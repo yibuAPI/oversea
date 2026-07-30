@@ -11,7 +11,7 @@ createServer((req, res) => {
         success: true,
         message: '',
         data: {
-          system_name: 'yibuapi',
+          system_name: 'OneStepAPI',
           logo: '',
           version: 'v0.9.9-mock',
           register_enabled: true,

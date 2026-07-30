@@ -24,7 +24,7 @@ const pricingQ = useQuery({ queryKey: ['pricing'], queryFn: getPricing })
 
 const search = ref('')
 const vendorId = ref<number | 'all'>('all')
-/** 当前用于报价的分组。默认取 usable_group 的第一个 */
+/** 当前用于报价的分组。默认优先 default（用户实际的基准分组），没有才落到第一个 */
 const group = ref<string>('')
 
 const models = computed(() => pricingQ.data.value?.data ?? [])
@@ -37,9 +37,16 @@ const usableGroups = computed(() => {
   return Object.entries(g).map(([key, label]) => ({ key, label }))
 })
 
-const activeGroup = computed(
-  () => group.value || usableGroups.value[0]?.key || 'default',
-)
+const activeGroup = computed({
+  get: () => {
+    if (group.value) return group.value
+    if (usableGroups.value.some((g) => g.key === 'default')) return 'default'
+    return usableGroups.value[0]?.key || 'default'
+  },
+  set: (v: string) => {
+    group.value = v
+  },
+})
 
 /**
  * 分组倍率。auto 分组在 group_ratio 里可能没有条目
@@ -51,6 +58,13 @@ const activeRatio = computed(() => {
 })
 const ratioUnknown = computed(
   () => typeof groupRatios.value[activeGroup.value] !== 'number',
+)
+
+/** 提示文案里显示分组的可读名称，回落到 key */
+const activeGroupLabel = computed(
+  () =>
+    usableGroups.value.find((g) => g.key === activeGroup.value)?.label ||
+    activeGroup.value,
 )
 
 const vendorName = (id?: number) =>
@@ -137,7 +151,7 @@ async function copyName(name: string) {
 
       <select
         v-if="usableGroups.length > 1"
-        v-model="group"
+        v-model="activeGroup"
         :aria-label="t('models.group')"
         class="h-9 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-accent"
       >
@@ -151,8 +165,8 @@ async function copyName(name: string) {
     <p v-if="!pricingQ.isLoading.value" class="mb-4 text-[12px] text-fg-subtle">
       {{
         ratioUnknown
-          ? t('models.ratioAuto', { group: activeGroup })
-          : t('models.ratioHint', { group: activeGroup, ratio: activeRatio })
+          ? t('models.ratioAuto', { group: activeGroupLabel })
+          : t('models.ratioHint', { group: activeGroupLabel, ratio: activeRatio })
       }}
     </p>
 

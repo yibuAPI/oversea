@@ -33,7 +33,7 @@ import {
 } from '@/api/tokens'
 import { getMyGroups, getMyModels } from '@/api/models'
 import { TOKEN_STATUS, type ApiToken } from '@/api/types'
-import { formatDateTime, formatExpiry, formatQuota, formatRelative } from '@/lib/format'
+import { formatDateTime, formatQuota, formatRelative } from '@/lib/format'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import DataTable, { type Column } from '@/components/ui/DataTable.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -295,19 +295,19 @@ const delMut = useMutation({
 
 const STATUS_META: Record<number, { key: string; cls: string }> = {
   [TOKEN_STATUS.ENABLED]: {
-    key: 'keys.statusEnabled',
+    key: 'keys.status_1',
     cls: 'border-success-border bg-success-bg text-success-fg',
   },
   [TOKEN_STATUS.DISABLED]: {
-    key: 'keys.statusDisabled',
+    key: 'keys.status_2',
     cls: 'border-border bg-bg-muted text-fg-muted',
   },
   [TOKEN_STATUS.EXPIRED]: {
-    key: 'keys.statusExpired',
+    key: 'keys.status_3',
     cls: 'border-warning-border bg-warning-bg text-warning-fg',
   },
   [TOKEN_STATUS.EXHAUSTED]: {
-    key: 'keys.statusExhausted',
+    key: 'keys.status_4',
     cls: 'border-danger-border bg-danger-bg text-danger-fg',
   },
 }
@@ -411,7 +411,11 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
         <template v-else-if="column.key === 'created_time'">
           <p>{{ formatDateTime(row.created_time) }}</p>
           <p class="mt-0.5 text-[11px] text-fg-subtle">
-            {{ t('keys.expires', { v: formatExpiry(row.expired_time) }) }}
+            {{
+              t('keys.expires', {
+                v: row.expired_time === -1 ? t('keys.never') : formatDateTime(row.expired_time),
+              })
+            }}
           </p>
         </template>
 
@@ -420,7 +424,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
           <span :class="row.accessed_time <= row.created_time ? 'text-fg-subtle' : ''">
             {{
               row.accessed_time <= row.created_time
-                ? t('keys.never')
+                ? t('keys.neverUsed')
                 : formatRelative(row.accessed_time)
             }}
           </span>

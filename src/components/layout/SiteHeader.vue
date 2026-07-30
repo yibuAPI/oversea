@@ -18,8 +18,10 @@
  * 拉满会把渐变整条盖掉（曾经的错误做法）。
  * 故 header 用 flex 让药丸按内容宽度收缩，右侧留白透出渐变。
  *
- * 滚动后转为吸顶通栏：hero 之外的区块背景是白的，
- * 不加底色会和内容糊在一起，故滚动态补 border + shadow。
+ * 滚动后仍保持药丸圆角（不再切成直角通栏），改为：
+ * 微收 top 偏移 + 四周一圈淡化品牌渐变描边 + 阴影，
+ * 与页面白底区块区分开。渐变描边用 ::after + mask 挖空实现，
+ * 见底部 scoped 样式。
  */
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -69,29 +71,30 @@ function toggleLocale() {
 <template>
   <header
     class="pointer-events-none fixed inset-x-0 top-0 z-50 transition-[top] duration-200"
-    :class="scrolled ? 'lg:top-0' : 'lg:top-6'"
+    :class="scrolled ? 'lg:top-2' : 'lg:top-6'"
   >
     <!--
-      未吸顶：药丸贴左通栏，右端在登录按钮之后收口（留 80px 透出 hero 渐变）。
-      吸顶：撑满整行变成通栏条。
+      药丸贴左通栏，右端在登录按钮之后收口（留 80px 透出背景）。
+      滚动后保持同一形状，只加渐变描边与阴影。
     -->
-    <div class="flex" :class="scrolled ? '' : 'lg:pr-20'">
+    <div class="flex lg:pr-20">
       <!--
         浮动药丸：右侧 50px 半圆。
         左内边距 120px 而不是 infron 的 40px —— infron 的药丸本体从 x80 起，
         80+40=120 才是 logo 的真实横坐标，正好和 hero 的 h1 对齐。
-        我们的药丸是通栏（x0，滚动后要变整条），所以把那 80px 折进 padding，
+        我们的药丸是通栏（x0），所以把那 80px 折进 padding，
         结果一致：logo 落在 x120。xl 以下收回 40px，hero 同步，保证任何宽度都对齐。
 
-        右内边距：未吸顶时外层 pr-20(80) + 药丸 pr-10(40) = 120；
-        吸顶时外层不留白，故药丸自己补到 120 —— 登录按钮滚动时不会左右跳。
+        滚动态：左端脱开屏幕边缘补出左圆角（整颗药丸悬浮），
+        左外边距 + 左内边距之和保持 120px（lg 下 40px），logo 不左右跳；
+        同时套 site-pill--scrolled 加淡蓝渐变描边 + 阴影。
       -->
       <div
-        class="pointer-events-auto flex h-[76px] w-full items-center bg-bg px-6 transition-[border-radius] duration-200 lg:h-20 lg:pl-10 lg:py-[13px] xl:pl-[120px]"
+        class="site-pill pointer-events-auto flex h-[76px] w-full items-center bg-bg px-6 transition-[margin,border-radius] duration-200 lg:h-20 lg:py-[13px] lg:pr-10"
         :class="
           scrolled
-            ? 'border-b border-border shadow-sm lg:rounded-none lg:pr-10 xl:pr-[120px]'
-            : 'lg:rounded-r-[50px] lg:pr-10'
+            ? 'site-pill--scrolled border-b border-border lg:ml-5 lg:rounded-[50px] lg:border-b-0 lg:pl-5 xl:ml-6 xl:pl-24'
+            : 'lg:rounded-r-[50px] lg:pl-10 xl:pl-[120px]'
         "
       >
         <RouterLink to="/" class="flex shrink-0 items-center gap-2.5">
@@ -171,3 +174,43 @@ function toggleLocale() {
     </div>
   </header>
 </template>
+
+<style scoped>
+/**
+ * 滚动态的淡蓝渐变描边：::after 铺渐变，再用 mask 把内容区挖空，
+ * 只留 1px 边圈。渐变取品牌色但压到低饱和（浅蓝为主），避免喧宾夺主。
+ */
+.site-pill {
+  position: relative;
+}
+.site-pill--scrolled {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+@media (min-width: 1024px) {
+  .site-pill--scrolled {
+    box-shadow: 0 4px 24px rgba(10, 141, 255, 0.08);
+  }
+  .site-pill--scrolled::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      90deg,
+      rgba(72, 84, 255, 0.35) 0%,
+      rgba(59, 202, 245, 0.45) 55%,
+      rgba(134, 239, 215, 0.35) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+}
+</style>

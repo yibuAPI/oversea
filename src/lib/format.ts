@@ -4,6 +4,7 @@
  * 额度（quota）在后端是整数，换算关系：quota / quota_per_unit = 美元。
  * quota_per_unit 由 /api/status 下发（实测 500000），不要写死。
  */
+import { i18n } from '@/i18n'
 
 /** quota 整数 -> 美元数值 */
 export function quotaToUsd(quota: number, quotaPerUnit: number): number {
@@ -84,11 +85,12 @@ export function formatAxisLabel(unixSeconds: number, hourly: boolean): string {
 /** 相对时间。「从未使用」这类空值交给调用方判断，这里只管有值的 */
 export function formatRelative(unixSeconds: number): string {
   if (!unixSeconds) return '—'
+  const { t } = i18n.global
   const diff = Date.now() / 1000 - unixSeconds
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 2592000) return `${Math.floor(diff / 86400)} 天前`
+  if (diff < 60) return t('time.justNow')
+  if (diff < 3600) return t('time.minutesAgo', { n: Math.floor(diff / 60) })
+  if (diff < 86400) return t('time.hoursAgo', { n: Math.floor(diff / 3600) })
+  if (diff < 2592000) return t('time.daysAgo', { n: Math.floor(diff / 86400) })
   return formatDate(unixSeconds)
 }
 
@@ -98,10 +100,4 @@ export function formatDuration(seconds: number): string {
   if (seconds < 1) return `${Math.round(seconds * 1000)}ms`
   if (seconds < 60) return `${seconds.toFixed(2)}s`
   return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`
-}
-
-/** -1 = 永不过期 */
-export function formatExpiry(unixSeconds: number): string {
-  if (unixSeconds === -1) return '永不过期'
-  return formatDateTime(unixSeconds)
 }

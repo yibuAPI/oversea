@@ -4,6 +4,7 @@ import axios, {
   type AxiosResponse,
 } from 'axios'
 import { ApiError, type ApiEnvelope } from './types'
+import { i18n } from '@/i18n'
 
 /**
  * 全站唯一的 HTTP 客户端。
@@ -86,8 +87,8 @@ http.interceptors.response.use(
     const payload = error?.response?.data as ApiEnvelope | undefined
     const message =
       payload?.message ||
-      (status === 0 ? '网络连接失败，请检查后端服务是否运行' : error?.message) ||
-      '请求失败'
+      (status === 0 ? i18n.global.t('api.networkError') : error?.message) ||
+      i18n.global.t('api.requestFailed')
 
     if (status === 401) onUnauthorized?.()
 
@@ -117,7 +118,7 @@ async function unwrap<T>(p: Promise<AxiosResponse<ApiEnvelope<T>>>): Promise<T> 
   }
   if (!body.success) {
     if (res.status === 401) onUnauthorized?.()
-    throw new ApiError(body.message || '请求失败', {
+    throw new ApiError(body.message || i18n.global.t('api.requestFailed'), {
       status: res.status,
       raw: body,
     })
@@ -158,7 +159,7 @@ export const api = {
     const body = res.data
     if (body?.message !== 'success') {
       throw new ApiError(
-        typeof body?.data === 'string' ? body.data : body?.message || '支付请求失败',
+        typeof body?.data === 'string' ? body.data : body?.message || i18n.global.t('api.payFailed'),
         { status: res.status, raw: body },
       )
     }

@@ -18,11 +18,12 @@ export const useSiteStore = defineStore('site', () => {
   const error = ref<string | null>(null)
 
   // 后端有值才用后端的，否则回落 —— 与现有 React 前端行为一致。
-  // 海外站品牌统一为 OneStepAPI：后端 system_name 还是旧中文名时也映射掉，
-  // 避免后台没来得及改导致页面上中英混排。
+  // 对外品牌统一为 OneStepAPI：后端 system_name 还是旧名（New API 默认值 /
+  // 中文旧名 / yibuapi）时一律映射掉，避免后台没来得及改导致品牌外泄。
+  const LEGACY_NAMES = new Set(['newapi', 'yibuapi', '一步api'])
   const systemName = computed(() => {
     const raw = status.value?.system_name
-    if (!raw || raw === '一步API' || raw.toLowerCase() === 'yibuapi') {
+    if (!raw || LEGACY_NAMES.has(raw.toLowerCase().replace(/[\s-_]/g, ''))) {
       return DEFAULT_SYSTEM_NAME
     }
     return raw

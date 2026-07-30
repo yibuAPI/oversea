@@ -2,7 +2,7 @@
 /**
  * 文档站 /docs —— 版式对照 infron.ai/docs（GitBook）：
  *
- *   顶栏     深色通栏：logo + 居中搜索框（Ctrl K）+ 右侧「模型 / 登录」
+ *   顶栏     通栏（跟随主题）：logo + 居中搜索框（Ctrl K）+ 右侧「模型 / 登录」
  *   tab 条   顶栏下的横向分区 tab（Document / API 分组）
  *   左栏     分组目录树（OVERVIEW / INTEGRATION / REFERENCE），子页缩进
  *   正文     品牌渐变横幅（仅首页）→ 面包屑 + Copy → emoji 大标题 → 区块流
@@ -226,12 +226,12 @@ const mobileNav = ref(false)
 
 <template>
   <div class="min-h-dvh bg-bg text-fg">
-    <!-- ============ 深色顶栏（两种主题下都是深色，infron 同款） ============ -->
-    <header class="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#0d0d0f]">
+    <!-- ============ 顶栏（跟随主题：日间浅色 / 夜间深色） ============ -->
+    <header class="fixed inset-x-0 top-0 z-50 border-b border-border bg-bg">
       <div class="flex h-14 items-center gap-4 px-4 lg:px-6">
         <button
           type="button"
-          class="rounded-md p-1.5 text-white/60 hover:text-white lg:hidden"
+          class="rounded-md p-1.5 text-fg-muted hover:text-fg lg:hidden"
           :aria-label="t('nav.menu')"
           @click="mobileNav = !mobileNav"
         >
@@ -240,32 +240,32 @@ const mobileNav = ref(false)
 
         <RouterLink to="/" class="flex shrink-0 items-center gap-2">
           <img :src="logo" :alt="systemName" class="h-5 w-auto" />
-          <span class="text-[15px] font-semibold text-white">{{ systemName }}</span>
+          <span class="text-[15px] font-semibold text-fg">{{ systemName }}</span>
         </RouterLink>
 
         <!-- 居中搜索框 -->
         <div class="relative mx-auto hidden w-full max-w-[520px] sm:block">
           <Search
-            class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-white/40"
+            class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-subtle"
           />
           <input
             ref="searchEl"
             v-model="search"
             type="search"
             :placeholder="t('publicDocs.searchPlaceholder')"
-            class="h-9 w-full rounded-lg border border-white/10 bg-white/[0.06] pl-9 pr-16 text-[13.5px] text-white outline-none transition-colors placeholder:text-white/35 focus:border-white/30"
+            class="h-9 w-full rounded-lg border border-border bg-bg-muted pl-9 pr-16 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
           />
           <span
             class="pointer-events-none absolute right-2.5 top-1/2 flex -translate-y-1/2 gap-1"
             aria-hidden="true"
           >
             <kbd
-              class="rounded border border-white/15 px-1.5 py-0.5 font-mono text-[10.5px] text-white/45"
+              class="rounded border border-border px-1.5 py-0.5 font-mono text-[10.5px] text-fg-subtle"
             >
               Ctrl
             </kbd>
             <kbd
-              class="rounded border border-white/15 px-1.5 py-0.5 font-mono text-[10.5px] text-white/45"
+              class="rounded border border-border px-1.5 py-0.5 font-mono text-[10.5px] text-fg-subtle"
             >
               K
             </kbd>
@@ -275,19 +275,19 @@ const mobileNav = ref(false)
         <nav class="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <RouterLink
             to="/models"
-            class="hidden rounded-md px-2.5 py-1.5 text-[13.5px] text-white/70 transition-colors hover:text-white sm:block"
+            class="hidden rounded-md px-2.5 py-1.5 text-[13.5px] text-fg-muted transition-colors hover:text-fg sm:block"
           >
             {{ t('nav.models') }}
           </RouterLink>
           <RouterLink
             to="/login"
-            class="hidden rounded-md px-2.5 py-1.5 text-[13.5px] text-white/70 transition-colors hover:text-white sm:block"
+            class="hidden rounded-md px-2.5 py-1.5 text-[13.5px] text-fg-muted transition-colors hover:text-fg sm:block"
           >
             {{ t('auth.signIn') }}
           </RouterLink>
           <button
             type="button"
-            class="rounded-md p-2 text-white/60 transition-colors hover:text-white"
+            class="rounded-md p-2 text-fg-muted transition-colors hover:text-fg"
             aria-label="Switch language"
             @click="toggleLocale"
           >
@@ -295,7 +295,7 @@ const mobileNav = ref(false)
           </button>
           <button
             type="button"
-            class="rounded-md p-2 text-white/60 transition-colors hover:text-white"
+            class="rounded-md p-2 text-fg-muted transition-colors hover:text-fg"
             :aria-label="t('theme.toggle')"
             @click="theme.toggle()"
           >
