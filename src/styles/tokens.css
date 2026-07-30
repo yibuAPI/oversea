@@ -1,0 +1,253 @@
+/**
+ * Design tokens —— 全站唯一的视觉真相来源。
+ *
+ * 规则：组件只消费 var(--color-*)，绝不写死颜色值。
+ * 换主色只需改本文件的 brand 色阶，全站随之更新。
+ *
+ * 品牌来源：public/logo.png 渐变取样（见 PLAN.md §1.6）
+ *   蓝紫 #4854FF → 天蓝 #3BCAF5 → 青绿 #86EFD7
+ *
+ * 对比度：所有用于文字/图标的色值均按 WCAG AA 校验。
+ * logo 原始天蓝 #3BCAF5 在白底上对比度仅约 1.8:1，远不达标，
+ * 故 accent 文字态取压暗后的 600/700 档。
+ */
+
+@import 'tailwindcss';
+
+/* 主题由 theme store 往 <html> 上挂 .dark 类驱动；
+   Tailwind 4 的 dark: 默认跟系统媒体查询走，必须显式改成类选择器，
+   否则所有 dark: 工具类都不会响应站内的主题开关。 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    /* ---------- 品牌渐变（仅装饰用，不用于文字） ---------- */
+    --brand-violet: #4854ff;
+    --brand-sky: #3bcaf5;
+    --brand-mint: #86efd7;
+    --brand-gradient: linear-gradient(
+      90deg,
+      var(--brand-violet) 0%,
+      var(--brand-sky) 55%,
+      var(--brand-mint) 100%
+    );
+
+    /* ---------- 主色阶（infron 实测品牌蓝 #005EFF / #0A8DFF） ---------- */
+    --accent-50: #edf7ff;
+    --accent-100: #d1f5ff;
+    --accent-200: #b3e0ff;
+    --accent-300: #7cc6ff;
+    --accent-400: #0a8dff; /* 亮蓝：大面积填充/图表，白底小字不达标（3.35:1） */
+    --accent-500: #007bf5;
+    --accent-600: #005eff; /* 白底文字 5.19:1 AA；白字按钮底同为 5.19:1 AA */
+    --accent-700: #0049c4; /* hover：7.62:1 */
+    --accent-800: #003a9e;
+    --accent-900: #002f80;
+    --accent-950: #001f57;
+
+    /* ---------- 次要品牌色（蓝紫） ---------- */
+    --violet-100: #e5e6ff;
+    --violet-400: #7d84ff;
+    --violet-500: #4854ff; /* logo 原色 */
+    --violet-600: #3a3ee6;
+    --violet-700: #2f2fb8;
+
+    /* ---------- 语义色 ---------- */
+    --success-bg: #e7f8f0;
+    --success-fg: #0a7a52;
+    --success-border: #9fe3c6;
+    --warning-bg: #fff4e5;
+    --warning-fg: #96500a;
+    --warning-border: #ffd399;
+    --danger-bg: #fdecec;
+    --danger-fg: #b42318;
+    --danger-border: #f7bdb8;
+    --info-bg: var(--accent-50);
+    --info-fg: var(--accent-700);
+    --info-border: var(--accent-200);
+
+    /* ---------- 中性 / 表面 ---------- */
+    /* 取自 infron.ai 实测 token 值（见 reference/infron/index.html） */
+    --color-bg: #ffffff;
+    --color-bg-subtle: #fbfbfb;
+    --color-bg-muted: #f8f9fa;
+    --color-bg-elevated: #ffffff;
+    --color-bg-inset: #f0f1f2;
+
+    --color-fg: #050503; /* 20.40:1 —— 近黑，比原来的 #1a1d21 更硬朗 */
+    --color-fg-secondary: #38383d; /* infron 正文灰（10.9:1）：比 fg 轻、比 muted 重 */
+    --color-fg-muted: #706f6b; /* 5.03:1 AA */
+    --color-fg-subtle: #919191; /* 3.15:1 —— 仅用于大字/装饰，不用于正文 */
+    --color-fg-onAccent: #ffffff;
+
+    --color-border: #e5e5e8;
+    --color-border-strong: #d6d6d6;
+
+    --color-accent: var(--accent-600);
+    --color-accent-hover: var(--accent-700);
+    --color-accent-active: var(--accent-800);
+    --color-accent-bg: var(--accent-50);
+    --color-accent-border: var(--accent-200);
+    --color-accent-solid: var(--accent-400); /* 大色块填充 */
+
+    --color-ring: var(--accent-500);
+
+    /* 主按钮：浅色主题下是深色底白字（infron 控制台实测） */
+    --color-btn-primary-bg: #18181b;
+    --color-btn-primary-hover: #27272a;
+    --color-btn-primary-fg: #fafafa;
+
+    /* 区块眉标色（infron 实测 rgb(63,58,212)）：白底 7.59:1，AAA */
+    --color-brand: #3f3ad4;
+
+    /* ---------- 图表配色（以品牌三色为锚点扩展） ---------- */
+    --chart-1: #12aee0;
+    --chart-2: #4854ff;
+    --chart-3: #16b391;
+    --chart-4: #8b5cf6;
+    --chart-5: #f0883e;
+    --chart-6: #e05c8a;
+    --chart-7: #0a7099;
+    --chart-8: #6b7cff;
+
+    /* ---------- 圆角 ---------- */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
+
+    /* ---------- 阴影（冷调，避免灰蒙） ---------- */
+    --shadow-xs: 0 1px 2px 0 rgb(16 24 40 / 0.04);
+    --shadow-sm: 0 1px 3px 0 rgb(16 24 40 / 0.08), 0 1px 2px -1px rgb(16 24 40 / 0.04);
+    --shadow-md: 0 4px 8px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.04);
+    --shadow-lg: 0 12px 16px -4px rgb(16 24 40 / 0.08), 0 4px 6px -2px rgb(16 24 40 / 0.03);
+
+    /* ---------- 字体 ---------- */
+    /* Inter Variable 由 main.ts 自托管加载；中文回落到系统黑体 */
+    --font-sans:
+      'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    --font-mono:
+      'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Consolas,
+      'Liberation Mono', monospace;
+
+    /* ---------- 动效 ---------- */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-fast: 120ms;
+    --duration-base: 200ms;
+  }
+
+  /* ---------------- 暗色主题 ---------------- */
+  /* 对齐 infron 控制台实测观感：近纯黑的中性灰阶（zinc 系），
+     无蓝 tint —— 蓝只出现在链接/选中态，主按钮是白底黑字。
+     蓝黑（GitHub 风）是我们之前「廉价感」的主因，整套弃用。 */
+  .dark {
+    --color-bg: #0a0a0b;
+    --color-bg-subtle: #0a0a0b; /* 侧栏与页面同底，靠 1px 边线分界 */
+    --color-bg-muted: #1a1a1d; /* hover 态 */
+    --color-bg-elevated: #111113; /* 卡片 */
+    --color-bg-inset: #1e1e22;
+
+    --color-fg: #fafafa;
+    --color-fg-secondary: #c8c8cf;
+    --color-fg-muted: #a1a1aa;
+    --color-fg-subtle: #6b6b73;
+    --color-fg-onAccent: #04212e;
+
+    --color-border: #222226;
+    --color-border-strong: #3a3a40;
+
+    /* 链接/选中态蓝：#0A8DFF 在 #0a0a0b 上 ≈4.9:1，达标 */
+    --color-accent: #2f9dff;
+    --color-accent-hover: #57b3ff;
+    --color-accent-active: #7cc6ff;
+    --color-accent-bg: #0d1b2a;
+    --color-accent-border: #123a5c;
+    --color-accent-solid: var(--accent-400);
+
+    /* infron 控制台的主按钮是白底黑字 */
+    --color-btn-primary-bg: #fafafa;
+    --color-btn-primary-hover: #e4e4e7;
+    --color-btn-primary-fg: #0a0a0b;
+
+    --color-ring: #2f9dff;
+
+    /* 眉标色暗底提亮 */
+    --color-brand: #9a97ff;
+
+    --success-bg: #0a1f16;
+    --success-fg: #34d399;
+    --success-border: #143d2c;
+    --warning-bg: #241a08;
+    --warning-fg: #f0b464;
+    --warning-border: #4a3512;
+    --danger-bg: #2a1110;
+    --danger-fg: #f87171;
+    --danger-border: #4c1d1a;
+    --info-bg: #0d1b2a;
+    --info-fg: #57b3ff;
+    --info-border: #123a5c;
+
+    --chart-1: #3bcaf5;
+    --chart-2: #7d84ff;
+    --chart-3: #3ed6b0;
+    --chart-4: #a78bfa;
+    --chart-5: #f5a05e;
+    --chart-6: #f07fa8;
+    --chart-7: #77dff7;
+    --chart-8: #9aa6ff;
+
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 12px 16px -4px rgb(0 0 0 / 0.5), 0 4px 6px -2px rgb(0 0 0 / 0.3);
+  }
+}
+
+/* 把 tokens 暴露给 Tailwind 的工具类（Tailwind 4 @theme） */
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-bg-subtle: var(--color-bg-subtle);
+  --color-bg-muted: var(--color-bg-muted);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-bg-inset: var(--color-bg-inset);
+  --color-fg: var(--color-fg);
+  --color-fg-secondary: var(--color-fg-secondary);
+  --color-fg-muted: var(--color-fg-muted);
+  --color-fg-subtle: var(--color-fg-subtle);
+  --color-fg-on-accent: var(--color-fg-onAccent);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-bg: var(--color-accent-bg);
+  --color-accent-border: var(--color-accent-border);
+  --color-accent-solid: var(--color-accent-solid);
+  /* focus-visible:outline-ring 依赖它。漏了这行的话工具类不生成，
+     焦点环会静默消失 —— 键盘用户直接失去可见焦点。 */
+  --color-ring: var(--color-ring);
+  --color-btn-primary-bg: var(--color-btn-primary-bg);
+  --color-btn-primary-hover: var(--color-btn-primary-hover);
+  --color-btn-primary-fg: var(--color-btn-primary-fg);
+  --color-brand: var(--color-brand);
+  --color-success-bg: var(--success-bg);
+  --color-success-fg: var(--success-fg);
+  --color-success-border: var(--success-border);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-fg: var(--warning-fg);
+  --color-warning-border: var(--warning-border);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-fg: var(--danger-fg);
+  --color-danger-border: var(--danger-border);
+  --color-info-bg: var(--info-bg);
+  --color-info-fg: var(--info-fg);
+  --color-info-border: var(--info-border);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+}

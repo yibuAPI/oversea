@@ -1,0 +1,20 @@
+# 一键部署：docker compose up -d --build
+#
+# 前端容器把 /api /v1 /pg 反代到 BACKEND_ORIGIN。
+# 后端（New API）不在本 compose 里 —— 按实际部署二选一：
+#   1. 后端跑在宿主机：保持下方 host.docker.internal 配置即可
+#   2. 后端也是容器：把它加进同一个 network，BACKEND_ORIGIN 改成 http://<服务名>:3000
+
+services:
+  web:
+    build: .
+    image: yibuapi-web
+    container_name: yibuapi-web
+    ports:
+      - '8080:80'
+    environment:
+      # 后端地址。Linux 上 host.docker.internal 需要下面的 extra_hosts 才能解析
+      BACKEND_ORIGIN: http://host.docker.internal:3000
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    restart: unless-stopped

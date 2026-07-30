@@ -1,0 +1,63 @@
+# nginx 配置模板：${BACKEND_ORIGIN} 启动时由 envsubst 注入。
+#
+# 反代路径必须与 vite.config.ts 的 dev proxy 一致（/api /v1 /pg）——
+# 后端 session cookie 是 SameSite=Strict，前后端必须同源，
+# 所以生产环境同样由 nginx 做同源反代，绝不能让浏览器跨域直连后端。
+
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # 静态资源：带 hash 的文件名可以永久缓存
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    # 后端反代：保留原始 Host（对应 dev proxy 的 changeOrigin:false）
+    location /api/ {
+        proxy_pass ${BACKEND_ORIGIN};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # SSE / 流式响应不能缓冲
+        proxy_buffering off;
+        proxy_read_timeout 300s;
+    }
+
+    location /v1/ {
+        proxy_pass ${BACKEND_ORIGIN};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # LLM 流式输出：必须关缓冲，否则 SSE 会整段卡住再一次性吐出
+        proxy_buffering off;
+        proxy_read_timeout 600s;
+    }
+
+    location /pg/ {
+        proxy_pass ${BACKEND_ORIGIN};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # SPA 回退：任意路径都回 index.html，交给 vue-router
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 1024;
+}
