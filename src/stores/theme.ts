@@ -3,7 +3,7 @@ import { ref, computed, watchEffect } from 'vue'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 
-const STORAGE_KEY = 'yibu-theme'
+const STORAGE_KEY = 'onestep-theme'
 
 /**
  * 主题。index.html 的内联脚本已在首屏前套用过一次以避免闪烁（FOUC），

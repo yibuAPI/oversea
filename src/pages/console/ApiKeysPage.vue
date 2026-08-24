@@ -2,7 +2,7 @@
 /**
  * API 密钥。对齐 infron API Keys 页的表格结构（名称/状态/创建时间/最后使用/操作），
  * 但字段以后端真实能力为准：
- *   - key 列表里是打码的，明文要单独点「显示」调 /token/:id/key
+ *   - key 列表里是打码的，页面始终只显示打码版；复制时调 /token/:id/key 取真值，不展开明文
  *   - 创建接口不返回 data，故建完必须重新拉列表
  *   - 分组是必填项（后端按 groups 路由），下拉数据来自 /user/self/groups
  */
@@ -13,7 +13,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import {
   Plus,
   Copy,
-  Eye,
   Trash2,
   Pencil,
   KeyRound,
@@ -69,41 +68,25 @@ const columns: Column<ApiToken>[] = [
   { key: 'actions', label: '', class: 'w-[120px]' },
 ]
 
-// ───────────────── 明文密钥 ─────────────────
+// ───────────────── 复制密钥（显示打码，复制真值） ─────────────────
 
-/** id -> 明文。只在本次会话内存在，不落盘 */
-const revealed = ref<Record<number, string>>({})
-const revealing = ref<number | null>(null)
+/** 正在复制中的 id，用于禁用复制按钮 */
+const copying = ref<number | null>(null)
 
-async function onReveal(id: number) {
-  if (revealed.value[id]) return
-  revealing.value = id
+async function onCopy(id: number) {
+  const row = rows.value.find((r) => r.id === id)
+  if (!row) return
+  copying.value = id
   try {
+    // 列表里只有打码的 key，真要复制得调接口取明文；取到一并拼 sk- 前缀
     const { key } = await revealTokenKey(id)
-    revealed.value = { ...revealed.value, [id]: key }
+    const full = `sk-${key}`
+    await navigator.clipboard.writeText(full)
+    toast(t('keys.copied'))
   } catch (e) {
     toast(e instanceof Error ? e.message : String(e), true)
   } finally {
-    revealing.value = null
-  }
-}
-
-/** 完整密钥要带 sk- 前缀才能直接用于 Authorization */
-function fullKey(id: number) {
-  const raw = revealed.value[id]
-  return raw ? `sk-${raw}` : null
-}
-
-async function onCopy(id: number) {
-  // 没显示过就先取一次，省得用户点两下
-  if (!revealed.value[id]) await onReveal(id)
-  const k = fullKey(id)
-  if (!k) return
-  try {
-    await navigator.clipboard.writeText(k)
-    toast(t('keys.copied'))
-  } catch {
-    toast(t('keys.copyFailed'), true)
+    copying.value = null
   }
 }
 
@@ -356,28 +339,18 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
           </p>
         </template>
 
-        <!-- 密钥 -->
+        <!-- 密钥（列表只显示打码版，复制走接口拿真值） -->
         <template v-else-if="column.key === 'key'">
           <div class="flex items-center gap-1">
             <code class="min-w-0 flex-1 truncate font-mono text-[11.5px]">
-              {{ fullKey(row.id) ?? `sk-${row.key}` }}
+              {{ `sk-${row.key}` }}
             </code>
             <button
-              v-if="!revealed[row.id]"
               type="button"
               class="flex size-6 shrink-0 items-center justify-center rounded text-fg-subtle transition-colors hover:bg-bg-muted hover:text-fg disabled:opacity-50"
-              :title="t('keys.reveal')"
-              :aria-label="t('keys.reveal')"
-              :disabled="revealing === row.id"
-              @click="onReveal(row.id)"
-            >
-              <Eye class="size-3.5" />
-            </button>
-            <button
-              type="button"
-              class="flex size-6 shrink-0 items-center justify-center rounded text-fg-subtle transition-colors hover:bg-bg-muted hover:text-fg"
               :title="t('common.copy')"
               :aria-label="t('common.copy')"
+              :disabled="copying === row.id"
               @click="onCopy(row.id)"
             >
               <Copy class="size-3.5" />

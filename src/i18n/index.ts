@@ -2,7 +2,7 @@ import { createI18n } from 'vue-i18n'
 import zhCN from './locales/zh-CN'
 import en from './locales/en'
 
-const STORAGE_KEY = 'yibu-locale'
+const STORAGE_KEY = 'onestep-locale'
 export const SUPPORTED = ['zh-CN', 'en'] as const
 export type Locale = (typeof SUPPORTED)[number]
 

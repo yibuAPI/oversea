@@ -1,8 +1,8 @@
 # 多阶段构建：Node 编译静态产物 -> nginx 托管 + 反代后端
 #
 # 用法（单容器）：
-#   docker build -t yibuapi-web .
-#   docker run -d -p 8080:80 -e BACKEND_ORIGIN=http://host.docker.internal:3000 yibuapi-web
+#   docker build -t onestep-web .
+#   docker run -d -p 8080:80 -e BACKEND_ORIGIN=http://host.docker.internal:3000 onestep-web
 # 推荐直接用 docker-compose up -d（见 docker-compose.yml）。
 
 # ---------- 构建阶段 ----------

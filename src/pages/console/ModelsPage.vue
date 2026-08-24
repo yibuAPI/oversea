@@ -31,10 +31,18 @@ const models = computed(() => pricingQ.data.value?.data ?? [])
 const vendors = computed(() => pricingQ.data.value?.vendors ?? [])
 const groupRatios = computed(() => pricingQ.data.value?.group_ratio ?? {})
 
-/** 用户可用的分组（后端已按用户权限过滤） */
+/**
+ * 用户可用的分组（后端已按用户权限过滤）。
+ * 下拉选项与「新增密钥」保持一致：分组名（key）+ 倍率，即 `default（×2）`。
+ * usable_group 的 value 是可读描述，仅在无倍率时兜底显示。
+ */
 const usableGroups = computed(() => {
   const g = pricingQ.data.value?.usable_group ?? {}
-  return Object.entries(g).map(([key, label]) => ({ key, label }))
+  const ratios = pricingQ.data.value?.group_ratio ?? {}
+  return Object.entries(g).map(([key, label]) => {
+    const ratio = ratios[key]
+    return { key, label, ratio: typeof ratio === 'number' ? ratio : null }
+  })
 })
 
 const activeGroup = computed({
@@ -156,7 +164,9 @@ async function copyName(name: string) {
         class="h-9 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-accent"
       >
         <option v-for="g in usableGroups" :key="g.key" :value="g.key">
-          {{ g.label }}
+          {{ g.key }}
+          <template v-if="g.ratio !== null">（×{{ g.ratio }}）</template>
+          <template v-else>{{ g.label }}</template>
         </option>
       </select>
     </div>

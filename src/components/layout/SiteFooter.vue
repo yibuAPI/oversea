@@ -29,30 +29,25 @@ const version = computed(() => {
 })
 
 const columns = [
-  { key: 'product', links: ['models', 'pricing', 'rankings', 'status'] },
-  { key: 'developers', links: ['docs', 'quickstart', 'console'] },
-  { key: 'company', links: ['about'] },
-  { key: 'legal', links: ['privacy', 'terms'] },
+  { key: 'product', links: ['models', 'pricing', 'rankings'] },
+  { key: 'developers', links: ['docs', 'quickstart', 'console', 'contact'] },
 ] as const
 
 const hrefs: Record<string, string> = {
   models: '/models',
   pricing: '/pricing',
   rankings: '/rankings',
-  status: '/status',
   docs: '/docs',
   quickstart: '/docs',
   console: '/console',
-  about: '/about',
-  privacy: '/privacy-policy',
-  terms: '/user-agreement',
+  contact: '/about',
 }
 </script>
 
 <template>
   <footer class="bg-black text-white">
     <div class="mx-auto max-w-[1100px] px-6 py-[100px]">
-      <div class="grid gap-10 lg:grid-cols-[1fr_repeat(4,auto)] lg:gap-10">
+      <div class="grid gap-10 lg:grid-cols-[1fr_repeat(2,auto)] lg:gap-10">
         <div>
           <RouterLink to="/" class="flex items-center gap-2.5">
             <img :src="logo" :alt="systemName" class="h-5 w-auto" />

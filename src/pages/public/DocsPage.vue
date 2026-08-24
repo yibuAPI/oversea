@@ -37,13 +37,14 @@ import {
 } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
 import { useThemeStore } from '@/stores/theme'
+import { DOCS_BASE_URL } from '@/utils/content-format'
 import { getPricing } from '@/api/models'
 import { setLocale } from '@/i18n'
 import { buildDocs, type Block } from './docs-content'
 
 const site = useSiteStore()
 const theme = useThemeStore()
-const { status, systemName, logo } = storeToRefs(site)
+const { systemName, logo } = storeToRefs(site)
 const { isDark } = storeToRefs(theme)
 const { t, tm, locale } = useI18n()
 const route = useRoute()
@@ -55,12 +56,9 @@ function toggleLocale() {
 
 const pricingQ = useQuery({ queryKey: ['pricing'], queryFn: getPricing })
 
-const baseUrl = computed(() => {
-  const raw =
-    (typeof status.value?.server_address === 'string' && status.value.server_address) ||
-    window.location.origin
-  return raw.replace(/\/+$/, '')
-})
+// 文档展示的接口基址固定为 DOCS_BASE_URL，不随后端 server_address 变化；
+// 否则用户复制走的代码会打到后端配置的旧域名（本地为 localhost）。
+const baseUrl = DOCS_BASE_URL
 
 const sampleModel = computed(() => {
   const first = pricingQ.data.value?.data?.find((m) => m.quota_type === 0)
@@ -82,7 +80,7 @@ void tm
 const docs = computed(() =>
   buildDocs({
     zh: locale.value === 'zh-CN',
-    base: baseUrl.value,
+    base: baseUrl,
     model: sampleModel.value,
     name: systemName.value,
     faq: faqItems.value,

@@ -59,7 +59,7 @@ const password = ref('')
 const submitting = ref(false)
 
 /** 上次成功登录用的方式，用于 "last used" 徽章；无记录则不显示 */
-const LAST_KEY = 'yibuapi:last-login-method'
+const LAST_KEY = 'onestep:last-login-method'
 const lastUsed = ref<string | null>(null)
 onMounted(() => {
   // 黑底铺到 <html>，否则 body 的白会从滚动边缘漏出来

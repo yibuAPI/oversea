@@ -3,37 +3,30 @@
  * 接入文档。infron 的 Docs 页是「侧边小节 + 代码块 + 复制」的形态。
  *
  * 这一页没有专属后端接口 —— 内容是静态的，但**变量必须是真的**：
- *   base_url  取 /api/status 的 server_address，没有则回落到当前 origin
+ *   base_url  固定展示 DOCS_BASE_URL（llmuni.com），不随后端 server_address 变化，
+ *             否则用户复制走的代码会打到后端配置的旧域名（本地为 localhost）
  *   模型名     取 /api/user/models（用户真实可用的），不写死 gpt-4
  *   密钥       只提示去 API Keys 页取，绝不在文档里塞真实 key
  * 写死 base_url 是这类页面最常见的坑：用户复制走的代码直接打到示例域名。
  */
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useQuery } from '@tanstack/vue-query'
 import { RouterLink } from 'vue-router'
 import { Check, Copy, ExternalLink } from 'lucide-vue-next'
-import { useSiteStore } from '@/stores/site'
 import { getMyModels } from '@/api/models'
+import { DOCS_BASE_URL } from '@/utils/content-format'
 import PageHeader from '@/components/ui/PageHeader.vue'
 
-const site = useSiteStore()
-const { status } = storeToRefs(site)
 const { t } = useI18n()
 
 const modelsQ = useQuery({ queryKey: ['my-models'], queryFn: () => getMyModels() })
 
 /**
- * 基址。后端 server_address 常带尾斜杠，去掉后再拼 /v1，
- * 否则会出现 https://x.com//v1 这种双斜杠。
+ * 基址。固定用 DOCS_BASE_URL，不随后端 server_address 变化——否则用户复制走的
+ * 代码会打到后端配置的旧域名（本地为 localhost）。展示/复制时拼 /v1。
  */
-const baseUrl = computed(() => {
-  const raw =
-    (typeof status.value?.server_address === 'string' && status.value.server_address) ||
-    window.location.origin
-  return raw.replace(/\/+$/, '')
-})
+const baseUrl = DOCS_BASE_URL
 
 /** 示例里用的模型：优先用户真实可用的第一个 */
 const sampleModel = computed(() => modelsQ.data.value?.[0] ?? 'gpt-4o-mini')
@@ -49,7 +42,7 @@ const LANGS: { key: Lang; label: string }[] = [
 ]
 
 const snippets = computed<Record<Lang, string>>(() => {
-  const base = baseUrl.value
+  const base = baseUrl
   const model = sampleModel.value
   return {
     curl: `curl ${base}/v1/chat/completions \\

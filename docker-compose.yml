@@ -8,8 +8,8 @@
 services:
   web:
     build: .
-    image: yibuapi-web
-    container_name: yibuapi-web
+    image: onestep-web
+    container_name: onestep-web
     ports:
       - '8080:80'
     environment:

@@ -44,9 +44,21 @@ const router = createRouter({
           component: () => import('@/pages/public/RankingsPage.vue'),
         },
         {
+          /** 联系我们 —— 渲染后台 /api/about 富文本 */
           path: 'about',
           name: 'about',
+          component: () => import('@/pages/public/ContactPage.vue'),
+        },
+        {
+          /** 关于我们 —— 静态展示页（不渲染后台富文本，与 /about 区分） */
+          path: 'company',
+          name: 'company',
           component: () => import('@/pages/public/AboutPage.vue'),
+        },
+        {
+          /** 旧 /contact 已并入 /about（后台 about 逻辑），重定向防止断链 */
+          path: 'contact',
+          redirect: '/about',
         },
       ],
     },

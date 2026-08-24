@@ -25,6 +25,7 @@ import { toast } from 'vue-sonner'
 import { ArrowUpRight, Check, Copy, KeyRound, RotateCcw, TriangleAlert } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
 import { regenerateAccessToken } from '@/api/account'
+import { DOCS_BASE_URL } from '@/utils/content-format'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -33,13 +34,8 @@ const site = useSiteStore()
 const { status } = storeToRefs(site)
 const { t } = useI18n()
 
-/** base_url 取服务端配置，缺失才回落到当前 origin（与 Docs 页同规则） */
-const baseUrl = computed(() => {
-  const raw =
-    (typeof status.value?.server_address === 'string' && status.value.server_address) ||
-    window.location.origin
-  return raw.replace(/\/+$/, '')
-})
+/** base_url 固定用 DOCS_BASE_URL，与文档页口径一致（不随后端 server_address 变化） */
+const baseUrl = DOCS_BASE_URL
 
 /** chat_link 是后端站点配置，格式模板含 {key} 占位 */
 const chatLinkTemplate = computed(() =>
@@ -95,7 +91,7 @@ async function copyText(text: string, id: string) {
 
 /** 按客户端渲染配置参数 —— 字段完全一致，只是壳不同 */
 const clientFields = computed(() => [
-  { label: t('integrations.fieldUrl'), value: `${baseUrl.value}/v1`, id: 'url' },
+  { label: t('integrations.fieldUrl'), value: `${baseUrl}/v1`, id: 'url' },
   {
     label: t('integrations.fieldKey'),
     value: t('integrations.fieldKeyPlaceholder'),

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 关于页 /about —— 版式对照 infron.ai/about-us：
+ * 关于我们 /company —— 静态展示页，版式对照 infron.ai/about-us：
  *
  *   hero      全屏品牌渐变 + 居中大字标语（暗色主题下渐变反相处理）
  *   宣言      白底居中窄栏两段
@@ -10,6 +10,7 @@
  *   收尾      居中 CTA（免费开始 + 浏览模型）
  *
  * 不再渲染后台 /api/about 富文本：那块二维码 + 本站须知与专业版式冲突，已移除。
+ * 后台富文本出口在 /about，此处仅作品牌展示。
  */
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'

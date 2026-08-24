@@ -18,8 +18,9 @@ export const useSiteStore = defineStore('site', () => {
   const error = ref<string | null>(null)
 
   // 后端有值才用后端的，否则回落 —— 与现有 React 前端行为一致。
-  // 对外品牌统一为 OneStepAPI：后端 system_name 还是旧名（New API 默认值 /
-  // 中文旧名 / yibuapi）时一律映射掉，避免后台没来得及改导致品牌外泄。
+  // 对外品牌统一为 OneStepAPI：后端 system_name 仍是旧值（New API 默认值 /
+  // 旧中文名 / 旧服务名）时一律映射掉，避免后台没来得及改导致品牌外泄。
+  // LEGACY_NAMES 里的每个值都是后端可能实际下发的字符串，未改别删。
   const LEGACY_NAMES = new Set(['newapi', 'yibuapi', '一步api'])
   const systemName = computed(() => {
     const raw = status.value?.system_name

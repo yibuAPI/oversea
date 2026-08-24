@@ -36,7 +36,7 @@ export function setUnauthorizedHandler(fn: () => void) {
  * 故把 uid 落到 localStorage。它不是凭证（凭证仍是 HttpOnly cookie），
  * 被篡改也只会导致 mismatch 401，没有越权风险。
  */
-const UID_KEY = 'yibuapi:uid'
+const UID_KEY = 'onestep:uid'
 
 function readStoredUid(): number | null {
   try {

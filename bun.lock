@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "yibuapi-web",
+      "name": "onestep-web",
       "dependencies": {
         "@fontsource-variable/inter": "^5.3.0",
         "@tanstack/vue-query": "^5.66.0",

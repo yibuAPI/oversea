@@ -60,7 +60,7 @@ const navItems = [
   { key: 'docs', to: '/docs' },
   { key: 'pricing', to: '/pricing' },
   { key: 'rankings', to: '/rankings' },
-  { key: 'about', to: '/about' },
+  { key: 'about', to: '/company' },
 ] as const
 
 function toggleLocale() {
@@ -129,9 +129,9 @@ function toggleLocale() {
             <Languages class="size-4.5" />
           </button>
 
-          <!-- 主 CTA：黑底药丸，radius 20px -->
+          <!-- 主 CTA：黑底药丸，radius 20px —— 指向 /about 后台 about 富文本逻辑 -->
           <RouterLink
-            to="/console"
+            to="/about"
             class="hidden h-10 items-center rounded-[20px] bg-btn-primary-bg px-[18px] text-[16px] font-normal text-btn-primary-fg transition-opacity hover:opacity-88 sm:inline-flex"
           >
             {{ t('home.nav.cta') }}
