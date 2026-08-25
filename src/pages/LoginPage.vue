@@ -8,10 +8,10 @@
  *   表单列    宽 384px，水平居中；标题 y≈140
  *   标题      逐字打字机 + 品牌渐变 + 闪烁光标（见 TypewriterText）。
  *             infron 原样是静态 "Welcom"，这里按需求改成
- *             "Welcome to OneStepAPI" 的动效版。标题写死不走站名变量 ——
+ *             "Welcome to llmuni" 的动效版。标题写死不走站名变量 ——
  *             后端的 system_name 可能还是旧名，接在 "Welcome to"
  *             后面中英混排很难看，且会撑破 384 列宽。
- *   字号      按 384 列宽反推："Welcome to OneStepAPI" 21 字符，
+ *   字号      按 384 列宽反推："Welcome to llmuni" 18 字符，
  *             30px/600 下约 268px，加光标仍有富余。
  *   字段      label 12px 灰 → 输入框高 40px，radius 6px，深灰描边
  *   主按钮    高 40px，深蓝近黑 #111a2e，白字 14px/600
@@ -157,7 +157,7 @@ async function onSubmit() {
         <h1
           class="text-[26px] font-semibold leading-[1.1] tracking-[-0.5px] sm:text-[30px]"
         >
-          <TypewriterText text="Welcome to OneStepAPI" />
+          <TypewriterText text="Welcome to llmuni" />
         </h1>
 
         <form class="mt-12 space-y-4" @submit.prevent="onSubmit">

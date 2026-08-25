@@ -164,6 +164,12 @@ const price = computed(() => {
 })
 
 /**
+ * 成功率归一到 0~1：后端 /api/perf-metrics/summary 返回的 success_rate
+ * 既有 0~1 小数也有百分制（100=100%），统一除回来，避免显示层二次乘 100。
+ */
+const successRate01 = (v: number) => (v > 1 ? v / 100 : v)
+
+/**
  * 性能指标展示值：延迟 ms→s（≥1000ms 换算），吞吐取整 + "t"，
  * 成功率前端按 0~1 小数乘 100 得百分数。无数据返回 null，卡片静默隐藏该块。
  */
@@ -177,13 +183,13 @@ const metricFmt = computed(() => {
   return {
     latency: `${latency}`,
     throughput: `${Math.round(m.avg_tps)}t`,
-    status: `${Math.round(m.success_rate * 100)}%`,
+    status: `${Math.round(successRate01(m.success_rate) * 100)}%`,
   }
 })
 
 /** 状态配色：按成功率 优/中/差 三档（命中任一即用） */
 const statusTone = computed(() => {
-  const rate = props.metric?.success_rate ?? 0
+  const rate = successRate01(props.metric?.success_rate ?? 0)
   if (rate >= 0.99) return 'text-[#16A34A] dark:text-[#4ADE80]'
   if (rate >= 0.95) return 'text-[#F59E0B] dark:text-[#FBBF24]'
   return 'text-[#DC2626] dark:text-[#F87171]'

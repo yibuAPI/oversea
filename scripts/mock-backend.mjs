@@ -11,7 +11,7 @@ createServer((req, res) => {
         success: true,
         message: '',
         data: {
-          system_name: 'OneStepAPI',
+          system_name: 'llmuni',
           logo: '',
           version: 'v0.9.9-mock',
           register_enabled: true,
