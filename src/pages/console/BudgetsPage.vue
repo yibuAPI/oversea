@@ -99,7 +99,8 @@ const errors = computed(() => {
   const e: Record<string, string> = {}
 
   const usd = Number(thresholdUsd.value)
-  if (!thresholdUsd.value.trim()) e.threshold = t('budgets.errThresholdEmpty')
+  // type="number" 的 v-model 会把值强转成 number，不能假设它是字符串
+  if (!thresholdUsd.value) e.threshold = t('budgets.errThresholdEmpty')
   else if (!Number.isFinite(usd) || usd <= 0) e.threshold = t('budgets.errThresholdGtZero')
 
   if (notifyType.value === 'webhook') {
