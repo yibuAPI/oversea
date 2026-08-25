@@ -121,12 +121,13 @@ const router = createRouter({
           component: () => import('@/pages/console/BillingPage.vue'),
           meta: { titleKey: 'console.nav.billing' },
         },
-        {
-          path: 'budgets',
-          name: 'console-budgets',
-          component: () => import('@/pages/console/BudgetsPage.vue'),
-          meta: { titleKey: 'console.nav.budgets' },
-        },
+        // 暂隐藏 /console/budgets，后续再开放
+        // {
+        //   path: 'budgets',
+        //   name: 'console-budgets',
+        //   component: () => import('@/pages/console/BudgetsPage.vue'),
+        //   meta: { titleKey: 'console.nav.budgets' },
+        // },
         {
           path: 'discount',
           name: 'console-discount',

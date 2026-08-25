@@ -21,7 +21,6 @@ import {
   FileText,
   PieChart,
   Receipt,
-  BellRing,
   BadgePercent,
   Activity,
   ScrollText,
@@ -69,7 +68,7 @@ const groups = computed(() => [
     items: [
       { to: '/console/cost', icon: PieChart, label: t('console.nav.cost') },
       { to: '/console/billing', icon: Receipt, label: t('console.nav.billing') },
-      { to: '/console/budgets', icon: BellRing, label: t('console.nav.budgets') },
+      // { to: '/console/budgets', icon: BellRing, label: t('console.nav.budgets') }, // 暂隐藏，后续再开放
       { to: '/console/discount', icon: BadgePercent, label: t('console.nav.discount') },
     ],
   },
