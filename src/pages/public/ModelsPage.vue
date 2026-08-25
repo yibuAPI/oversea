@@ -35,12 +35,8 @@ import {
   Search,
   Copy,
   Check,
-  Flame,
-  Gift,
   ChevronDown,
   ChevronUp,
-  ChevronLeft,
-  ChevronRight,
   ArrowRight,
   Boxes,
 } from 'lucide-vue-next'
@@ -153,45 +149,6 @@ function toggleBill(kind: BillKind) {
 const collapsed = ref<Record<string, boolean>>({})
 const toggleSection = (k: string) => (collapsed.value[k] = !collapsed.value[k])
 
-// ───────── 精选轮播 ─────────
-
-type FeatureTab = 'featured' | 'free'
-const featureTab = ref<FeatureTab>('featured')
-const carouselPage = ref(0)
-
-const freeModels = computed(() => models.value.filter((m) => comparablePrice(m) === 0))
-
-const featureSource = computed(() =>
-  featureTab.value === 'free' ? freeModels.value : models.value,
-)
-/** 每页 6 张（3 列 × 2 行），最多 3 页 */
-const carouselPages = computed(() => {
-  const src = featureSource.value.slice(0, 18)
-  const pages: PricingModel[][] = []
-  for (let i = 0; i < src.length; i += 6) pages.push(src.slice(i, i + 6))
-  return pages.length ? pages : [[]]
-})
-function switchTab(tab: FeatureTab) {
-  featureTab.value = tab
-  carouselPage.value = 0
-}
-
-/** 渐变方块两角的颜色：按厂商名哈希取，仅装饰 */
-const GRAD_COLORS = [
-  ['#3b82f6', '#ff5b22'],
-  ['#111827', '#f43f5e'],
-  ['#0ea5e9', '#8b5cf6'],
-  ['#059669', '#fbbf24'],
-  ['#7c3aed', '#22d3ee'],
-  ['#dc2626', '#3b82f6'],
-]
-function gradOf(name: string) {
-  let h = 0
-  for (const c of name) h = (h * 31 + c.charCodeAt(0)) | 0
-  const [a, b] = GRAD_COLORS[Math.abs(h) % GRAD_COLORS.length]
-  return `linear-gradient(135deg, ${a} 0%, rgb(255,255,255) 50%, ${b} 100%)`
-}
-
 const fmtPrice = (v: number) => `$${v < 1 ? +v.toFixed(3) : +v.toFixed(2)}`
 
 function priceLabel(m: PricingModel) {
@@ -263,137 +220,6 @@ async function copyName(name: string) {
                 :placeholder="t('public.models.searchBig')"
                 class="flex-1 bg-transparent text-sm font-medium leading-5 text-[#0A0A0A] outline-none placeholder:text-[#A3A3A3] dark:text-neutral-100 dark:placeholder:text-neutral-500"
               />
-            </div>
-          </div>
-        </div>
-
-        <!-- 精选区 -->
-        <div class="flex w-full flex-col gap-6">
-          <!-- tab 条 -->
-          <div
-            class="-mx-4 flex items-center gap-4 overflow-x-auto border-b border-[#DADDE3] px-4 [scrollbar-width:none] sm:mx-0 sm:gap-6 sm:px-0 dark:border-neutral-800"
-          >
-            <button
-              type="button"
-              class="flex h-14 shrink-0 items-center gap-2 whitespace-nowrap border-b-[3px] px-2 py-4 text-sm leading-6 transition-colors min-[390px]:text-base sm:gap-3"
-              :class="
-                featureTab === 'featured'
-                  ? 'border-[#000000] font-semibold text-[#0A0A0A] dark:border-white dark:text-neutral-50'
-                  : 'border-transparent font-medium text-[#737373] hover:text-[#0A0A0A] dark:text-neutral-400 dark:hover:text-neutral-100'
-              "
-              @click="switchTab('featured')"
-            >
-              <Flame class="size-4 shrink-0" />
-              {{ t('public.models.tabFeatured') }}
-            </button>
-            <button
-              v-if="freeModels.length"
-              type="button"
-              class="flex h-14 shrink-0 items-center gap-2 whitespace-nowrap border-b-[3px] px-2 py-4 text-sm leading-6 transition-colors min-[390px]:text-base sm:gap-3"
-              :class="
-                featureTab === 'free'
-                  ? 'border-[#000000] font-semibold text-[#0A0A0A] dark:border-white dark:text-neutral-50'
-                  : 'border-transparent font-medium text-[#737373] hover:text-[#0A0A0A] dark:text-neutral-400 dark:hover:text-neutral-100'
-              "
-              @click="switchTab('free')"
-            >
-              <Gift class="size-4 shrink-0" />
-              {{ t('public.models.tabFree') }}
-            </button>
-          </div>
-
-          <!-- 轮播：每页 3×2 -->
-          <div class="group/carousel relative">
-            <button
-              v-if="carouselPage > 0"
-              type="button"
-              class="absolute left-0 top-1/2 z-10 flex size-8 -translate-x-[calc(100%+10px)] -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E5E5] bg-white text-[#0A0A0A] shadow-sm transition hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-              :aria-label="t('public.models.prevModels')"
-              @click="carouselPage--"
-            >
-              <ChevronLeft class="size-4" />
-            </button>
-            <button
-              v-if="carouselPage < carouselPages.length - 1"
-              type="button"
-              class="absolute right-0 top-1/2 z-10 flex size-8 translate-x-[calc(100%+10px)] -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E5E5] bg-white text-[#0A0A0A] shadow-sm transition hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-              :aria-label="t('public.models.nextModels')"
-              @click="carouselPage++"
-            >
-              <ChevronRight class="size-4" />
-            </button>
-
-            <div class="overflow-hidden">
-              <div
-                class="flex transition-transform duration-300 ease-out"
-                :style="{ transform: `translateX(-${carouselPage * 100}%)` }"
-              >
-                <div
-                  v-for="(pageItems, pi) in carouselPages"
-                  :key="pi"
-                  class="grid w-full shrink-0 grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3"
-                >
-                  <div
-                    v-for="m in pageItems"
-                    :key="m.model_name"
-                    role="button"
-                    tabindex="0"
-                    class="flex h-24 min-w-0 overflow-hidden rounded-[10px] border border-[#E5E5E5] bg-white text-left transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
-                    @click="copyName(m.model_name)"
-                  >
-                    <!-- 渐变方块 + logo：logo 放白色圆角底板上（infron 同款），
-                         故图标恒用 light 版，不跟主题走 -->
-                    <div
-                      class="flex size-24 shrink-0 items-center justify-center overflow-hidden"
-                      :style="{ background: gradOf(vendorName(m.vendor_id)) }"
-                    >
-                      <div
-                        class="flex size-16 items-center justify-center overflow-hidden rounded-[18px] bg-white p-2.5 shadow-sm"
-                      >
-                        <BrandIcon
-                          :icon="iconOf(m)"
-                          :name="vendorName(m.vendor_id)"
-                          variant="light"
-                        />
-                      </div>
-                    </div>
-
-                    <div
-                      class="grid min-w-0 flex-1 content-center gap-1 px-4 pr-6"
-                      style="grid-template-rows: 28px 28px"
-                    >
-                      <div class="flex h-7 min-w-0 items-center gap-4">
-                        <span
-                          class="min-w-0 flex-1 truncate text-sm font-semibold leading-6 text-[#0A0A0A] dark:text-neutral-50"
-                        >
-                          {{ vendorName(m.vendor_id) }}: {{ m.model_name }}
-                        </span>
-                        <span
-                          v-if="tagsOf(m).length"
-                          class="inline-flex h-[22px] shrink-0 items-center rounded-[6px] bg-[#E5F3FF] px-2 text-xs font-medium capitalize leading-4 text-[#1687E8] dark:bg-[#0d2a45] dark:text-[#57b3ff]"
-                        >
-                          {{ tagsOf(m)[0] }}
-                        </span>
-                      </div>
-                      <div
-                        class="flex h-7 min-w-0 items-center gap-2 overflow-hidden text-xs leading-5 text-[#737373] dark:text-neutral-400"
-                      >
-                        <template v-if="priceLabel(m).kind === 'token'">
-                          <span class="truncate">
-                            {{ t('models.input') }} {{ priceLabel(m).input }} ·
-                            {{ t('models.output') }} {{ priceLabel(m).output }} /M
-                          </span>
-                        </template>
-                        <template v-else>
-                          <span class="truncate">
-                            {{ t('public.models.perCallShort') }} {{ priceLabel(m).input }}
-                          </span>
-                        </template>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
