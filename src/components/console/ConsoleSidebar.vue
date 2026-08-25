@@ -133,7 +133,7 @@ async function onSignOut() {
     <div class="px-3 pb-1">
       <RouterLink
         to="/console/billing"
-        class="group flex items-center gap-2 rounded-lg border border-border bg-bg-elevated px-3 py-2 transition-colors hover:border-border-strong"
+        class="motion-press group flex items-center gap-2 rounded-lg border border-border bg-bg-elevated px-3 py-2 hover:-translate-y-px hover:border-border-strong"
       >
         <span class="min-w-0 flex-1">
           <span class="block text-[11px] leading-tight text-fg-subtle">
@@ -165,7 +165,7 @@ async function onSignOut() {
           <li v-for="item in g.items" :key="item.to">
             <RouterLink
               :to="item.to"
-              class="flex items-center gap-2.5 rounded-lg px-2 py-[7px] text-[13.5px] transition-colors"
+              class="motion-press flex items-center gap-2.5 rounded-lg px-2 py-[7px] text-[13.5px]"
               :class="
                 isActive(item.to)
                   ? 'bg-bg-inset font-medium text-fg'
@@ -186,7 +186,7 @@ async function onSignOut() {
     <div ref="menuRef" class="relative shrink-0 border-t border-border p-3">
       <button
         type="button"
-        class="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-bg-muted"
+        class="motion-press flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-bg-muted"
         :aria-expanded="menuOpen"
         aria-haspopup="menu"
         @click="menuOpen = !menuOpen"
@@ -216,7 +216,7 @@ async function onSignOut() {
         <RouterLink
           to="/console/settings"
           role="menuitem"
-          class="flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+          class="motion-press flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
           @click="menuOpen = false; emit('navigate')"
         >
           <Settings class="size-4" />
@@ -225,7 +225,7 @@ async function onSignOut() {
         <RouterLink
           to="/console/billing"
           role="menuitem"
-          class="flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+          class="motion-press flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
           @click="menuOpen = false; emit('navigate')"
         >
           <CreditCard class="size-4" />
@@ -234,7 +234,7 @@ async function onSignOut() {
         <RouterLink
           to="/console/docs"
           role="menuitem"
-          class="flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+          class="motion-press flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
           @click="menuOpen = false; emit('navigate')"
         >
           <LifeBuoy class="size-4" />
@@ -244,7 +244,7 @@ async function onSignOut() {
         <button
           type="button"
           role="menuitem"
-          class="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+          class="motion-press flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
           @click="onSignOut"
         >
           <LogOut class="size-4" />

@@ -65,7 +65,7 @@ function rankDelta(m: { rank: number; previous_rank?: number }) {
       <p class="text-[14px] text-danger-fg">{{ rankQ.error.value.message }}</p>
       <button
         type="button"
-        class="mt-4 rounded-full border border-border px-4 py-2 text-[13px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+        class="motion-press mt-4 rounded-full border border-border px-4 py-2 text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
         @click="rankQ.refetch()"
       >
         {{ t('common.retry') }}

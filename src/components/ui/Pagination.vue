@@ -29,7 +29,7 @@ const to = computed(() => Math.min(props.page * props.pageSize, props.total))
     <div class="flex items-center gap-1">
       <button
         type="button"
-        class="flex size-8 items-center justify-center rounded-md border border-border transition-colors hover:bg-bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
+        class="motion-press flex size-8 items-center justify-center rounded-md border border-border hover:bg-bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
         :disabled="page <= 1"
         aria-label="上一页"
         @click="emit('update:page', page - 1)"
@@ -39,7 +39,7 @@ const to = computed(() => Math.min(props.page * props.pageSize, props.total))
       <span class="px-2 tabular">{{ page }} / {{ pageCount }}</span>
       <button
         type="button"
-        class="flex size-8 items-center justify-center rounded-md border border-border transition-colors hover:bg-bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
+        class="motion-press flex size-8 items-center justify-center rounded-md border border-border hover:bg-bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
         :disabled="page >= pageCount"
         aria-label="下一页"
         @click="emit('update:page', page + 1)"

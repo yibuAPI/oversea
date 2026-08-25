@@ -144,7 +144,7 @@ async function onSubmit() {
     <!-- 右上角语言切换：海外站，每个页面都必须能切语言 -->
     <button
       type="button"
-      class="absolute right-6 top-6 z-10 rounded-full p-2 text-[#8a8a8a] transition-colors hover:bg-white/10 hover:text-[#f2f2f2] sm:right-10"
+      class="motion-press absolute right-6 top-6 z-10 rounded-full p-2 text-[#8a8a8a] hover:bg-white/10 hover:text-[#f2f2f2] sm:right-10"
       aria-label="Switch language"
       @click="toggleLocale"
     >
@@ -204,7 +204,7 @@ async function onSubmit() {
           <button
             type="submit"
             :disabled="submitting || !passwordLoginEnabled"
-            class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-[6px] bg-[#111a2e] text-[14px] font-semibold text-white transition-colors hover:bg-[#182541] disabled:cursor-not-allowed disabled:opacity-50"
+            class="motion-press inline-flex h-10 w-full items-center justify-center gap-2 rounded-[6px] bg-[#111a2e] text-[14px] font-semibold text-white hover:-translate-y-px hover:bg-[#182541] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <LoaderCircle v-if="submitting" class="size-4 animate-spin" />
             {{ t('auth.signIn') }}
@@ -235,7 +235,7 @@ async function onSubmit() {
               v-for="p in providers"
               :key="p"
               :href="oauthUrl(p)"
-              class="relative flex h-10 w-full items-center justify-center gap-2.5 rounded-[6px] border border-[#2e2e2e] px-3 text-[14px] font-medium text-[#f2f2f2] transition-colors hover:border-[#5a5a5a] hover:bg-[#141414]"
+              class="motion-press relative flex h-10 w-full items-center justify-center gap-2.5 rounded-[6px] border border-[#2e2e2e] px-3 text-[14px] font-medium text-[#f2f2f2] hover:border-[#5a5a5a] hover:bg-[#141414]"
               @click="remember(p)"
             >
               <ProviderIcon :name="p" />

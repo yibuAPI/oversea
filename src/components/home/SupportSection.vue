@@ -62,7 +62,7 @@ function bullets(): string[] {
         <article
           v-for="c in cards"
           :key="c"
-          class="rounded-[24px] bg-bg-elevated p-6"
+          class="motion-lift rounded-[24px] bg-bg-elevated p-6 hover:shadow-lg"
         >
           <h3 class="text-[20px] font-semibold leading-6">
             {{ t(`home.support.card.${c}.title`) }}

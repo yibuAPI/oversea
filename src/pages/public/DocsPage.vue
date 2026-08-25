@@ -318,7 +318,7 @@ const mobileNav = ref(false)
               <li v-for="k in g.items" :key="k">
                 <button
                   type="button"
-                  class="flex w-full items-center gap-2 rounded-lg px-3 py-[7px] text-left text-[13.5px] transition-colors"
+                  class="motion-press flex w-full items-center gap-2 rounded-lg px-3 py-[7px] text-left text-[13.5px]"
                   :class="
                     pageKey === k
                       ? 'bg-accent-bg font-medium text-accent'
@@ -348,7 +348,7 @@ const mobileNav = ref(false)
                   <li v-for="c in docs.pages[k].children" :key="c">
                     <button
                       type="button"
-                      class="w-full rounded-lg px-3 py-[6px] text-left text-[13px] transition-colors"
+                      class="motion-press w-full rounded-lg px-3 py-[6px] text-left text-[13px]"
                       :class="
                         pageKey === c
                           ? 'bg-accent-bg font-medium text-accent'
@@ -404,7 +404,7 @@ const mobileNav = ref(false)
           </nav>
           <button
             type="button"
-            class="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-[12.5px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+            class="motion-press ml-auto inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-[12.5px] text-fg-muted hover:bg-bg-muted hover:text-fg"
             @click="copyPage"
           >
             <Check v-if="copied === 'page'" class="size-3.5 text-success-fg" />

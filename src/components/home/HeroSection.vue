@@ -71,7 +71,7 @@ const { t } = useI18n()
           <div class="mt-[70px] flex flex-wrap items-center gap-3">
             <RouterLink
               to="/console"
-              class="group inline-flex h-10 items-center gap-2.5 rounded-[20px] bg-btn-primary-bg py-2 pl-[18px] pr-2 text-[16px] font-normal text-btn-primary-fg transition-opacity hover:opacity-88"
+              class="motion-press group inline-flex h-10 items-center gap-2.5 rounded-[20px] bg-btn-primary-bg py-2 pl-[18px] pr-2 text-[16px] font-normal text-btn-primary-fg hover:-translate-y-px hover:opacity-88"
             >
               {{ t('home.hero.primaryCta') }}
               <span
@@ -83,7 +83,7 @@ const { t } = useI18n()
 
             <RouterLink
               to="/models"
-              class="inline-flex h-10 items-center rounded-[100px] border border-border-strong px-[18px] py-2 text-[16px] font-normal transition-colors hover:bg-bg-muted"
+              class="motion-press inline-flex h-10 items-center rounded-[100px] border border-border-strong px-[18px] py-2 text-[16px] font-normal hover:bg-bg-muted"
             >
               {{ t('home.hero.secondaryCta') }}
             </RouterLink>

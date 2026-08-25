@@ -194,7 +194,7 @@ const promos = [
         <li v-for="(s, i) in steps" :key="i">
           <RouterLink
             :to="s.to"
-            class="group flex items-center gap-3.5 px-5 py-3.5 transition-colors hover:bg-bg-subtle"
+            class="motion-press group flex items-center gap-3.5 px-5 py-3.5 hover:bg-bg-subtle"
           >
             <span
               class="flex size-8 shrink-0 items-center justify-center rounded-lg border transition-colors"

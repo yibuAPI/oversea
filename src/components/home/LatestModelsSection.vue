@@ -73,7 +73,7 @@ function perCall(v?: number | null): string {
         <li
           v-for="m in shown"
           :key="m.id"
-          class="flex flex-col rounded-[24px] border border-border bg-bg-elevated p-6"
+          class="motion-lift flex flex-col rounded-[24px] border border-border bg-bg-elevated p-6 hover:shadow-lg"
         >
           <p
             v-if="m.vendor"
@@ -138,7 +138,7 @@ function perCall(v?: number | null): string {
       <div class="mt-12 flex justify-center">
         <RouterLink
           to="/models"
-          class="group inline-flex h-10 items-center gap-2 rounded-[100px] border border-border-strong px-[18px] text-[14px] tracking-[-0.14px] transition-colors hover:bg-bg-muted"
+          class="motion-press group inline-flex h-10 items-center gap-2 rounded-[100px] border border-border-strong px-[18px] text-[14px] tracking-[-0.14px] hover:bg-bg-muted"
         >
           {{ t('home.latest.cta') }}
           <ArrowRight class="size-3.5 transition-transform group-hover:translate-x-0.5" />

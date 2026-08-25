@@ -80,7 +80,7 @@ watch(drawerOpen, (open) => {
       >
         <button
           type="button"
-          class="-ml-1 flex size-9 items-center justify-center rounded-lg text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg lg:hidden"
+          class="motion-press -ml-1 flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg lg:hidden"
           :aria-label="t('nav.menu')"
           @click="drawerOpen = true"
         >
@@ -97,7 +97,7 @@ watch(drawerOpen, (open) => {
 
         <button
           type="button"
-          class="ml-auto flex size-9 items-center justify-center rounded-lg text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+          class="motion-press ml-auto flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg"
           aria-label="Switch language"
           @click="toggleLocale"
         >
@@ -105,7 +105,7 @@ watch(drawerOpen, (open) => {
         </button>
         <button
           type="button"
-          class="flex size-9 items-center justify-center rounded-lg text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+          class="motion-press flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg"
           :aria-label="t('theme.toggle')"
           @click="theme.toggle()"
         >

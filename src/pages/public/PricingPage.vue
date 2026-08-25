@@ -422,7 +422,7 @@ onUnmounted(() => observer?.disconnect())
         <p class="mt-2 text-[14px] text-fg-muted">{{ t('public.pricing.ctaDesc') }}</p>
         <RouterLink
           to="/console"
-          class="group mt-6 inline-flex h-10 items-center gap-2.5 rounded-[20px] bg-btn-primary-bg py-2 pl-[18px] pr-2 text-[14px] text-btn-primary-fg transition-opacity hover:opacity-88"
+          class="motion-press group mt-6 inline-flex h-10 items-center gap-2.5 rounded-[20px] bg-btn-primary-bg py-2 pl-[18px] pr-2 text-[14px] text-btn-primary-fg hover:-translate-y-px hover:opacity-88"
         >
           {{ t('home.hero.primaryCta') }}
           <span

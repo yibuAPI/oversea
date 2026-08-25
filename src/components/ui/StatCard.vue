@@ -18,7 +18,9 @@ defineProps<{
 </script>
 
 <template>
-  <div class="rounded-xl border border-border bg-bg-elevated p-4">
+  <div
+    class="motion-lift rounded-xl border border-border bg-bg-elevated p-4 hover:shadow-lg"
+  >
     <div class="flex items-start justify-between gap-2">
       <p class="text-[12.5px] text-fg-muted">{{ label }}</p>
       <component

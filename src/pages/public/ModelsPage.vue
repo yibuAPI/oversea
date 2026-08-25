@@ -279,7 +279,7 @@ async function copyName(name: string) {
               <button
                 role="tab"
                 :aria-selected="category === 'all'"
-                class="h-9 shrink-0 rounded-[6px] px-3 text-sm font-medium leading-5 transition-colors"
+                class="motion-press h-9 shrink-0 rounded-[6px] px-3 text-sm font-medium leading-5"
                 :class="
                   category === 'all'
                     ? 'bg-white text-[#0A0A0A] shadow-[0px_1px_4px_rgba(0,0,0,0.12)] dark:bg-neutral-800 dark:text-neutral-50'
@@ -294,7 +294,7 @@ async function copyName(name: string) {
                 :key="c"
                 role="tab"
                 :aria-selected="category === c"
-                class="h-9 shrink-0 rounded-[6px] px-3 text-sm font-medium leading-5 transition-colors"
+                class="motion-press h-9 shrink-0 rounded-[6px] px-3 text-sm font-medium leading-5"
                 :class="
                   category === c
                     ? 'bg-white text-[#0A0A0A] shadow-[0px_1px_4px_rgba(0,0,0,0.12)] dark:bg-neutral-800 dark:text-neutral-50'
@@ -323,7 +323,7 @@ async function copyName(name: string) {
                 <div class="border-t border-[#E5E5E5] pt-4 dark:border-neutral-800">
                   <button
                     type="button"
-                    class="flex w-full items-center justify-between pb-3"
+                    class="motion-press flex w-full items-center justify-between pb-3"
                     @click="toggleSection('vendor')"
                   >
                     <span class="text-sm font-semibold text-[#0A0A0A] dark:text-neutral-50">
@@ -337,7 +337,7 @@ async function copyName(name: string) {
                   <ul v-if="!collapsed.vendor" class="flex flex-col gap-1 pb-1">
                     <li v-for="v in vendors" :key="v.id">
                       <label
-                        class="flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
+                        class="motion-press flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
                       >
                         <input
                           type="checkbox"
@@ -364,7 +364,7 @@ async function copyName(name: string) {
                 <div class="mt-5 border-t border-[#E5E5E5] pt-4 dark:border-neutral-800">
                   <button
                     type="button"
-                    class="flex w-full items-center justify-between pb-3"
+                    class="motion-press flex w-full items-center justify-between pb-3"
                     @click="toggleSection('billing')"
                   >
                     <span class="text-sm font-semibold text-[#0A0A0A] dark:text-neutral-50">
@@ -378,7 +378,7 @@ async function copyName(name: string) {
                   <ul v-if="!collapsed.billing" class="flex flex-col gap-1 pb-1">
                     <li>
                       <label
-                        class="flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
+                        class="motion-press flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
                       >
                         <input
                           type="checkbox"
@@ -396,7 +396,7 @@ async function copyName(name: string) {
                     </li>
                     <li>
                       <label
-                        class="flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
+                        class="motion-press flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
                       >
                         <input
                           type="checkbox"
@@ -437,7 +437,7 @@ async function copyName(name: string) {
                 <div class="mt-5 border-t border-[#E5E5E5] pt-4 dark:border-neutral-800">
                   <button
                     type="button"
-                    class="flex w-full items-center justify-between pb-3"
+                    class="motion-press flex w-full items-center justify-between pb-3"
                     @click="toggleSection('group')"
                   >
                     <span class="text-sm font-semibold text-[#0A0A0A] dark:text-neutral-50">
@@ -451,7 +451,7 @@ async function copyName(name: string) {
                   <ul v-if="!collapsed.group" class="flex flex-col gap-1 pb-1">
                     <li v-for="g in groups" :key="g.key">
                       <label
-                        class="flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
+                        class="motion-press flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
                       >
                         <input
                           type="checkbox"
@@ -562,7 +562,7 @@ async function copyName(name: string) {
                 <p class="text-sm text-danger-fg">{{ pricingQ.error.value.message }}</p>
                 <button
                   type="button"
-                  class="mt-4 rounded-[8px] border border-[#D4D4D4] px-4 py-2 text-sm text-[#525252] transition-colors hover:bg-[#F5F5F5] dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-900"
+                  class="motion-press mt-4 rounded-[8px] border border-[#D4D4D4] px-4 py-2 text-sm text-[#525252] hover:bg-[#F5F5F5] dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-900"
                   @click="pricingQ.refetch()"
                 >
                   {{ t('common.retry') }}
