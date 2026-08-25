@@ -130,12 +130,14 @@ function toggleLocale() {
           </button>
 
           <!-- 主 CTA：黑底药丸，radius 20px —— 指向 /about 后台 about 富文本逻辑 -->
+          <!-- 「联系我们」入口暂隐藏，路由 /about 保留，需要时放开下面这一注释即可。
           <RouterLink
             to="/about"
             class="motion-press hidden h-10 items-center rounded-[20px] bg-btn-primary-bg px-[18px] text-[16px] font-normal text-btn-primary-fg hover:opacity-88 sm:inline-flex"
           >
             {{ t('home.nav.cta') }}
           </RouterLink>
+          -->
 
           <!-- 次 CTA：描边药丸，radius 100px -->
           <RouterLink
