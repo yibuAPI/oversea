@@ -186,7 +186,7 @@ export default {
       cost: '消费明细',
       billing: '账单与充值',
       budgets: '预算与提醒',
-      discount: '优惠',
+      discount: '分组优惠',
       groupAnalysis: '数据分析',
       usage: '用量与活动',
       logs: '日志',
@@ -597,7 +597,7 @@ export default {
     fixErrors: '请先修正上方标红的字段',
   },
   discount: {
-    title: '优惠',
+    title: '分组优惠',
     subtitle: '充值折扣、分组倍率与邀请返利',
     topupTitle: '充值折扣',
     topupDesc: '充值以下指定金额即可享受折扣。注意：折扣按金额精确匹配，只有恰好充值该面额才生效。',

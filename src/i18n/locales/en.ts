@@ -187,7 +187,7 @@ export default {
       cost: 'Cost Breakdown',
       billing: 'Billing',
       budgets: 'Budgets & Alerts',
-      discount: 'Discount',
+      discount: 'Group Discount',
       groupAnalysis: 'Analysis',
       usage: 'Usage & Activity',
       logs: 'Logs',
@@ -598,7 +598,7 @@ export default {
     fixErrors: 'Fix the highlighted fields first',
   },
   discount: {
-    title: 'Discount',
+    title: 'Group Discount',
     subtitle: 'Top-up discounts, group rates and referrals',
     topupTitle: 'Top-up discounts',
     topupDesc: 'Top up exactly one of the amounts below to get the discount. Matching is exact — any other amount pays full price.',
