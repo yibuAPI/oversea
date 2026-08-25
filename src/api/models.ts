@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { PricingResponse, UserGroup } from './types'
+import type { PricingResponse, SummaryAllResult, UserGroup } from './types'
 
 /**
  * 模型库与定价。
@@ -12,6 +12,10 @@ export const getPricing = () => api.flat<PricingResponse>('/pricing')
 /** 当前用户可用的模型名列表；传 group 则只看该分组 */
 export const getMyModels = (group?: string) =>
   api.get<string[]>('/user/models', { params: group ? { group } : undefined })
+
+/** 所有模型的性能指标汇总：延迟 / 成功率 / 吞吐（公开，未登录也可访问） */
+export const getPerfMetricsSummary = () =>
+  api.get<SummaryAllResult>('/perf-metrics/summary')
 
 /** 分组倍率与说明。auto 分组的 ratio 是字符串「自动」 */
 export const getMyGroups = () => api.get<Record<string, UserGroup>>('/user/self/groups')

@@ -9,7 +9,7 @@
  *
  * 列宽交给调用方通过 col.class 控制，这里不猜。
  */
-export interface Column<T> {
+export interface Column {
   key: string
   label: string
   /** th/td 都会带上，用来控制宽度与对齐 */
@@ -19,7 +19,7 @@ export interface Column<T> {
 }
 
 const props = defineProps<{
-  columns: Column<T>[]
+  columns: Column[]
   rows: T[]
   rowKey: (row: T) => string | number
   loading?: boolean
@@ -30,7 +30,7 @@ const props = defineProps<{
 defineEmits<{ retry: [] }>()
 
 defineSlots<{
-  cell(props: { row: T; column: Column<T> }): unknown
+  cell(props: { row: T; column: Column }): unknown
   empty(): unknown
 }>()
 </script>

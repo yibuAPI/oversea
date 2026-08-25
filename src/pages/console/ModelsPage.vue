@@ -7,6 +7,7 @@
  * 价格换算：
  *   按量模型 quota_type=0 -> 倍率 × 分组倍率 × $2/M tokens
  *   按次模型 quota_type=1 -> model_price 就是每次调用的美元数
+ *   动态计费 billing_mode=tiered_expr（或 quota_type=2）-> 无固定单价，统一展示「动态计费」
  * 分组倍率跟着用户当前选中的分组变 —— 同一个模型在不同分组价格不同，
  * 这点不能糊，否则用户按页面报价做预算会算错。
  */
@@ -108,7 +109,8 @@ const vendorCounts = computed(() => {
   return m
 })
 
-/** 价格展示。按次计费的单位是「每次」，不能和 /M tokens 混排 */
+/** 价格展示。按次计费的单位是「每次」，不能和 /M tokens 混排。
+ *  动态计费（billing_mode=tiered_expr）与 quota_type=2 一样无固定单价，均按阶梯桶展示。 */
 function priceLabel(m: PricingModel) {
   if (m.quota_type === 1) {
     return {
@@ -116,6 +118,9 @@ function priceLabel(m: PricingModel) {
       input: `$${m.model_price.toFixed(m.model_price < 0.01 ? 5 : 3)}`,
       output: null,
     }
+  }
+  if (m.billing_mode === 'tiered_expr' || m.quota_type === 2) {
+    return { kind: 'tiered' as const, input: null, output: null }
   }
   const inp = inputPrice(m.model_ratio, activeRatio.value)
   const out = outputPrice(m.model_ratio, m.completion_ratio, activeRatio.value)
@@ -307,13 +312,18 @@ async function copyName(name: string) {
                 <p class="text-[13px] font-medium tabular">{{ priceLabel(m).output }}</p>
               </div>
             </template>
-            <template v-else>
+            <template v-else-if="priceLabel(m).kind === 'call'">
               <div>
                 <p class="text-[10.5px] uppercase tracking-wide text-fg-subtle">
                   {{ t('models.perCall') }}
                 </p>
                 <p class="text-[13px] font-medium tabular">{{ priceLabel(m).input }}</p>
               </div>
+            </template>
+            <template v-else>
+              <p class="text-[11px] leading-relaxed text-fg-subtle">
+                {{ t('models.priceTiered') }}
+              </p>
             </template>
           </div>
           <p

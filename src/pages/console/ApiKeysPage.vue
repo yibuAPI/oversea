@@ -58,7 +58,7 @@ const modelsQ = useQuery({ queryKey: ['my-models'], queryFn: () => getMyModels()
 
 const rows = computed(() => tokensQ.data.value?.items ?? [])
 
-const columns: Column<ApiToken>[] = [
+const columns: Column[] = [
   { key: 'name', label: t('keys.colName') },
   { key: 'key', label: t('keys.colKey'), class: 'w-[210px]' },
   { key: 'status', label: t('keys.colStatus'), class: 'w-[100px]' },

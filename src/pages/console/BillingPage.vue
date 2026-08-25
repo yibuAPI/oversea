@@ -38,7 +38,6 @@ import {
   payUsdt,
   redeemCode,
 } from '@/api/billing'
-import type { TopUpRecord } from '@/api/types'
 import { formatDateTime, formatQuota, formatUsd } from '@/lib/format'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import StatCard from '@/components/ui/StatCard.vue'
@@ -244,7 +243,7 @@ const redeemMut = useMutation({
 
 // ───────────────── 流水表 ─────────────────
 
-const columns = computed<Column<TopUpRecord>[]>(() => [
+const columns = computed<Column[]>(() => [
   { key: 'create_time', label: t('billing.colTime'), class: 'w-[150px]' },
   { key: 'trade_no', label: t('billing.colOrder') },
   { key: 'payment_method', label: t('billing.colMethod'), class: 'w-[110px]' },

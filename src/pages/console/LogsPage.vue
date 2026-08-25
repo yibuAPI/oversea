@@ -16,7 +16,7 @@ import { useQuery } from '@tanstack/vue-query'
 import { Search, ScrollText, ChevronDown } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
 import { listLogs, listTasks, listMidjourney } from '@/api/usage'
-import { LOG_TYPE, type LogEntry } from '@/api/types'
+import { LOG_TYPE } from '@/api/types'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import DataTable, { type Column } from '@/components/ui/DataTable.vue'
 import Pagination from '@/components/ui/Pagination.vue'
@@ -25,7 +25,6 @@ import {
   formatCompact,
   formatDateTime,
   formatDuration,
-  formatInt,
   formatQuota,
 } from '@/lib/format'
 
@@ -145,7 +144,7 @@ const TYPE_META: Record<number, string> = {
   [LOG_TYPE.LOGIN]: 'border-info-border bg-info-bg text-info-fg',
 }
 
-const logColumns = computed<Column<LogEntry>[]>(() => [
+const logColumns = computed<Column[]>(() => [
   { key: 'created_at', label: t('logs.colTime'), class: 'w-[150px]' },
   { key: 'type', label: t('logs.colType'), class: 'w-[80px]' },
   { key: 'model_name', label: t('logs.colModel') },
@@ -445,7 +444,7 @@ function parseOther(raw: string): Record<string, unknown> | null {
           <template v-else-if="column.key === 'quota'">
             {{ row.quota ? formatQuota(row.quota, quotaPerUnit) : '—' }}
           </template>
-          <template v-else>{{ row[column.key] || '—' }}</template>
+          <template v-else>{{ (row as unknown as Record<string, unknown>)[column.key] || '—' }}</template>
         </template>
       </DataTable>
     </template>

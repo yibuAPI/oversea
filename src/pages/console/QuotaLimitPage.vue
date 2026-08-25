@@ -74,7 +74,7 @@ const overAllocated = computed(
   () => unlimitedCount.value === 0 && allocated.value > accountQuota.value,
 )
 
-const columns = computed<Column<ApiToken>[]>(() => [
+const columns = computed<Column[]>(() => [
   { key: 'name', label: t('limits.colKey') },
   { key: 'status', label: t('limits.colStatus'), class: 'w-[90px]' },
   { key: 'limit', label: t('limits.colLimit'), class: 'w-[150px]', numeric: true },

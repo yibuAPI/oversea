@@ -30,27 +30,36 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuery } from '@tanstack/vue-query'
-import { RouterLink } from 'vue-router'
-import {
-  Search,
-  Copy,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  ArrowRight,
-  Boxes,
-} from 'lucide-vue-next'
-import { getPricing, inputPrice, outputPrice } from '@/api/models'
-import type { PricingModel } from '@/api/types'
-import BrandIcon from '@/components/common/BrandIcon.vue'
+import { Search, ChevronDown, ChevronUp, Boxes, LayoutGrid, List } from 'lucide-vue-next'
+import { getPricing, inputPrice, getPerfMetricsSummary } from '@/api/models'
+import type { ModelSummary, PricingModel } from '@/api/types'
+import ModelCard from '@/components/common/ModelCard.vue'
+
+/** 网格/列表视图：默认网格，记忆到 localStorage，切换无需经过父级状态 */
+type ViewMode = 'grid' | 'list'
+const view = ref<ViewMode>(
+  (localStorage.getItem('onestep-models-view') as ViewMode) === 'list' ? 'list' : 'grid',
+)
+function setView(v: ViewMode) {
+  view.value = v
+  localStorage.setItem('onestep-models-view', v)
+}
 
 const { t } = useI18n()
 
 const pricingQ = useQuery({ queryKey: ['pricing'], queryFn: getPricing })
 
+/** 性能指标汇总：model_name → 指标。拿不到数据时保持空 map，卡片静默隐藏指标块 */
+const perfQ = useQuery({ queryKey: ['perf-metrics', 'summary'], queryFn: getPerfMetricsSummary })
+const perfMap = computed<Record<string, ModelSummary>>(() => {
+  const out: Record<string, ModelSummary> = {}
+  for (const m of perfQ.data.value?.models ?? []) out[m.model_name] = m
+  return out
+})
+
 const search = ref('')
 const vendorSel = ref<Set<number>>(new Set())
-type BillKind = 'token' | 'call'
+type BillKind = 'token' | 'call' | 'tiered'
 const billSel = ref<Set<BillKind>>(new Set())
 const groupSel = ref<Set<string>>(new Set())
 type SortKey = 'name' | 'priceAsc' | 'priceDesc'
@@ -77,7 +86,8 @@ const tagsOf = (m: PricingModel) =>
   (m.tags ?? '').split(',').map((s) => s.trim()).filter(Boolean)
 
 function comparablePrice(m: PricingModel): number {
-  if (m.quota_type === 1) return m.model_price
+  if (billingKind(m) === 'call') return m.model_price
+  if (billingKind(m) === 'tiered') return Number.POSITIVE_INFINITY // 阶梯计费没有固定单价，价格排序放最后
   return inputPrice(m.model_ratio, groupRatio.value)
 }
 
@@ -105,7 +115,7 @@ const filtered = computed(() => {
   const list = models.value.filter((m) => {
     if (vendorSel.value.size && !vendorSel.value.has(m.vendor_id ?? 0)) return false
     if (billSel.value.size) {
-      const kind: BillKind = m.quota_type === 1 ? 'call' : 'token'
+      const kind = billingKind(m)
       if (!billSel.value.has(kind)) return false
     }
     if (groupSel.value.size) {
@@ -142,8 +152,14 @@ const vendorCounts = computed(() => {
 const billCounts = computed(() => {
   let token = 0
   let call = 0
-  for (const m of models.value) (m.quota_type === 1 ? call++ : token++)
-  return { token, call }
+  let tiered = 0
+  for (const m of models.value) {
+    const k = billingKind(m)
+    if (k === 'call') call++
+    else if (k === 'tiered') tiered++
+    else token++
+  }
+  return { token, call, tiered }
 })
 
 function toggleVendor(id: number) {
@@ -178,26 +194,18 @@ function toggleGroup(key: string) {
 const collapsed = ref<Record<string, boolean>>({})
 const toggleSection = (k: string) => (collapsed.value[k] = !collapsed.value[k])
 
-const fmtPrice = (v: number) => `$${v < 1 ? +v.toFixed(3) : +v.toFixed(2)}`
-
-function priceLabel(m: PricingModel) {
-  if (m.quota_type === 1) {
-    return {
-      kind: 'call' as const,
-      input: `$${m.model_price.toFixed(m.model_price < 0.01 ? 5 : 3)}`,
-      output: null as string | null,
-    }
-  }
-  return {
-    kind: 'token' as const,
-    input: fmtPrice(inputPrice(m.model_ratio, groupRatio.value)),
-    output: fmtPrice(outputPrice(m.model_ratio, m.completion_ratio, groupRatio.value)),
-  }
-}
-
-/** 可用分组数：enable_groups 是真实的后端字段，不编数字 */
-const groupCount = (m: PricingModel) =>
-  Array.isArray(m.enable_groups) ? m.enable_groups.length : 0
+/**
+ * 计价方式：动态计费（billing_mode="tiered_expr"，与 quota_type 并行、需优先读）→ 阶梯；
+ * 否则 0 按量 / 1 按次 / 2 阶梯。页面上筛选与排序都从这里取，避免到处对 1 特判。
+ */
+const billingKind = (m: PricingModel): BillKind =>
+  m.billing_mode === 'tiered_expr'
+    ? 'tiered'
+    : m.quota_type === 1
+      ? 'call'
+      : m.quota_type === 2
+        ? 'tiered'
+        : 'token'
 
 const copied = ref<string | null>(null)
 async function copyName(name: string) {
@@ -404,6 +412,24 @@ async function copyName(name: string) {
                         </span>
                       </label>
                     </li>
+                    <li>
+                      <label
+                        class="flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
+                      >
+                        <input
+                          type="checkbox"
+                          :checked="billSel.has('tiered')"
+                          class="size-4 shrink-0 accent-[#0A0A0A] dark:accent-white"
+                          @change="toggleBill('tiered')"
+                        />
+                        <span class="flex-1 text-sm text-[#0A0A0A] dark:text-neutral-200">
+                          {{ t('home.latest.kindTiered') }}
+                        </span>
+                        <span class="text-right text-sm text-[#737373] dark:text-neutral-500">
+                          {{ billCounts.tiered }}
+                        </span>
+                      </label>
+                    </li>
                   </ul>
                 </div>
 
@@ -462,7 +488,46 @@ async function copyName(name: string) {
                   </span>
                 </div>
 
-                <div class="relative">
+                <div class="flex items-center gap-3">
+                  <!-- 网格 / 列表 视图切换 -->
+                  <div
+                    role="group"
+                    :aria-label="t('public.models.view')"
+                    class="inline-flex shrink-0 gap-1 rounded-[8px] bg-[#F5F5F5] p-1 dark:bg-neutral-900"
+                  >
+                    <button
+                      type="button"
+                      :aria-pressed="view === 'grid'"
+                      :title="t('public.models.viewGrid')"
+                      class="flex h-9 items-center gap-1.5 rounded-[6px] px-3 text-sm font-medium leading-5 transition-colors"
+                      :class="
+                        view === 'grid'
+                          ? 'bg-white text-[#0A0A0A] shadow-[0px_1px_4px_rgba(0,0,0,0.12)] dark:bg-neutral-800 dark:text-neutral-50'
+                          : 'text-[#525252] hover:text-[#0A0A0A] dark:text-neutral-400 dark:hover:text-neutral-100'
+                      "
+                      @click="setView('grid')"
+                    >
+                      <LayoutGrid class="size-4" />
+                      <span class="hidden sm:inline">{{ t('public.models.viewGrid') }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      :aria-pressed="view === 'list'"
+                      :title="t('public.models.viewList')"
+                      class="flex h-9 items-center gap-1.5 rounded-[6px] px-3 text-sm font-medium leading-5 transition-colors"
+                      :class="
+                        view === 'list'
+                          ? 'bg-white text-[#0A0A0A] shadow-[0px_1px_4px_rgba(0,0,0,0.12)] dark:bg-neutral-800 dark:text-neutral-50'
+                          : 'text-[#525252] hover:text-[#0A0A0A] dark:text-neutral-400 dark:hover:text-neutral-100'
+                      "
+                      @click="setView('list')"
+                    >
+                      <List class="size-4" />
+                      <span class="hidden sm:inline">{{ t('public.models.viewList') }}</span>
+                    </button>
+                  </div>
+
+                  <div class="relative">
                   <select
                     v-model="sortKey"
                     :aria-label="t('public.models.sort')"
@@ -479,7 +544,10 @@ async function copyName(name: string) {
               </div>
 
               <!-- 骨架 / 错误 / 空态 -->
-              <div v-if="pricingQ.isLoading.value" class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <div
+                v-if="pricingQ.isLoading.value"
+                class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3"
+              >
                 <div
                   v-for="i in 6"
                   :key="i"
@@ -514,163 +582,32 @@ async function copyName(name: string) {
                 </p>
               </div>
 
-              <!-- 模型卡网格 -->
-              <div v-else class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
-                <article
+              <!-- 模型卡（网格 / 列表） -->
+              <div
+                v-else
+                class="mt-6 grid grid-cols-1 gap-6"
+                :class="view === 'list' ? 'grid-cols-1' : 'lg:grid-cols-2 xl:grid-cols-3'"
+              >
+                <ModelCard
                   v-for="m in filtered"
                   :key="m.model_name"
-                  class="group relative isolate flex cursor-pointer flex-col rounded-[10px] border border-[#E5E5E5] bg-white transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-px hover:border-[#D4D4D4] hover:shadow-[0_6px_18px_rgba(15,23,42,0.06)] xl:min-h-[313px] dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-700"
-                >
-                  <!-- 悬停浮现的黑色 CTA -->
-                  <RouterLink
-                    to="/console"
-                    class="pointer-events-none absolute right-5 top-14 z-20 flex h-9 items-center gap-1.5 rounded-md bg-[#181818] px-4 text-sm font-semibold leading-5 text-white opacity-0 shadow-[0_3px_10px_rgba(0,0,0,0.16)] transition-[opacity,background-color] duration-200 hover:bg-black group-hover:pointer-events-auto group-hover:opacity-100 dark:bg-white dark:text-[#0A0A0A]"
-                  >
-                    {{ t('public.models.viewIt') }}
-                    <ArrowRight class="size-4" />
-                  </RouterLink>
-
-                  <div class="grid flex-1 gap-4 px-6 pb-4 pt-6" style="grid-template-rows: auto minmax(0, 1fr) auto">
-                    <div class="flex flex-col gap-2">
-                      <!-- 厂商行 -->
-                      <div class="flex min-h-6 w-fit max-w-full items-start gap-2 self-start">
-                        <span
-                          class="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-[4.5px] border border-[#EDEDED] bg-white p-0.5 dark:border-neutral-700"
-                        >
-                          <BrandIcon
-                            :icon="iconOf(m)"
-                            :name="vendorName(m.vendor_id)"
-                            variant="light"
-                          />
-                        </span>
-                        <span
-                          class="min-w-0 max-w-full whitespace-normal break-words text-sm font-normal leading-6 text-[#0A0A0A] dark:text-neutral-200"
-                        >
-                          {{ vendorName(m.vendor_id) }}
-                        </span>
-                      </div>
-
-                      <!-- 标题 + 悬停复制 -->
-                      <div class="flex min-w-0 items-center gap-1.5">
-                        <h3
-                          class="line-clamp-1 min-w-0 text-[20px] font-semibold leading-7 text-[#0A0A0A] dark:text-neutral-50"
-                          :title="m.model_name"
-                        >
-                          {{ m.model_name }}
-                        </h3>
-                        <button
-                          type="button"
-                          :aria-label="t('models.copyName')"
-                          class="pointer-events-none inline-flex size-5 shrink-0 items-center justify-center rounded text-[#8A8A8A] opacity-0 transition-[opacity,background-color,color] duration-200 hover:bg-[#F5F5F5] hover:text-[#0A0A0A] group-hover:pointer-events-auto group-hover:opacity-100 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
-                          @click.stop="copyName(m.model_name)"
-                        >
-                          <Check v-if="copied === m.model_name" class="size-4 text-success-fg" />
-                          <Copy v-else class="size-4" />
-                        </button>
-                      </div>
-
-                      <!-- 标签：首个彩色，其余灰底描边 -->
-                      <div
-                        v-if="tagsOf(m).length"
-                        class="flex max-h-[82px] flex-wrap items-start gap-1.5 overflow-hidden pt-1"
-                      >
-                        <span
-                          class="inline-flex h-[22px] items-center justify-center gap-1.5 rounded-md bg-[#E5F3FF] px-2 text-xs font-medium leading-4 text-[#1687E8] dark:bg-[#0d2a45] dark:text-[#57b3ff]"
-                        >
-                          {{ tagsOf(m)[0] }}
-                        </span>
-                        <span
-                          v-for="tag in tagsOf(m).slice(1, 5)"
-                          :key="tag"
-                          class="inline-flex h-[22px] items-center justify-center gap-1.5 rounded-md border border-[#EDEDED] bg-[#F5F5F5] px-2 text-xs font-medium leading-4 text-[#18181B] dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200"
-                        >
-                          {{ tag }}
-                        </span>
-                      </div>
-                    </div>
-
-                    <!-- 描述：3 行截断 -->
-                    <p
-                      v-if="m.description"
-                      class="line-clamp-3 min-h-0 overflow-hidden text-sm font-normal leading-5 text-[#737373] dark:text-neutral-400"
-                    >
-                      {{ m.description }}
-                    </p>
-                    <span v-else class="min-h-0" />
-
-                    <!-- 价格行 -->
-                    <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5">
-                      <template v-if="priceLabel(m).kind === 'token'">
-                        <div class="flex items-center gap-3">
-                          <span class="text-sm font-normal leading-4 text-[#181818] dark:text-neutral-300">
-                            {{ t('models.input') }}
-                          </span>
-                          <span class="whitespace-nowrap leading-5">
-                            <span class="text-sm font-semibold text-[#0A0A0A] dark:text-neutral-50">
-                              {{ priceLabel(m).input }}
-                            </span>
-                            <span class="text-xs font-normal text-[#9CA3AF]">
-                              /M Tokens
-                            </span>
-                          </span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                          <span class="text-sm font-normal leading-4 text-[#181818] dark:text-neutral-300">
-                            {{ t('models.output') }}
-                          </span>
-                          <span class="whitespace-nowrap leading-5">
-                            <span class="text-sm font-semibold text-[#0A0A0A] dark:text-neutral-50">
-                              {{ priceLabel(m).output }}
-                            </span>
-                            <span class="text-xs font-normal text-[#9CA3AF]">
-                              /M Tokens
-                            </span>
-                          </span>
-                        </div>
-                      </template>
-                      <template v-else>
-                        <div class="flex items-center gap-3">
-                          <span class="text-sm font-normal leading-4 text-[#181818] dark:text-neutral-300">
-                            {{ t('models.perCall') }}
-                          </span>
-                          <span class="whitespace-nowrap leading-5">
-                            <span class="text-sm font-semibold text-[#0A0A0A] dark:text-neutral-50">
-                              {{ priceLabel(m).input }}
-                            </span>
-                          </span>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
-
-                  <!-- 底栏 -->
-                  <div
-                    class="grid min-h-12 shrink-0 grid-cols-1 items-center gap-2 border-t border-[#EDEDED] px-6 py-3 sm:grid-cols-[minmax(120px,1fr)_auto] sm:gap-4 dark:border-neutral-800"
-                  >
-                    <span
-                      class="block min-w-0 truncate whitespace-nowrap text-xs font-normal leading-5 text-[#737373] dark:text-neutral-400"
-                    >
-                      {{
-                        m.quota_type === 1
-                          ? t('home.latest.kindCall')
-                          : t('home.latest.kindToken')
-                      }}
-                    </span>
-                    <span
-                      v-if="groupCount(m)"
-                      class="min-w-0 truncate text-xs font-normal leading-4 text-[#737373] sm:text-right dark:text-neutral-400"
-                    >
-                      {{ t('public.models.availableGroups', { n: groupCount(m) }) }}
-                    </span>
-                  </div>
-                </article>
+                  :model="m"
+                  :vendor-name="vendorName(m.vendor_id)"
+                  :icon="iconOf(m)"
+                  :group-ratio="groupRatio"
+                  :copied="copied === m.model_name"
+                  :layout="view"
+                  :metric="perfMap[m.model_name]"
+                  @copy="copyName"
+                />
               </div>
+            </div>
             </div>
           </div>
         </section>
       </div>
     </div>
-  </div>
+    </div>
 </template>
 
 <style scoped>

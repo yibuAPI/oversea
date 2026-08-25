@@ -370,7 +370,10 @@ export interface PricingModel {
   icon?: string
   tags?: string
   vendor_id?: number
-  /** 0 = 按量（倍率），1 = 按次（固定价） */
+  /**
+   * 计价方式：0 = 按量（倍率 × 分组倍率），1 = 按次（固定每次价），
+   * 2 = 阶梯计费（价格随调用量分级，前端不能按固定单价展示）。
+   */
   quota_type: number
   model_ratio: number
   model_price: number
@@ -380,6 +383,12 @@ export interface PricingModel {
   create_cache_ratio?: number
   enable_groups: string[]
   supported_endpoint_types?: string[]
+  /**
+   * 动态计费模式：后端用 billing_mode="tiered_expr" 标记按表达式/时段动态定价的模型。
+   * 与 quota_type 并行 —— 动态模型 quota_type 常为 0，前端必须优先判断它，否则会误标成按 token。
+   */
+  billing_mode?: string
+  billing_expr?: string
 }
 
 export interface Vendor {
@@ -405,6 +414,25 @@ export interface PricingResponse {
 export interface UserGroup {
   ratio: number | string
   desc: string
+}
+
+// ───────────────────── 模型性能指标（/api/perf-metrics） ─────────────────────
+
+/** 单个模型的聚合指标：延迟、成功率、吞吐。recent_success_rates 为近期逐桶成功率。 */
+export interface ModelSummary {
+  model_name: string
+  /** 平均延迟（毫秒） */
+  avg_latency_ms: number
+  /** 平均成功率 0~1 */
+  success_rate: number
+  /** 平均吞吐（token/秒） */
+  avg_tps: number
+  recent_success_rates?: number[]
+}
+
+/** GET /api/perf-metrics/summary 响应：{ success, data: { models } } */
+export interface SummaryAllResult {
+  models: ModelSummary[]
 }
 
 // ───────────────────────── 异步任务 ─────────────────────────
