@@ -776,6 +776,7 @@ export default {
       filter: '筛选',
       filterVendor: '厂商',
       filterBilling: '计费方式',
+      filterGroup: '分组',
       countTitle: '{n} 个模型',
       sort: '排序',
       sortName: '按名称',

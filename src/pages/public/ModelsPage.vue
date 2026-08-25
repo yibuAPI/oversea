@@ -52,6 +52,7 @@ const search = ref('')
 const vendorSel = ref<Set<number>>(new Set())
 type BillKind = 'token' | 'call'
 const billSel = ref<Set<BillKind>>(new Set())
+const groupSel = ref<Set<string>>(new Set())
 type SortKey = 'name' | 'priceAsc' | 'priceDesc'
 const sortKey = ref<SortKey>('name')
 const category = ref<string>('all')
@@ -90,6 +91,15 @@ const categories = computed(() => {
     .map(([tag]) => tag)
 })
 
+/** 可用分组列表：直接以分组键(key)作为短名显示，default 优先，其余按名称排 */
+const groups = computed(() => {
+  return [...new Set(models.value.flatMap((m) => m.enable_groups ?? []))]
+    .map((key) => ({ key, label: key }))
+    .sort((a, b) =>
+      a.key === 'default' ? -1 : b.key === 'default' ? 1 : a.label.localeCompare(b.label),
+    )
+})
+
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
   const list = models.value.filter((m) => {
@@ -97,6 +107,10 @@ const filtered = computed(() => {
     if (billSel.value.size) {
       const kind: BillKind = m.quota_type === 1 ? 'call' : 'token'
       if (!billSel.value.has(kind)) return false
+    }
+    if (groupSel.value.size) {
+      const gs = m.enable_groups ?? []
+      if (!gs.some((g) => groupSel.value.has(g))) return false
     }
     if (category.value !== 'all' && !tagsOf(m).includes(category.value)) return false
     if (!q) return true
@@ -143,6 +157,21 @@ function toggleBill(kind: BillKind) {
   if (next.has(kind)) next.delete(kind)
   else next.add(kind)
   billSel.value = next
+}
+
+const groupCounts = computed(() => {
+  const m = new Map<string, number>()
+  for (const x of models.value) {
+    for (const g of x.enable_groups ?? []) m.set(g, (m.get(g) ?? 0) + 1)
+  }
+  return m
+})
+
+function toggleGroup(key: string) {
+  const next = new Set(groupSel.value)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  groupSel.value = next
 }
 
 /** 侧栏分节折叠状态 */
@@ -372,6 +401,47 @@ async function copyName(name: string) {
                         </span>
                         <span class="text-right text-sm text-[#737373] dark:text-neutral-500">
                           {{ billCounts.call }}
+                        </span>
+                      </label>
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- 分组 -->
+                <div class="mt-5 border-t border-[#E5E5E5] pt-4 dark:border-neutral-800">
+                  <button
+                    type="button"
+                    class="flex w-full items-center justify-between pb-3"
+                    @click="toggleSection('group')"
+                  >
+                    <span class="text-sm font-semibold text-[#0A0A0A] dark:text-neutral-50">
+                      {{ t('public.models.filterGroup') }}
+                    </span>
+                    <component
+                      :is="collapsed.group ? ChevronDown : ChevronUp"
+                      class="size-4 text-[#737373]"
+                    />
+                  </button>
+                  <ul v-if="!collapsed.group" class="flex flex-col gap-1 pb-1">
+                    <li v-for="g in groups" :key="g.key">
+                      <label
+                        class="flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
+                      >
+                        <input
+                          type="checkbox"
+                          :checked="groupSel.has(g.key)"
+                          class="size-4 shrink-0 accent-[#0A0A0A] dark:accent-white"
+                          @change="toggleGroup(g.key)"
+                        />
+                        <span
+                          class="min-w-0 flex-1 truncate text-sm font-normal text-[#0A0A0A] dark:text-neutral-200"
+                        >
+                          {{ g.label }}
+                        </span>
+                        <span
+                          class="min-w-[18px] shrink-0 text-right text-sm font-normal leading-5 text-[#737373] dark:text-neutral-500"
+                        >
+                          {{ groupCounts.get(g.key) ?? 0 }}
                         </span>
                       </label>
                     </li>

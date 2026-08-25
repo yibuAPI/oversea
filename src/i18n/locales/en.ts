@@ -777,6 +777,7 @@ export default {
       filter: 'Filter',
       filterVendor: 'Providers',
       filterBilling: 'Billing',
+      filterGroup: 'Groups',
       countTitle: '{n} Models',
       sort: 'Sort',
       sortName: 'By name',
