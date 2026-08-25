@@ -19,12 +19,13 @@ const props = withDefaults(
 
 const cls = computed(() => {
   const base =
-    'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
+    'motion-press inline-flex items-center justify-center gap-1.5 rounded-lg font-medium disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
   const size =
     props.size === 'sm' ? 'h-8 px-2.5 text-[12.5px]' : 'h-9 px-3.5 text-[13px]'
   const variant = {
     /* infron 控制台的主按钮是深色底（暗色主题下为白底黑字），不是品牌蓝 */
-    primary: 'bg-btn-primary-bg text-btn-primary-fg hover:bg-btn-primary-hover',
+    primary:
+      'bg-btn-primary-bg text-btn-primary-fg hover:bg-btn-primary-hover hover:-translate-y-px',
     secondary: 'border border-border bg-bg text-fg hover:bg-bg-muted',
     ghost: 'text-fg-muted hover:bg-bg-muted hover:text-fg',
     danger: 'border border-danger-border bg-danger-bg text-danger-fg hover:bg-danger-bg/70',

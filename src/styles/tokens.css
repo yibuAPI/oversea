@@ -250,4 +250,7 @@
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
   --radius-2xl: var(--radius-2xl);
+  /* 自定义贝塞尔曲线，接入 Tailwind 的 ease-out 工具类。
+     字面量而非 var()，避免与 :root 里的 var(--ease-out) 成环。 */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }

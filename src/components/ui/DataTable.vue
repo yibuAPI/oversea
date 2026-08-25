@@ -36,7 +36,7 @@ defineSlots<{
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-xl border border-border bg-bg-elevated">
+  <div class="motion-lift overflow-hidden rounded-xl border border-border bg-bg-elevated hover:shadow-lg">
     <div class="overflow-x-auto">
       <table class="w-full border-collapse text-[13px]">
         <thead>

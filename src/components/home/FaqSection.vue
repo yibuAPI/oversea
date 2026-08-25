@@ -36,7 +36,7 @@ const items = ['models', 'billing', 'compat', 'limits', 'support'] as const
         <details
           v-for="key in items"
           :key="key"
-          class="group rounded-[10px] bg-bg-muted px-6"
+          class="group rounded-[10px] bg-bg-muted px-6 transition-transform duration-200 ease-out active:scale-[0.99]"
         >
           <summary
             class="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 text-[16px] font-normal leading-4 tracking-[-0.16px] marker:hidden"

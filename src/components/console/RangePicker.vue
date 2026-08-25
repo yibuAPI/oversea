@@ -81,7 +81,7 @@ watch([customStart, customEnd], applyCustom)
         v-for="p in PRESETS"
         :key="p.key"
         type="button"
-        class="h-8 px-2.5 text-[12.5px] transition-colors"
+        class="motion-press h-8 px-2.5 text-[12.5px]"
         :class="
           preset === p.key
             ? 'bg-bg-inset font-medium text-fg'
@@ -94,7 +94,7 @@ watch([customStart, customEnd], applyCustom)
       </button>
       <button
         type="button"
-        class="h-8 border-l border-border px-2.5 text-[12.5px] transition-colors"
+        class="motion-press h-8 border-l border-border px-2.5 text-[12.5px]"
         :class="
           preset === 'custom'
             ? 'bg-bg-inset font-medium text-fg'

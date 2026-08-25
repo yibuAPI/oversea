@@ -107,7 +107,7 @@ function toggleLocale() {
             v-for="item in navItems"
             :key="item.key"
             :to="item.to"
-            class="text-[16px] font-normal tracking-[-0.16px] text-fg transition-opacity hover:opacity-60"
+            class="motion-press text-[16px] font-normal tracking-[-0.16px] text-fg hover:opacity-60"
           >
             {{ t(`nav.${item.key}`) }}
           </RouterLink>
@@ -115,14 +115,14 @@ function toggleLocale() {
 
         <div class="ml-auto flex items-center gap-3 lg:ml-[60px]">
           <button
-            class="hidden rounded-full p-2 text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg sm:block"
+            class="motion-press hidden rounded-full p-2 text-fg-muted hover:bg-bg-muted hover:text-fg sm:block"
             :aria-label="t('theme.' + (isDark ? 'light' : 'dark'))"
             @click="theme.toggle()"
           >
             <component :is="isDark ? Sun : Moon" class="size-4.5" />
           </button>
           <button
-            class="hidden rounded-full p-2 text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg sm:block"
+            class="motion-press hidden rounded-full p-2 text-fg-muted hover:bg-bg-muted hover:text-fg sm:block"
             aria-label="Switch language"
             @click="toggleLocale"
           >
@@ -132,7 +132,7 @@ function toggleLocale() {
           <!-- 主 CTA：黑底药丸，radius 20px —— 指向 /about 后台 about 富文本逻辑 -->
           <RouterLink
             to="/about"
-            class="hidden h-10 items-center rounded-[20px] bg-btn-primary-bg px-[18px] text-[16px] font-normal text-btn-primary-fg transition-opacity hover:opacity-88 sm:inline-flex"
+            class="motion-press hidden h-10 items-center rounded-[20px] bg-btn-primary-bg px-[18px] text-[16px] font-normal text-btn-primary-fg hover:opacity-88 sm:inline-flex"
           >
             {{ t('home.nav.cta') }}
           </RouterLink>
@@ -140,14 +140,14 @@ function toggleLocale() {
           <!-- 次 CTA：描边药丸，radius 100px -->
           <RouterLink
             :to="user.isLoggedIn ? '/console' : '/login'"
-            class="inline-flex h-10 items-center gap-2 rounded-[100px] border border-border-strong px-[18px] text-[16px] font-normal transition-colors hover:bg-bg-muted"
+            class="motion-press inline-flex h-10 items-center gap-2 rounded-[100px] border border-border-strong px-[18px] text-[16px] font-normal hover:bg-bg-muted"
           >
             {{ user.isLoggedIn ? t('nav.console') : t('auth.signIn') }}
             <LogIn class="size-3.5" />
           </RouterLink>
 
           <button
-            class="rounded-full p-2 text-fg-muted transition-colors hover:bg-bg-muted lg:hidden"
+            class="motion-press rounded-full p-2 text-fg-muted hover:bg-bg-muted lg:hidden"
             aria-label="Menu"
             @click="mobileOpen = !mobileOpen"
           >
@@ -165,7 +165,7 @@ function toggleLocale() {
           v-for="item in navItems"
           :key="item.key"
           :to="item.to"
-          class="block rounded-xl px-4 py-3 text-sm text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+          class="motion-press block rounded-xl px-4 py-3 text-sm text-fg-muted hover:bg-bg-muted hover:text-fg"
           @click="mobileOpen = false"
         >
           {{ t(`nav.${item.key}`) }}
