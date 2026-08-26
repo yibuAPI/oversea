@@ -69,8 +69,13 @@ const category = ref<string>('all')
 const models = computed(() => pricingQ.data.value?.data ?? [])
 const vendors = computed(() => pricingQ.data.value?.vendors ?? [])
 
+/** 分组倍率映射：group → ratio，用于价格换算 */
+const groupRatioMap = computed<Record<string, number>>(
+  () => pricingQ.data.value?.group_ratio ?? {},
+)
+/** 默认分组倍率：优先取 default，否则取第一个数值 */
 const groupRatio = computed(() => {
-  const g = pricingQ.data.value?.group_ratio ?? {}
+  const g = groupRatioMap.value
   if (typeof g.default === 'number') return g.default
   const first = Object.values(g).find((v) => typeof v === 'number')
   return typeof first === 'number' ? first : 1
@@ -101,9 +106,10 @@ const categories = computed(() => {
     .map(([tag]) => tag)
 })
 
-/** 可用分组列表：直接以分组键(key)作为短名显示，default 优先，其余按名称排 */
+/** 可用分组列表：以 group_ratio 的键（即后台「定价分组」配置）为准，保证与后台一致。
+ *  分组即便目前没有模型（count 为 0）也列出，避免前端筛选面板和后台表格对不上。 */
 const groups = computed(() => {
-  return [...new Set(models.value.flatMap((m) => m.enable_groups ?? []))]
+  return Object.keys(groupRatioMap.value)
     .map((key) => ({ key, label: key }))
     .sort((a, b) =>
       a.key === 'default' ? -1 : b.key === 'default' ? 1 : a.label.localeCompare(b.label),

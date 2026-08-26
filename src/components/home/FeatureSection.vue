@@ -22,7 +22,6 @@ const { t, tm } = useI18n()
 const blocks = [
   { key: 'unified', to: '/docs', visual: 'code' },
   { key: 'reliability', to: '/company', visual: 'failover' },
-  { key: 'price', to: '/pricing', visual: 'price' },
   { key: 'support', to: '/about', visual: 'support' },
 ] as const
 

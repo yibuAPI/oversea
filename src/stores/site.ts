@@ -62,16 +62,53 @@ export const useSiteStore = defineStore('site', () => {
       .map(([k]) => k)
   })
 
-  /** 顶部导航模块开关：后端以逗号分隔字符串下发 */
-  const navModules = computed(() => {
-    const raw = status.value?.header_nav_modules
-    if (typeof raw !== 'string' || !raw) return null // null = 未配置，全开
-    return new Set(raw.split(',').map((s) => s.trim()).filter(Boolean))
+  /**
+   * 顶部导航模块开关。后端 /api/status 下发 HeaderNavModules（JSON 字符串），
+   * 语义与 admin 默认页面一致：**省略的键 = 开启**，只有显式关闭才隐藏
+   * （后端 getHeaderNavAccess 的 fallback 也是 Enabled:true）。
+   *   - 布尔 false / 0 / "false" / "0" → 关闭
+   *   - 对象形态（如 pricing: { enabled, requireAuth }）→ 看 enabled 字段
+   * 键名兼容两种：HeaderNavModules（JSON）+ header_nav_modules（逗号分隔兜底）。
+   */
+  const disabledNavModules = computed(() => {
+    const raw = status.value?.HeaderNavModules ?? status.value?.header_nav_modules
+    const disabled = new Set<string>()
+    if (!raw) return disabled // 未配置，全开
+    if (typeof raw === 'string' && raw.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(raw) as Record<string, unknown>
+        for (const [key, v] of Object.entries(parsed)) {
+          if (parseHeaderNavBool(v)) continue
+          disabled.add(key)
+        }
+      } catch {
+        /* 非法 JSON 视为未配置，全开 */
+      }
+      return disabled
+    }
+    if (typeof raw === 'string') {
+      // 逗号分隔字符串形态：列出的是「启用」的模块，其余默认开启
+      for (const key of raw.split(',').map((s) => s.trim()).filter(Boolean)) {
+        if (parseHeaderNavBool(key) === false) disabled.add(key)
+      }
+    }
+    return disabled
   })
-  const hasNavModule = (name: string) => {
-    const m = navModules.value
-    return m === null ? true : m.has(name)
+  function parseHeaderNavBool(value: unknown): boolean {
+    if (value === true) return true
+    if (value === false || value == null) return false
+    if (typeof value === 'number') return value === 1
+    if (typeof value === 'string') {
+      const s = value.trim().toLowerCase()
+      return s === 'true' || s === '1'
+    }
+    // 对象形态（pricing: { enabled, requireAuth }）看 enabled 字段
+    if (typeof value === 'object') {
+      return parseHeaderNavBool((value as Record<string, unknown>).enabled)
+    }
+    return false
   }
+  const hasNavModule = (name: string) => !disabledNavModules.value.has(name)
 
   /** 额度换算：后端以 quota 整数存储，展示需除以 quota_per_unit */
   const quotaPerUnit = computed(() => status.value?.quota_per_unit ?? 500_000)

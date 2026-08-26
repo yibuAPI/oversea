@@ -29,13 +29,12 @@ const version = computed(() => {
 })
 
 const columns = [
-  { key: 'product', links: ['models', 'pricing', 'rankings'] },
+  { key: 'product', links: ['models', 'rankings'] },
   { key: 'developers', links: ['docs', 'quickstart', 'console', 'contact'] },
 ] as const
 
 const hrefs: Record<string, string> = {
   models: '/models',
-  pricing: '/pricing',
   rankings: '/rankings',
   docs: '/docs',
   quickstart: '/docs',

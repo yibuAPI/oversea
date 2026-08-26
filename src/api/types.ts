@@ -82,7 +82,8 @@ export interface SiteStatus {
   password_register_enabled?: boolean
   setup?: boolean
   version?: string
-  /** 顶部导航模块开关（pricing / rankings 等） */
+  /** 顶部导航模块开关（pricing / rankings 等，JSON 字符串） */
+  HeaderNavModules?: string
   header_nav_modules?: string
   [k: string]: unknown
 }

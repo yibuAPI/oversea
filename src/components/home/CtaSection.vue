@@ -46,13 +46,6 @@ const { t } = useI18n()
             <ArrowRight class="size-3.5" />
           </span>
         </RouterLink>
-
-        <RouterLink
-          to="/pricing"
-          class="motion-press inline-flex h-10 items-center rounded-[100px] border border-border-strong px-[18px] text-[14px] font-normal tracking-[-0.14px] hover:bg-bg-muted"
-        >
-          {{ t('home.cta.secondary') }}
-        </RouterLink>
       </div>
     </div>
   </section>

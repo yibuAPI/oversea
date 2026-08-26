@@ -425,7 +425,6 @@ console.log(completion.choices[0].message.content)`,
             },
           ],
         },
-        { type: 'link', to: '/pricing', label: zh ? '查看完整价目表' : 'View the full price list' },
       ],
     },
 

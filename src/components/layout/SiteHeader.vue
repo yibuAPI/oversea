@@ -23,7 +23,7 @@
  * 与页面白底区块区分开。渐变描边用 ::after + mask 挖空实现，
  * 见底部 scoped 样式。
  */
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
@@ -55,13 +55,15 @@ onMounted(() => {
 })
 onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 
-const navItems = [
-  { key: 'models', to: '/models' },
-  { key: 'docs', to: '/docs' },
-  { key: 'pricing', to: '/pricing' },
-  { key: 'rankings', to: '/rankings' },
-  { key: 'about', to: '/company' },
-] as const
+const navItems = computed(() =>
+  [
+    { key: 'models', to: '/models' },
+    { key: 'docs', to: '/docs' },
+    // 价格页入口暂去，/pricing 路由保留
+    { key: 'rankings', to: '/rankings' },
+    { key: 'about', to: '/company' },
+  ].filter((item) => site.hasNavModule(item.key)),
+)
 
 function toggleLocale() {
   setLocale(locale.value === 'zh-CN' ? 'en' : 'zh-CN')
