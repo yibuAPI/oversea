@@ -358,7 +358,13 @@ const rowCache = (id: number) => cacheByRow.value.get(id) ?? EMPTY_CACHE
 
           <template v-else-if="column.key === 'tokens'">
             <span v-if="row.prompt_tokens || row.completion_tokens">
-              {{ formatCompact(row.prompt_tokens) }} / {{ formatCompact(row.completion_tokens) }}
+              <span :class="row.prompt_tokens ? 'text-success-fg' : 'text-fg-subtle'">
+                {{ formatCompact(row.prompt_tokens) }}
+              </span>
+              /
+              <span :class="row.completion_tokens ? '' : 'text-fg-subtle'">
+                {{ formatCompact(row.completion_tokens) }}
+              </span>
             </span>
             <span v-else class="text-fg-subtle">—</span>
           </template>

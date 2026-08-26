@@ -52,6 +52,10 @@ function onScroll() {
 onMounted(() => {
   onScroll()
   window.addEventListener('scroll', onScroll, { passive: true })
+  // 公开页（含首页）的路由 meta 没有 requiresAuth/guestOnly，路由守卫不会
+  // 触发 ensureResolved —— 冷启动时 store 是空的，右上角会错显示「登录」。
+  // 登录态在后端 session cookie 里，这里补确认一次；已确认过则是空操作。
+  void user.ensureResolved()
 })
 onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 

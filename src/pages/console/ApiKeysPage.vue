@@ -342,7 +342,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
         <!-- 密钥（列表只显示打码版，复制走接口拿真值） -->
         <template v-else-if="column.key === 'key'">
           <div class="flex items-center gap-1">
-            <code class="min-w-0 flex-1 truncate font-mono text-[11.5px]">
+            <code class="min-w-0 truncate font-mono text-[11.5px]">
               {{ `sk-${row.key}` }}
             </code>
             <button
