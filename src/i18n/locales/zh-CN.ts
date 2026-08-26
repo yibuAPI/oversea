@@ -394,6 +394,7 @@ export default {
     subtitle: '全部可用模型与实时价格',
     searchPlaceholder: '搜索模型名称、厂商或描述…',
     group: '计价分组',
+    allGroups: '全部分组',
     allVendors: '全部厂商',
     vendorOther: '其他',
     ratioHint: '以下价格按分组「{group}」的倍率 ×{ratio} 计算',
