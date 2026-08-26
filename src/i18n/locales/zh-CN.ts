@@ -510,7 +510,7 @@ export default {
     belowMin: '最低充值金额为 {v}',
     quote: '充 {amount}，实付 {price}',
     payNow: '立即支付',
-    payStripe: 'Stripe 支付',
+    payStripe: 'Stripe 支付(微信/支付宝/银行卡/Apple Pay/Link)',
     payUsdt: 'USDT 支付',
     epayMethod: '支付方式',
     creemPackages: '固定面额充值',
