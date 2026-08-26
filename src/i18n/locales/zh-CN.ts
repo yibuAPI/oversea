@@ -366,6 +366,8 @@ export default {
     colType: '类型',
     colModel: '模型',
     colTokens: 'Token（入/出）',
+    colCache: '缓存（读/写）',
+    cacheTip: '缓存命中 {r} tokens，写入缓存 {w} tokens',
     colLatency: '耗时',
     colCost: '费用',
     colPlatform: '平台',

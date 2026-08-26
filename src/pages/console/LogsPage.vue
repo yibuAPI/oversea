@@ -16,7 +16,7 @@ import { useQuery } from '@tanstack/vue-query'
 import { Search, ScrollText, ChevronDown } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
 import { listLogs, listTasks, listMidjourney } from '@/api/usage'
-import { LOG_TYPE } from '@/api/types'
+import { LOG_TYPE, type LogEntry } from '@/api/types'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import DataTable, { type Column } from '@/components/ui/DataTable.vue'
 import Pagination from '@/components/ui/Pagination.vue'
@@ -25,6 +25,7 @@ import {
   formatCompact,
   formatDateTime,
   formatDuration,
+  formatInt,
   formatQuota,
 } from '@/lib/format'
 
@@ -149,6 +150,7 @@ const logColumns = computed<Column[]>(() => [
   { key: 'type', label: t('logs.colType'), class: 'w-[80px]' },
   { key: 'model_name', label: t('logs.colModel') },
   { key: 'tokens', label: t('logs.colTokens'), class: 'w-[120px]', numeric: true },
+  { key: 'cache', label: t('logs.colCache'), class: 'w-[120px]', numeric: true },
   { key: 'use_time', label: t('logs.colLatency'), class: 'w-[90px]', numeric: true },
   { key: 'quota', label: t('logs.colCost'), class: 'w-[110px]', numeric: true },
 ])
@@ -166,6 +168,61 @@ function parseOther(raw: string): Record<string, unknown> | null {
     return null
   }
 }
+
+/**
+ * 缓存 token 读写。
+ *
+ * LogEntry 上没有独立字段，数值埋在 other 这个 JSON 串里，而不同上游
+ * （OpenAI / Anthropic / 后端自己的汇总）用的键名不一致，所以按候选键
+ * 依次取第一个能拿到的数字，取不到就算 0。
+ *   读 = 命中缓存、按折扣价计费的部分
+ *   写 = 建立缓存、通常比普通输入更贵的部分
+ */
+const CACHE_READ_KEYS = [
+  'cache_tokens',
+  'cached_tokens',
+  'cache_read_tokens',
+  'cache_read_input_tokens',
+]
+const CACHE_WRITE_KEYS = [
+  'cache_creation_tokens',
+  'cache_write_tokens',
+  'cache_creation_input_tokens',
+]
+
+function pickNumber(o: Record<string, unknown> | null, keys: string[]): number {
+  if (!o) return 0
+  for (const k of keys) {
+    const v = o[k]
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+    // 有的后端把计数写成字符串
+    if (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))) {
+      return Number(v)
+    }
+  }
+  return 0
+}
+
+function cacheTokens(row: LogEntry): { read: number; write: number } {
+  const o = parseOther(row.other)
+  return {
+    read: pickNumber(o, CACHE_READ_KEYS),
+    write: pickNumber(o, CACHE_WRITE_KEYS),
+  }
+}
+
+/**
+ * 按行预解析。模板里一个单元格要读好几次读写值，
+ * 直接调 cacheTokens 会把同一行的 other 反复 JSON.parse 一遍。
+ */
+const cacheByRow = computed(() => {
+  const m = new Map<number, { read: number; write: number }>()
+  for (const row of logsQ.data.value?.items ?? []) m.set(row.id, cacheTokens(row))
+  return m
+})
+
+const EMPTY_CACHE = { read: 0, write: 0 }
+const rowCache = (id: number) => cacheByRow.value.get(id) ?? EMPTY_CACHE
 </script>
 
 <template>
@@ -302,6 +359,27 @@ function parseOther(raw: string): Record<string, unknown> | null {
           <template v-else-if="column.key === 'tokens'">
             <span v-if="row.prompt_tokens || row.completion_tokens">
               {{ formatCompact(row.prompt_tokens) }} / {{ formatCompact(row.completion_tokens) }}
+            </span>
+            <span v-else class="text-fg-subtle">—</span>
+          </template>
+
+          <template v-else-if="column.key === 'cache'">
+            <span
+              v-if="rowCache(row.id).read || rowCache(row.id).write"
+              :title="
+                t('logs.cacheTip', {
+                  r: formatInt(rowCache(row.id).read),
+                  w: formatInt(rowCache(row.id).write),
+                })
+              "
+            >
+              <span :class="rowCache(row.id).read ? 'text-success-fg' : 'text-fg-subtle'">
+                {{ formatCompact(rowCache(row.id).read) }}
+              </span>
+              /
+              <span :class="rowCache(row.id).write ? '' : 'text-fg-subtle'">
+                {{ formatCompact(rowCache(row.id).write) }}
+              </span>
             </span>
             <span v-else class="text-fg-subtle">—</span>
           </template>

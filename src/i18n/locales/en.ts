@@ -367,6 +367,8 @@ export default {
     colType: 'Type',
     colModel: 'Model',
     colTokens: 'Tokens (in/out)',
+    colCache: 'Cache (read/write)',
+    cacheTip: '{r} tokens read from cache, {w} tokens written to cache',
     colLatency: 'Latency',
     colCost: 'Cost',
     colPlatform: 'Platform',
