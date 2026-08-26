@@ -25,8 +25,12 @@ const pricingQ = useQuery({ queryKey: ['pricing'], queryFn: getPricing })
 
 const search = ref('')
 const vendorId = ref<number | 'all'>('all')
-/** 当前用于报价的分组。默认优先 default（用户实际的基准分组），没有才落到第一个 */
-const group = ref<string>('')
+/**
+ * 分组筛选。'all' = 不按分组筛，展示全部可用模型；
+ * 选中某个分组则只看该分组开放的模型（enable_groups）。
+ * 报价用的分组见 activeGroup —— 两者独立：默认「全部分组」时报价仍落到用户基准分组。
+ */
+const groupSel = ref<string>('all')
 
 const models = computed(() => pricingQ.data.value?.data ?? [])
 const vendors = computed(() => pricingQ.data.value?.vendors ?? [])
@@ -46,14 +50,18 @@ const usableGroups = computed(() => {
   })
 })
 
+/**
+ * 当前用于报价的分组。选中了具体分组就跟着它走；
+ * 「全部分组」(all) 时回落到 default（用户基准分组），没有才取第一个。
+ */
 const activeGroup = computed({
   get: () => {
-    if (group.value) return group.value
+    if (groupSel.value !== 'all') return groupSel.value
     if (usableGroups.value.some((g) => g.key === 'default')) return 'default'
     return usableGroups.value[0]?.key || 'default'
   },
   set: (v: string) => {
-    group.value = v
+    groupSel.value = v
   },
 })
 
@@ -84,6 +92,10 @@ const filtered = computed(() => {
   return models.value
     .filter((m) => {
       if (vendorId.value !== 'all' && (m.vendor_id ?? 0) !== vendorId.value) return false
+      if (groupSel.value !== 'all') {
+        const gs = m.enable_groups ?? []
+        if (!gs.some((g) => g === groupSel.value)) return false
+      }
       if (!q) return true
       return (
         m.model_name.toLowerCase().includes(q) ||
@@ -163,11 +175,11 @@ async function copyName(name: string) {
       </div>
 
       <select
-        v-if="usableGroups.length > 1"
-        v-model="activeGroup"
+        v-model="groupSel"
         :aria-label="t('models.group')"
         class="h-9 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-accent"
       >
+        <option value="all">{{ t('models.allGroups') }}</option>
         <option v-for="g in usableGroups" :key="g.key" :value="g.key">
           {{ g.key }}
           <template v-if="g.ratio !== null">（×{{ g.ratio }}）</template>

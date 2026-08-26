@@ -395,6 +395,7 @@ export default {
     subtitle: 'Every available model with live pricing',
     searchPlaceholder: 'Search name, vendor or description…',
     group: 'Pricing group',
+    allGroups: 'All groups',
     allVendors: 'All vendors',
     vendorOther: 'Other',
     ratioHint: 'Prices below use group "{group}" at ×{ratio}',
