@@ -76,13 +76,16 @@
   /* ---------- 运动工具类 ----------
      给交互元素补上「按压/上浮」手感。transition-property 一把列出常用属性，
      hover 移走时同样平滑回弹（mouse-leave 靠对称 transition 实现）。
-     prefers-reduced-motion 由上方 base 层统一兜底压到 0.01ms。 */
+     prefers-reduced-motion 由上方 base 层统一兜底压到 0.01ms。
+
+     注意：这里不要加 will-change: transform。它会把元素永久提升成合成层，
+     文字改由 GPU 光栅化、丢掉次像素抗锯齿，静止状态下也一直发虚。
+     transition 本身足够触发临时提升，不需要提前声明。 */
   .motion-press {
     transition-property:
-      color, background-color, border-color, box-shadow, transform, opacity, filter;
+      color, background-color, border-color, box-shadow, transform, opacity;
     transition-timing-function: var(--ease-out);
     transition-duration: var(--duration-base);
-    will-change: transform;
     &:active {
       transform: scale(0.97);
     }
@@ -93,7 +96,6 @@
       background-color, border-color, box-shadow, transform, opacity;
     transition-timing-function: var(--ease-out);
     transition-duration: var(--duration-base);
-    will-change: transform;
     &:hover {
       transform: translateY(-2px);
     }
