@@ -24,6 +24,7 @@ import { sendEmailCode } from '@/api/account'
 import { ApiError } from '@/api/types'
 import ProviderIcon from '@/components/auth/ProviderIcon.vue'
 import { setLocale } from '@/i18n'
+import { clearAffCode, readAffCode } from '@/utils/aff-code'
 
 const site = useSiteStore()
 const router = useRouter()
@@ -49,9 +50,11 @@ const email = ref('')
 const code = ref('')
 const submitting = ref(false)
 
-/** 邀请码：注册链接形如 /register?aff=xxxx */
-const affCode = computed(() =>
-  typeof route.query.aff === 'string' ? route.query.aff : undefined,
+/** 邀请码：注册链接形如 /register?aff=xxxx。
+ *  URL 上没有时回落到持久层 —— 用户可能先点了「去登录」再折返，
+ *  或走了 OAuth 跳转，这两条路径都会把 query 冲掉。 */
+const affCode = computed(
+  () => (typeof route.query.aff === 'string' ? route.query.aff : '') || readAffCode() || undefined,
 )
 
 onMounted(() => document.documentElement.classList.add('login-dark'))
@@ -117,6 +120,7 @@ async function onSubmit() {
       ...(affCode.value ? { aff_code: affCode.value } : {}),
     })
     // 后端注册后不建立 session，所以这里只能引导去登录
+    clearAffCode()
     toast.success(t('auth.registerSuccess'))
     await router.replace({ name: 'login' })
   } catch (e) {

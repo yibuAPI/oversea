@@ -32,11 +32,17 @@ app.use(VueQueryPlugin, {
 
 // 401 处理：清本地登录态并跳登录页，保留原路径以便回跳。
 // 在 api 层之外注入，避免 api → store → api 的循环依赖。
+//
+// ⚠️ 只有「本来就要求登录」的页面才踢去登录页。匿名访客打开 /register?aff=xxx
+// 这类游客页时，路由守卫会先探测一次 GET /api/user/self —— 后端对匿名请求
+// 一律返回 401（middleware/auth.go authHelper），那是预期结果而非掉登录态。
+// 在这里无条件 replace 会把地址栏上的邀请码冲掉并把人送进登录页（返利链接失效）。
 setUnauthorizedHandler(() => {
   const user = useUserStore(pinia)
   user.clear()
   const current = router.currentRoute.value
-  if (current.name !== 'login') {
+  // 首屏导航尚未完成时 currentRoute 是 START_LOCATION（meta 为空），同样不跳转
+  if (current.meta.requiresAuth && current.name !== 'login') {
     router.replace({ name: 'login', query: { redirect: current.fullPath } })
   }
 })

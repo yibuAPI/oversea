@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { captureAffFromQuery } from '@/utils/aff-code'
 
 /**
  * 控制台路由挂在 ConsoleLayout 下（嵌套路由），
@@ -174,6 +175,9 @@ const router = createRouter({
  * ensureResolved() 内部有缓存，只在首次导航时真正发请求。
  */
 router.beforeEach(async (to) => {
+  // 无论去向哪，先把 URL 上的 ?aff= 收进持久层，避免跳转/登录后被弹走而丢失
+  captureAffFromQuery(to.query)
+
   const user = useUserStore()
 
   if (to.meta.requiresAuth || to.meta.guestOnly) {
