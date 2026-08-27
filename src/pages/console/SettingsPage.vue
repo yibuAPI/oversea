@@ -56,6 +56,12 @@ const { t } = useI18n()
 const INPUT =
   'h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-accent'
 
+/**
+ * 安全区（2FA / Passkey / 注销账号）暂不对外开放，整块隐藏。
+ * 后端能力还在，改成 true 就能原样恢复（相关请求也跟着开关走，关掉时不发）。
+ */
+const SHOW_SECURITY_SECTIONS = false
+
 // ───────────────── 资料 ─────────────────
 
 const displayName = ref('')
@@ -127,7 +133,11 @@ const profileMut = useMutation({
 
 // ───────────────── 2FA ─────────────────
 
-const twoFaQ = useQuery({ queryKey: ['2fa'], queryFn: get2faStatus })
+const twoFaQ = useQuery({
+  queryKey: ['2fa'],
+  queryFn: get2faStatus,
+  enabled: SHOW_SECURITY_SECTIONS,
+})
 const twoFaEnabled = computed(() => twoFaQ.data.value?.enabled === true)
 
 const twoFaSetupOpen = ref(false)
@@ -206,7 +216,11 @@ async function bindProvider() {
 
 // ───────────────── Passkey ─────────────────
 
-const passkeyQ = useQuery({ queryKey: ['passkey'], queryFn: getPasskey })
+const passkeyQ = useQuery({
+  queryKey: ['passkey'],
+  queryFn: getPasskey,
+  enabled: SHOW_SECURITY_SECTIONS,
+})
 const passkeyEnabled = computed(() => passkeyQ.data.value?.enabled === true)
 
 const passkeyMut = useMutation({
@@ -318,7 +332,10 @@ async function copyText(text: string, id: string) {
       </section>
 
       <!-- 2FA -->
-      <section class="rounded-xl border border-border bg-bg-elevated p-5">
+      <section
+        v-if="SHOW_SECURITY_SECTIONS"
+        class="rounded-xl border border-border bg-bg-elevated p-5"
+      >
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <Shield class="size-4 text-fg-subtle" />
@@ -419,7 +436,7 @@ async function copyText(text: string, id: string) {
 
       <!-- Passkey -->
       <section
-        v-if="passkeyQ.data.value"
+        v-if="SHOW_SECURITY_SECTIONS && passkeyQ.data.value"
         class="rounded-xl border border-border bg-bg-elevated p-5"
       >
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -459,7 +476,10 @@ async function copyText(text: string, id: string) {
       </section>
 
       <!-- 危险区 -->
-      <section class="rounded-xl border border-danger-border bg-danger-bg/30 p-5">
+      <section
+        v-if="SHOW_SECURITY_SECTIONS"
+        class="rounded-xl border border-danger-border bg-danger-bg/30 p-5"
+      >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="flex items-start gap-2.5">
             <TriangleAlert class="mt-0.5 size-4 shrink-0 text-danger-fg" />
