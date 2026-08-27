@@ -49,13 +49,21 @@ const infoQ = useQuery({ queryKey: ['topup-info'], queryFn: getTopUpInfo })
 const groupsQ = useQuery({ queryKey: ['my-groups'], queryFn: getMyGroups })
 const checkinQ = useQuery({ queryKey: ['checkin'], queryFn: () => getCheckin() })
 
+/**
+ * 邀请返利暂不对外开放，整块隐藏。
+ * 后端能力还在，改成 true 就能原样恢复（邀请码请求也跟着开关走，关掉时不发）。
+ */
+const SHOW_AFFILIATE = false
+
 /** 邀请码惰性生成：已有就用 user.aff_code，没有才调接口 */
 const affQ = useQuery({
   queryKey: ['aff-code'],
   queryFn: getAffCode,
-  enabled: computed(() => !user.value?.aff_code),
+  enabled: computed(() => SHOW_AFFILIATE && !user.value?.aff_code),
 })
-const affCode = computed(() => user.value?.aff_code || affQ.data.value || '')
+const affCode = computed(() =>
+  SHOW_AFFILIATE ? user.value?.aff_code || affQ.data.value || '' : '',
+)
 
 const affLink = computed(() =>
   affCode.value
@@ -288,7 +296,7 @@ const hasAnything = computed(
     </section>
 
     <!-- 邀请返利 -->
-    <section v-if="affCode" class="mb-8">
+    <section v-if="SHOW_AFFILIATE && affCode" class="mb-8">
       <div class="mb-3 flex items-center gap-2">
         <Users class="size-4 text-fg-subtle" />
         <h2 class="text-[15px] font-semibold tracking-tight">
