@@ -34,6 +34,7 @@ import { Search, ChevronDown, ChevronUp, Boxes, LayoutGrid, List } from 'lucide-
 import { getPricing, inputPrice, getPerfMetricsSummary } from '@/api/models'
 import type { ModelSummary, PricingModel } from '@/api/types'
 import ModelCard from '@/components/common/ModelCard.vue'
+import ModelTable from '@/components/common/ModelTable.vue'
 
 /** 网格/列表视图：默认网格，记忆到 localStorage，切换无需经过父级状态 */
 type ViewMode = 'grid' | 'list'
@@ -589,12 +590,20 @@ async function copyName(name: string) {
                 </p>
               </div>
 
-              <!-- 模型卡（网格 / 列表） -->
-              <div
-                v-else
-                class="mt-6 grid grid-cols-1 gap-6"
-                :class="view === 'list' ? 'grid-cols-1' : 'lg:grid-cols-2 xl:grid-cols-3'"
-              >
+              <!-- 列表视图：表格（一行一模型，横向比价） -->
+              <ModelTable
+                v-else-if="view === 'list'"
+                class="mt-6"
+                :models="filtered"
+                :group-ratio="groupRatio"
+                :copied="copied"
+                :vendor-name="vendorName"
+                :icon-of="iconOf"
+                @copy="copyName"
+              />
+
+              <!-- 网格视图：模型卡 -->
+              <div v-else class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
                 <ModelCard
                   v-for="m in filtered"
                   :key="m.model_name"
@@ -603,7 +612,6 @@ async function copyName(name: string) {
                   :icon="iconOf(m)"
                   :group-ratio="groupRatio"
                   :copied="copied === m.model_name"
-                  :layout="view"
                   :metric="perfMap[m.model_name]"
                   @copy="copyName"
                 />
