@@ -534,18 +534,19 @@ async function copyName(name: string) {
                   </div>
 
                   <div class="relative">
-                  <select
-                    v-model="sortKey"
-                    :aria-label="t('public.models.sort')"
-                    class="h-9 min-w-[146px] appearance-none rounded-[8px] border border-[#D4D4D4] bg-white pl-3 pr-9 text-[14px] font-medium leading-5 text-[#0A0A0A] shadow-[0_1px_2px_rgba(0,0,0,0.05)] outline-none dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
-                  >
-                    <option value="name">{{ t('public.models.sortName') }}</option>
-                    <option value="priceAsc">{{ t('public.models.sortPriceAsc') }}</option>
-                    <option value="priceDesc">{{ t('public.models.sortPriceDesc') }}</option>
-                  </select>
-                  <ChevronDown
-                    class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#0A0A0A] dark:text-neutral-100"
-                  />
+                    <select
+                      v-model="sortKey"
+                      :aria-label="t('public.models.sort')"
+                      class="h-9 min-w-[146px] appearance-none rounded-[8px] border border-[#D4D4D4] bg-white pl-3 pr-9 text-[14px] font-medium leading-5 text-[#0A0A0A] shadow-[0_1px_2px_rgba(0,0,0,0.05)] outline-none dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+                    >
+                      <option value="name">{{ t('public.models.sortName') }}</option>
+                      <option value="priceAsc">{{ t('public.models.sortPriceAsc') }}</option>
+                      <option value="priceDesc">{{ t('public.models.sortPriceDesc') }}</option>
+                    </select>
+                    <ChevronDown
+                      class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#0A0A0A] dark:text-neutral-100"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -607,7 +608,6 @@ async function copyName(name: string) {
                   @copy="copyName"
                 />
               </div>
-            </div>
             </div>
           </div>
         </section>
