@@ -2,16 +2,15 @@
 /**
  * 单张模型卡 —— 公开 /models 页面的网格竖卡。
  *
- * 厂商行 → 标题+复制 → 标签 → 描述 3 行 → Input/Output 价
- * 底栏（计费类型 | 分组徽章），hover 浮现右上「立即使用」。
+ * 厂商行 → 标题+复制+标签（同一行）→ 描述 2 行 → Input/Output 价
+ * 底栏（计费类型 | 分组徽章）。
  * 列表视图（一行一模型的表格）另见 ModelTable.vue。
  *
  * 价格计算（ratio 货币化）由父组件传入 groupRatio，这里只做展示层格式化。
  */
-import { computed } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
-import { Copy, Check, ArrowRight, Boxes } from 'lucide-vue-next'
+import { Copy, Check, Boxes } from 'lucide-vue-next'
 import { inputPrice, outputPrice } from '@/api/models'
 import type { ModelSummary, PricingModel } from '@/api/types'
 import BrandIcon from '@/components/common/BrandIcon.vue'
@@ -130,6 +129,28 @@ const descOf = computed(() => {
   })
 })
 
+/**
+ * 描述是否被 2 行截断 —— 只有真正溢出时才挂悬停浮层，短描述不必多此一举。
+ * clamp 后 scrollHeight > clientHeight 即为溢出；容器宽度（响应式列数）变化时重算。
+ */
+const descEl = ref<HTMLElement | null>(null)
+const descTruncated = ref(false)
+const measureDesc = () => {
+  const el = descEl.value
+  if (el) descTruncated.value = el.scrollHeight - el.clientHeight > 1
+}
+let descRo: ResizeObserver | undefined
+onMounted(() => {
+  measureDesc()
+  if (typeof ResizeObserver !== 'undefined' && descEl.value) {
+    descRo = new ResizeObserver(measureDesc)
+    descRo.observe(descEl.value)
+  }
+})
+onBeforeUnmount(() => descRo?.disconnect())
+// 文案变化（切换语言 / 卡片实例复用）后重新量一次
+watch(descOf, () => nextTick(measureDesc))
+
 const fmtPrice = (v: number) => `$${v < 1 ? +v.toFixed(3) : +v.toFixed(2)}`
 
 const price = computed(() => {
@@ -197,18 +218,10 @@ const statusTone = computed(() => {
 <template>
   <!-- 网格竖卡 -->
   <article
-    class="group relative isolate flex cursor-pointer flex-col rounded-[10px] border border-[#E5E5E5] bg-white transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-px hover:border-[#D4D4D4] hover:shadow-[0_6px_18px_rgba(15,23,42,0.06)] xl:min-h-[313px] dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-700"
+    class="group relative isolate flex cursor-pointer flex-col rounded-[10px] border border-[#E5E5E5] bg-white transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-px hover:border-[#D4D4D4] hover:shadow-[0_6px_18px_rgba(15,23,42,0.06)] xl:min-h-[248px] dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-700"
   >
-    <!-- 悬停浮现的黑色 CTA -->
-    <RouterLink
-      to="/console"
-      class="pointer-events-none absolute right-5 top-14 z-20 flex h-9 items-center gap-1.5 rounded-md bg-[#181818] px-4 text-sm font-semibold leading-5 text-white opacity-0 shadow-[0_3px_10px_rgba(0,0,0,0.16)] transition-[opacity,background-color] duration-200 hover:bg-black group-hover:pointer-events-auto group-hover:opacity-100 dark:bg-white dark:text-[#0A0A0A]"
-    >
-      {{ t('public.models.viewIt') }}
-      <ArrowRight class="size-4" />
-    </RouterLink>
 
-    <div class="grid flex-1 gap-4 px-6 pb-4 pt-6" style="grid-template-rows: auto minmax(0, 1fr) auto">
+    <div class="grid flex-1 gap-3 px-6 pb-3 pt-5" style="grid-template-rows: auto minmax(0, 1fr) auto">
       <div class="flex flex-col gap-2">
         <!-- 厂商行 -->
         <div class="flex min-h-6 w-fit max-w-full items-start gap-2 self-start">
@@ -224,48 +237,62 @@ const statusTone = computed(() => {
           </span>
         </div>
 
-        <!-- 标题 + 悬停复制 -->
-        <div class="flex min-w-0 items-center gap-1.5">
-          <h3
-            class="line-clamp-1 min-w-0 text-[20px] font-semibold leading-7 text-[#0A0A0A] dark:text-neutral-50"
-            :title="model.model_name"
+        <!-- 标题行：标题+复制紧贴成一组（左），标签右对齐 -->
+        <div class="flex min-w-0 items-center justify-between gap-2">
+          <!-- min-w-0 让长模型名可截断；复制按钮紧跟文字尾部，不被推到空白处 -->
+          <div class="flex min-w-0 items-center gap-1.5">
+            <h3
+              class="line-clamp-1 min-w-0 text-[20px] font-semibold leading-7 text-[#0A0A0A] dark:text-neutral-50"
+              :title="model.model_name"
+            >
+              {{ model.model_name }}
+            </h3>
+            <button
+              type="button"
+              :aria-label="t('models.copyName')"
+              class="pointer-events-none inline-flex size-5 shrink-0 items-center justify-center rounded text-[#8A8A8A] opacity-0 transition-[opacity,background-color,color] duration-200 hover:bg-[#F5F5F5] hover:text-[#0A0A0A] group-hover:pointer-events-auto group-hover:opacity-100 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+              @click.stop="emit('copy', model.model_name)"
+            >
+              <Check v-if="copied" class="size-4 text-success-fg" />
+              <Copy v-else class="size-4" />
+            </button>
+          </div>
+          <!-- 标签：首个彩色，其余灰底描边；横排右对齐，超宽换行 -->
+          <div
+            v-if="tagsOf.length"
+            class="flex min-w-0 max-w-[55%] shrink-0 flex-wrap items-center justify-end gap-1.5"
           >
-            {{ model.model_name }}
-          </h3>
-          <button
-            type="button"
-            :aria-label="t('models.copyName')"
-            class="pointer-events-none inline-flex size-5 shrink-0 items-center justify-center rounded text-[#8A8A8A] opacity-0 transition-[opacity,background-color,color] duration-200 hover:bg-[#F5F5F5] hover:text-[#0A0A0A] group-hover:pointer-events-auto group-hover:opacity-100 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
-            @click.stop="emit('copy', model.model_name)"
-          >
-            <Check v-if="copied" class="size-4 text-success-fg" />
-            <Copy v-else class="size-4" />
-          </button>
-        </div>
-
-        <!-- 标签：首个彩色，其余灰底描边 -->
-        <div v-if="tagsOf.length" class="flex max-h-[82px] flex-wrap items-start gap-1.5 overflow-hidden pt-1">
-          <span
-            class="inline-flex h-[22px] items-center justify-center gap-1.5 rounded-md bg-[#E5F3FF] px-2 text-xs font-medium leading-4 text-[#1687E8] dark:bg-[#0d2a45] dark:text-[#57b3ff]"
-          >
-            {{ tagsOf[0] }}
-          </span>
-          <span
-            v-for="tag in tagsOf.slice(1, 5)"
-            :key="tag"
-            class="inline-flex h-[22px] items-center justify-center gap-1.5 rounded-md border border-[#EDEDED] bg-[#F5F5F5] px-2 text-xs font-medium leading-4 text-[#18181B] dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200"
-          >
-            {{ tag }}
-          </span>
+            <span
+              class="inline-flex h-[22px] items-center justify-center gap-1.5 rounded-md bg-[#E5F3FF] px-2 text-xs font-medium leading-4 text-[#1687E8] dark:bg-[#0d2a45] dark:text-[#57b3ff]"
+            >
+              {{ tagsOf[0] }}
+            </span>
+            <span
+              v-for="tag in tagsOf.slice(1, 5)"
+              :key="tag"
+              class="inline-flex h-[22px] items-center justify-center gap-1.5 rounded-md border border-[#EDEDED] bg-[#F5F5F5] px-2 text-xs font-medium leading-4 text-[#18181B] dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200"
+            >
+              {{ tag }}
+            </span>
+          </div>
         </div>
       </div>
 
-      <!-- 描述：3 行截断，无说明时兜底成「厂商 + 计费 + 能力」 -->
-      <p
-        class="line-clamp-3 min-h-0 overflow-hidden text-sm font-normal leading-5 text-[#737373] dark:text-neutral-400"
-      >
-        {{ descOf }}
-      </p>
+      <!-- 描述：2 行截断（超出显示省略号），溢出时悬停浮层显示全文 -->
+      <div class="group/desc relative min-h-0">
+        <p
+          ref="descEl"
+          class="line-clamp-3 overflow-hidden text-sm font-normal leading-5 text-[#737373] dark:text-neutral-400"
+        >
+          {{ descOf }}
+        </p>
+        <span
+          v-if="descTruncated"
+          class="pointer-events-none absolute bottom-full left-0 z-30 mb-1.5 hidden w-max max-w-full whitespace-normal break-words rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs font-normal leading-5 text-[#181818] shadow-lg group-hover/desc:block dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200"
+        >
+          {{ descOf }}
+        </span>
+      </div>
 
       <!-- 性能指标：延迟 / 吞吐 / 状态。无数据时整块隐藏 -->
       <div
@@ -361,7 +388,7 @@ const statusTone = computed(() => {
 
     <!-- 底栏 -->
     <div
-      class="grid min-h-12 shrink-0 grid-cols-1 items-center gap-2 border-t border-[#EDEDED] px-6 py-3 sm:grid-cols-[minmax(120px,1fr)_auto] sm:gap-4 dark:border-neutral-800"
+      class="grid min-h-10 shrink-0 grid-cols-1 items-center gap-2 border-t border-[#EDEDED] px-6 py-2.5 sm:grid-cols-[minmax(120px,1fr)_auto] sm:gap-4 dark:border-neutral-800"
     >
       <span
         class="inline-flex min-w-0 items-center gap-1.5 justify-self-start rounded-full border px-2.5 py-0.5 text-xs font-medium leading-4"
