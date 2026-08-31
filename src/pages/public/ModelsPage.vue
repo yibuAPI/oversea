@@ -27,10 +27,19 @@
  *   暗色主题用 neutral 系对应（对照 infron 的 dark: 变体）。
  *   数据仍全部来自公开 GET /api/pricing —— 页面展示即实际结算价。
  */
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuery } from '@tanstack/vue-query'
-import { Search, ChevronDown, ChevronUp, Boxes, LayoutGrid, List } from 'lucide-vue-next'
+import {
+  Search,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  Boxes,
+  LayoutGrid,
+  List,
+} from 'lucide-vue-next'
 import { getPricing, inputPrice, getPerfMetricsSummary } from '@/api/models'
 import type { ModelSummary, PricingModel } from '@/api/types'
 import ModelCard from '@/components/common/ModelCard.vue'
@@ -66,6 +75,10 @@ const groupSel = ref<Set<string>>(new Set())
 type SortKey = 'name' | 'priceAsc' | 'priceDesc'
 const sortKey = ref<SortKey>('name')
 const category = ref<string>('all')
+
+/** 分页：默认每页 20 条，可选 10/20/50/100。筛选在前端做，切片也放前端 */
+const page = ref(1)
+const pageSize = ref(20)
 
 const models = computed(() => pricingQ.data.value?.data ?? [])
 const vendors = computed(() => pricingQ.data.value?.vendors ?? [])
@@ -147,6 +160,34 @@ const filtered = computed(() => {
       a.model_name.localeCompare(b.model_name),
   )
 })
+
+/** 当前页要展示的模型 —— 网格和列表共用，避免一次性渲染上百条 */
+const paged = computed(() => {
+  const start = (page.value - 1) * pageSize.value
+  return filtered.value.slice(start, start + pageSize.value)
+})
+
+// 任一筛选条件或每页条数变了就回到第 1 页
+watch([search, vendorSel, billSel, groupSel, category, sortKey, pageSize], () => {
+  page.value = 1
+})
+
+// 结果变少时把页码夹回合法范围，别停在空页上
+watch(
+  () => filtered.value.length,
+  (len) => {
+    const maxPage = Math.max(1, Math.ceil(len / pageSize.value))
+    if (page.value > maxPage) page.value = maxPage
+  },
+)
+
+const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize.value)))
+const pageFrom = computed(() => (filtered.value.length ? (page.value - 1) * pageSize.value + 1 : 0))
+const pageTo = computed(() => Math.min(page.value * pageSize.value, filtered.value.length))
+
+function onPageSizeChange(e: Event) {
+  pageSize.value = Number((e.target as HTMLSelectElement).value)
+}
 
 const vendorCounts = computed(() => {
   const m = new Map<number, number>()
@@ -594,7 +635,7 @@ async function copyName(name: string) {
               <ModelTable
                 v-else-if="view === 'list'"
                 class="mt-6"
-                :models="filtered"
+                :models="paged"
                 :group-ratio="groupRatio"
                 :copied="copied"
                 :vendor-name="vendorName"
@@ -605,7 +646,7 @@ async function copyName(name: string) {
               <!-- 网格视图：模型卡 -->
               <div v-else class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
                 <ModelCard
-                  v-for="m in filtered"
+                  v-for="m in paged"
                   :key="m.model_name"
                   :model="m"
                   :vendor-name="vendorName(m.vendor_id)"
@@ -615,6 +656,71 @@ async function copyName(name: string) {
                   :metric="perfMap[m.model_name]"
                   @copy="copyName"
                 />
+              </div>
+
+              <!-- 分页：一次只渲染当前页，弱网和实时筛选下不至于卡住 -->
+              <div
+                v-if="!pricingQ.isLoading.value && !pricingQ.error.value && filtered.length"
+                class="mt-8 flex flex-wrap items-center justify-between gap-3"
+              >
+                <p class="text-sm text-[#737373] dark:text-neutral-400">
+                  {{
+                    t('public.models.pageRange', {
+                      from: pageFrom,
+                      to: pageTo,
+                      total: filtered.length,
+                    })
+                  }}
+                </p>
+
+                <div class="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    class="motion-press flex size-9 items-center justify-center rounded-[8px] border border-[#D4D4D4] bg-white text-[#0A0A0A] shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#F5F5F5] disabled:opacity-40 disabled:hover:bg-white dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900 dark:disabled:hover:bg-neutral-950"
+                    :disabled="page <= 1"
+                    :aria-label="t('common.prevPage')"
+                    @click="page -= 1"
+                  >
+                    <ChevronLeft class="size-4" />
+                  </button>
+
+                  <span
+                    class="min-w-[68px] text-center text-sm font-medium text-[#0A0A0A] dark:text-neutral-100"
+                  >
+                    {{ page }} / {{ pageCount }}
+                  </span>
+
+                  <button
+                    type="button"
+                    class="motion-press flex size-9 items-center justify-center rounded-[8px] border border-[#D4D4D4] bg-white text-[#0A0A0A] shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-[#F5F5F5] disabled:opacity-40 disabled:hover:bg-white dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900 dark:disabled:hover:bg-neutral-950"
+                    :disabled="page >= pageCount"
+                    :aria-label="t('common.nextPage')"
+                    @click="page += 1"
+                  >
+                    <ChevronRight class="size-4" />
+                  </button>
+
+                  <label
+                    class="ml-1 flex items-center gap-2 text-sm text-[#737373] dark:text-neutral-400"
+                  >
+                    <span>{{ t('public.models.perPage') }}</span>
+                    <div class="relative">
+                      <select
+                        :value="pageSize"
+                        :aria-label="t('public.models.perPage')"
+                        class="h-9 appearance-none rounded-[8px] border border-[#D4D4D4] bg-white pl-3 pr-9 text-[14px] font-medium leading-5 text-[#0A0A0A] shadow-[0_1px_2px_rgba(0,0,0,0.05)] outline-none dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+                        @change="onPageSizeChange"
+                      >
+                        <option v-for="n in [10, 20, 50, 100]" :key="n" :value="n">
+                          {{ n }}
+                        </option>
+                      </select>
+                      <ChevronDown
+                        class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#0A0A0A] dark:text-neutral-100"
+                      />
+                    </div>
+                  </label>
+                </div>
               </div>
             </div>
           </div>

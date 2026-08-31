@@ -17,6 +17,9 @@ export default {
     close: 'Close',
     submit: 'Submit',
     total: '{n} total',
+    perPage: 'Per page',
+    prevPage: 'Previous page',
+    nextPage: 'Next page',
   },
   nav: {
     menu: 'Menu',
@@ -807,6 +810,8 @@ export default {
       view: 'View',
       viewGrid: 'Grid',
       viewList: 'List',
+      perPage: 'Per page',
+      pageRange: '{from}–{to} of {total}',
       colModel: 'Model',
       colType: 'Type',
       colPrice: 'Price',

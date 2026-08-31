@@ -17,6 +17,9 @@ export default {
     close: '关闭',
     submit: '提交',
     total: '共 {n} 条',
+    perPage: '每页',
+    prevPage: '上一页',
+    nextPage: '下一页',
   },
   nav: {
     menu: '菜单',
@@ -806,6 +809,8 @@ export default {
       view: '视图',
       viewGrid: '网格',
       viewList: '列表',
+      perPage: '每页',
+      pageRange: '{from}–{to} / 共 {total}',
       colModel: '模型',
       colType: '类型',
       colPrice: '价格',

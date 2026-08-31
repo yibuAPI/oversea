@@ -11,13 +11,14 @@
  * 分组倍率跟着用户当前选中的分组变 —— 同一个模型在不同分组价格不同，
  * 这点不能糊，否则用户按页面报价做预算会算错。
  */
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuery } from '@tanstack/vue-query'
 import { Search, Boxes, Copy, Check } from 'lucide-vue-next'
 import { getPricing, inputPrice, outputPrice } from '@/api/models'
 import type { PricingModel } from '@/api/types'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 
 const { t } = useI18n()
 
@@ -31,6 +32,10 @@ const vendorId = ref<number | 'all'>('all')
  * 报价用的分组见 activeGroup —— 两者独立：默认「全部分组」时报价仍落到用户基准分组。
  */
 const groupSel = ref<string>('all')
+
+/** 分页：默认每页 20 条，可选 10/20/50/100。列表是前端筛的，切片也放前端 */
+const page = ref(1)
+const pageSize = ref(20)
 
 const models = computed(() => pricingQ.data.value?.data ?? [])
 const vendors = computed(() => pricingQ.data.value?.vendors ?? [])
@@ -110,6 +115,26 @@ const filtered = computed(() => {
         a.model_name.localeCompare(b.model_name),
     )
 })
+
+/** 当前页要展示的模型 —— 对已筛选的列表做切片，避免一次性渲染上百张卡 */
+const paged = computed(() => {
+  const start = (page.value - 1) * pageSize.value
+  return filtered.value.slice(start, start + pageSize.value)
+})
+
+// 筛选条件或每页条数变了就回到第 1 页
+watch([search, vendorId, groupSel, pageSize], () => {
+  page.value = 1
+})
+
+// 结果变少时把页码夹回合法范围，别停在空页上
+watch(
+  () => filtered.value.length,
+  (len) => {
+    const maxPage = Math.max(1, Math.ceil(len / pageSize.value))
+    if (page.value > maxPage) page.value = maxPage
+  },
+)
 
 /** 每个厂商有多少模型，给筛选条上的计数用 */
 const vendorCounts = computed(() => {
@@ -266,7 +291,7 @@ async function copyName(name: string) {
     <!-- 模型卡网格 -->
     <div v-else class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <article
-        v-for="m in filtered"
+        v-for="m in paged"
         :key="m.model_name"
         class="group flex flex-col rounded-xl border border-border bg-bg-elevated p-4 transition-colors hover:border-border-strong"
       >
@@ -348,8 +373,18 @@ async function copyName(name: string) {
       </article>
     </div>
 
-    <p v-if="filtered.length" class="mt-4 text-[12px] text-fg-subtle">
-      {{ t('models.countHint', { shown: filtered.length, total: models.length }) }}
+    <Pagination
+      v-if="!pricingQ.isLoading.value && !pricingQ.error.value"
+      :page="page"
+      :page-size="pageSize"
+      :total="filtered.length"
+      :page-size-options="[10, 20, 50, 100]"
+      @update:page="page = $event"
+      @update:page-size="((pageSize = $event), (page = 1))"
+    />
+
+    <p v-if="filtered.length" class="mt-2 text-[12px] text-fg-subtle">
+      {{ t('models.countHint', { shown: paged.length, total: models.length }) }}
     </p>
   </div>
 </template>
