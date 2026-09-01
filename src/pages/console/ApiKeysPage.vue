@@ -244,6 +244,13 @@ function resolveExpiry(): number | null {
   return Math.floor(Date.now() / 1000) + Number(f.expiry) * 86400
 }
 
+/** 名称列下仅展示前 3 个分组，超出隐藏并以 +N 提示 */
+function groupLabel(row: ApiToken): string {
+  const groups = parseTokenGroups(row)
+  if (groups.length <= 3) return groups.join(', ')
+  return `${groups.slice(0, 3).join(', ')} +${groups.length - 3}`
+}
+
 const saveMut = useMutation({
   mutationFn: async () => {
     const f = form.value
@@ -376,8 +383,11 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
         <!-- 名称 + 分组 -->
         <template v-if="column.key === 'name'">
           <p class="truncate font-medium">{{ row.name }}</p>
-          <p class="mt-0.5 truncate text-[11.5px] text-fg-subtle">
-            {{ parseTokenGroups(row).join(', ') || '—' }}
+          <p
+            :title="parseTokenGroups(row).join(', ')"
+            class="mt-0.5 truncate text-[11.5px] text-fg-subtle"
+          >
+            {{ groupLabel(row) || '—' }}
             <template v-if="row.model_limits_enabled">
               · {{ t('keys.modelLimited') }}
             </template>
