@@ -32,6 +32,19 @@
       var(--brand-mint) 100%
     );
 
+    /* ---------- 首页 hero 渐变（蓝→紫→品红） ----------
+       与 --brand-gradient 分开：那条偏青绿，用于站内既有装饰；
+       hero 的字标与主按钮要的是蓝紫调，改动那条会波及全站。 */
+    --hero-blue: #2f6bff;
+    --hero-purple: #8b5cf6;
+    --hero-magenta: #e252c8;
+    --hero-gradient: linear-gradient(
+      95deg,
+      var(--hero-blue) 0%,
+      var(--hero-purple) 52%,
+      var(--hero-magenta) 100%
+    );
+
     /* ---------- 主色阶（infron 实测品牌蓝 #005EFF / #0A8DFF） ---------- */
     --accent-50: #edf7ff;
     --accent-100: #d1f5ff;

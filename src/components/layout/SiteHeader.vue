@@ -1,33 +1,36 @@
 <script setup lang="ts">
 /**
- * 悬浮导航 —— 尺寸取自 infron.ai 线上实测（CDP）：
- *   容器  x80 y24 宽 1258 高 80，padding 13px 40px
- *         → logo 实际横坐标 80+40 = 120，与 hero 的 h1(x120) 同一根竖线
- *   圆角  0 50px 50px 0（左侧直角贴边，右侧半圆）
- *   导航  16px / weight 400 / 项间距 52px
- *   右侧  主 CTA 与次 CTA 高 40px
- * 注意是浮动的独立药丸，不是通栏 header。
+ * 站点导航 —— 版式对齐参考站 api.openlux.ai：
  *
- * 宽屏行为按 1878px 实测 infron 复核：
- *   h1        x120        —— hero 文案钉在左侧 120px，不居中
- *   Login 按钮 x1668 w90  —— 即右端收在 x1758
- *   正文       1100@389   —— 页面主体才是 1100 定宽居中（实测出现 22 次）
+ *   **悬浮**的浅蓝渐变药丸：四周留出间隙、圆角收边、半透明 + 背景模糊，
+ *   浮在页面内容之上而不是焊死在顶边；
+ *   左 logo / 中导航 / 右操作区三段式；导航真正居中，当前页高亮成品牌蓝
+ *   并带一条下划线；右侧主题、语言两个图标用品牌蓝，后面跟
+ *   「登录 / 注册」两枚蓝色药丸。
  *
- * 关键：白色药丸是「贴左边通栏 + 右端在按钮后收口」，不是拉满整行。
- * 药丸右侧之外能看到 hero 渐变，这是 infron 视觉的一部分；
- * 拉满会把渐变整条盖掉（曾经的错误做法）。
- * 故 header 用 flex 让药丸按内容宽度收缩，右侧留白透出渐变。
+ * 三段式用 1fr_auto_1fr 网格：中间列宽度自适应内容，被两侧等宽的 1fr
+ * 挤到正中 —— 这样导航居中与左右两侧内容多长无关。用 flex + ml-auto
+ * 做不到这点（导航会被两侧内容推偏）。
  *
- * 滚动后仍保持药丸圆角（不再切成直角通栏），改为：
- * 微收 top 偏移 + 四周一圈淡化品牌渐变描边 + 阴影，
- * 与页面白底区块区分开。渐变描边用 ::after + mask 挖空实现，
- * 见底部 scoped 样式。
+ * 悬浮 ≠ 收窄。药丸靠 mx-3/lg:mx-5 的小外边距浮起来，**不设 max-width**：
+ * lg 下 logo 距页边 20+28=48px，跟参考站的 x≈40 基本齐平。别再套
+ * max-w-[1400px] 去跟 hero 容器对齐 —— 参考站两者本就不对齐（它 header
+ * logo 在 x≈57，hero 字标在 x≈128），套上之后在 1920 宽屏下 logo 会缩到
+ * 330px 处，整条横幅中间空一大片，一眼就不像。
+ *
+ * 高度：药丸本体 68px / lg 72px，加上 10px / lg 12px 的上边距，整体占位
+ * 78px / lg 84px —— 与原来通栏条的 76 / 80 基本持平。各公开页顶部留白
+ * （如 hero 的 pt-[104px] lg:pt-[132px]）按 76/80 配的，仍有 20px+ 余量，
+ * 不必逐页改。但别把药丸再加高：留白是硬编码的，超了就压到内容。
+ *
+ * 底色带 alpha + backdrop-blur：首页的鼠标跟随光晕铺满整页（见
+ * NewHomePage.vue），不透明底色会把顶栏这一条切成死板的横杠。
  */
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { Sun, Moon, Languages, LogIn, Menu, X } from 'lucide-vue-next'
+import { Sun, Moon, Languages, Menu, X } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
 import { useThemeStore } from '@/stores/theme'
 import { useUserStore } from '@/stores/user'
@@ -36,17 +39,17 @@ import { setLocale } from '@/i18n'
 const site = useSiteStore()
 const theme = useThemeStore()
 const user = useUserStore()
-const { systemName, logo } = storeToRefs(site)
+const { systemName, logo, registerEnabled } = storeToRefs(site)
 const { isDark } = storeToRefs(theme)
 const { locale, t } = useI18n()
 
 const mobileOpen = ref(false)
 
-/** 滚过 24px（浮动药丸原本的 top 偏移）就切成吸顶态 */
+/** 滚过顶部留白就加重投影，让悬浮药丸从滚动的内容里抬得更高 */
 const scrolled = ref(false)
 
 function onScroll() {
-  scrolled.value = window.scrollY > 24
+  scrolled.value = window.scrollY > 8
 }
 
 onMounted(() => {
@@ -59,100 +62,110 @@ onMounted(() => {
 })
 onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 
+/**
+ * exact：/ 必须精确匹配才算选中。RouterLink 默认的 active 是前缀匹配，
+ * 而任何路径都以 / 开头 —— 不加这个开关，「首页」会在每一页都亮着。
+ */
 const navItems = computed(() =>
   [
-    { key: 'models', to: '/models' },
-    { key: 'docs', to: '/docs' },
+    { key: 'home', to: '/', exact: true },
+    { key: 'models', to: '/models', exact: false },
+    { key: 'docs', to: '/docs', exact: false },
     // 价格页入口暂去，/pricing 路由保留
-    { key: 'rankings', to: '/rankings' },
-    { key: 'about', to: '/company' },
+    { key: 'rankings', to: '/rankings', exact: false },
+    { key: 'about', to: '/company', exact: false },
   ].filter((item) => site.hasNavModule(item.key)),
 )
 
 function toggleLocale() {
   setLocale(locale.value === 'zh-CN' ? 'en' : 'zh-CN')
 }
+
+/** 主题 / 语言两个圆形图标钮：参考站是品牌蓝，不是灰色 */
+const iconBtnCls =
+  'motion-press rounded-full p-2 text-accent transition-colors hover:bg-accent-bg'
 </script>
 
 <template>
-  <header
-    class="pointer-events-none fixed inset-x-0 top-0 z-50 transition-[top] duration-200"
-    :class="scrolled ? 'lg:top-2' : 'lg:top-6'"
-  >
-    <!--
-      药丸贴左通栏，右端在登录按钮之后收口（留 80px 透出背景）。
-      滚动后保持同一形状，只加渐变描边与阴影。
-    -->
-    <div class="flex lg:pr-20">
-      <!--
-        浮动药丸：右侧 50px 半圆。
-        左内边距 120px 而不是 infron 的 40px —— infron 的药丸本体从 x80 起，
-        80+40=120 才是 logo 的真实横坐标，正好和 hero 的 h1 对齐。
-        我们的药丸是通栏（x0），所以把那 80px 折进 padding，
-        结果一致：logo 落在 x120。xl 以下收回 40px，hero 同步，保证任何宽度都对齐。
-
-        滚动态：左端脱开屏幕边缘补出左圆角（整颗药丸悬浮），
-        左外边距 + 左内边距之和保持 120px（lg 下 40px），logo 不左右跳；
-        同时套 site-pill--scrolled 加淡蓝渐变描边 + 阴影。
-      -->
+  <header class="pointer-events-none fixed inset-x-0 top-0 z-50">
+    <!-- 悬浮药丸本体：四周留边、圆角收口、半透明 + 背景模糊。
+         **不描边**：药丸有 1570px 宽、圆角只吃掉两端各 34px，一圈 border
+         在屏幕上就是上下两道近乎通栏的硬线，比通栏横条还难看。
+         悬浮感全交给投影 —— 投影是渐变衰减的，不会切出边缘。
+         滚动后把投影加重一档，让它从滚动的内容里抬得更高。 -->
+    <div
+      class="pointer-events-auto mx-3 mt-2.5 rounded-full bg-[linear-gradient(90deg,rgba(233,240,255,0.82)_0%,rgba(249,251,255,0.78)_48%,rgba(235,243,255,0.82)_100%)] backdrop-blur-xl transition-shadow duration-200 lg:mx-5 lg:mt-3 dark:bg-[linear-gradient(90deg,rgba(12,19,34,0.82)_0%,rgba(11,15,24,0.78)_48%,rgba(12,21,38,0.82)_100%)]"
+      :class="
+        scrolled
+          ? 'shadow-[0_12px_40px_-14px_rgba(10,141,255,0.34)]'
+          : 'shadow-[0_8px_30px_-16px_rgba(10,141,255,0.26)]'
+      "
+    >
+      <!-- 药丸内不再 max-w 收窄：靠外层 mx-* 浮起来就够了，
+           logo/按钮仍贴近页边，中间留出足够的空当 -->
       <div
-        class="site-pill pointer-events-auto flex h-[76px] w-full items-center bg-bg px-6 transition-[margin,border-radius] duration-200 lg:h-20 lg:py-[13px] lg:pr-10"
-        :class="
-          scrolled
-            ? 'site-pill--scrolled border-b border-border lg:ml-5 lg:rounded-[50px] lg:border-b-0 lg:pl-5 xl:ml-6 xl:pl-24'
-            : 'lg:rounded-r-[50px] lg:pl-10 xl:pl-[120px]'
-        "
+        class="mx-auto flex h-[68px] max-w-none items-center gap-4 px-5 lg:grid lg:h-[72px] lg:grid-cols-[1fr_auto_1fr] lg:px-7 xl:px-9"
       >
+        <!-- 左：字标。比之前放大一档，对齐参考站的粗体 logo -->
         <RouterLink to="/" class="flex shrink-0 items-center gap-2.5">
-          <img :src="logo" :alt="systemName" class="h-5 w-auto" />
-          <span class="text-[17px] font-semibold tracking-tight">{{ systemName }}</span>
+          <img :src="logo" :alt="systemName" class="h-7 w-auto" />
+          <span class="text-[22px] font-bold tracking-tight">{{ systemName }}</span>
         </RouterLink>
 
-        <nav class="ml-auto hidden items-center gap-[52px] lg:flex">
+        <!-- 中：导航。被两侧 1fr 挤在正中 -->
+        <nav class="hidden items-center gap-14 lg:flex">
           <RouterLink
             v-for="item in navItems"
             :key="item.key"
             :to="item.to"
-            class="motion-press text-[16px] font-normal tracking-[-0.16px] text-fg hover:opacity-60"
+            class="nav-link motion-press relative text-[16px] font-medium text-fg-secondary transition-colors hover:text-accent"
+            :active-class="item.exact ? '' : 'nav-link--active'"
+            exact-active-class="nav-link--active"
           >
             {{ t(`nav.${item.key}`) }}
           </RouterLink>
         </nav>
 
-        <div class="ml-auto flex items-center gap-3 lg:ml-[60px]">
-          <button
-            class="motion-press hidden rounded-full p-2 text-fg-muted hover:bg-bg-muted hover:text-fg sm:block"
-            :aria-label="t('theme.' + (isDark ? 'light' : 'dark'))"
-            @click="theme.toggle()"
-          >
-            <component :is="isDark ? Sun : Moon" class="size-4.5" />
-          </button>
-          <button
-            class="motion-press hidden rounded-full p-2 text-fg-muted hover:bg-bg-muted hover:text-fg sm:block"
-            aria-label="Switch language"
-            @click="toggleLocale"
-          >
-            <Languages class="size-4.5" />
-          </button>
+        <!-- 右：主题 / 语言 / 登录注册。
+             图标自成一组挨紧（gap-0.5），与按钮之间才留空 —— 参考站的疏密关系。 -->
+        <div class="ml-auto flex items-center gap-3">
+          <div class="hidden items-center gap-0.5 sm:flex">
+            <button
+              :class="iconBtnCls"
+              :aria-label="t('theme.' + (isDark ? 'light' : 'dark'))"
+              @click="theme.toggle()"
+            >
+              <component :is="isDark ? Sun : Moon" class="size-[18px]" />
+            </button>
+            <button :class="iconBtnCls" aria-label="Switch language" @click="toggleLocale">
+              <Languages class="size-[18px]" />
+            </button>
+          </div>
 
-          <!-- 主 CTA：黑底药丸，radius 20px —— 指向 /about 后台 about 富文本逻辑 -->
-          <!-- 「联系我们」入口暂隐藏，路由 /about 保留，需要时放开下面这一注释即可。
+          <!-- 已登录时两枚按钮塌缩成一枚「控制台」，不再显示登录/注册 -->
           <RouterLink
-            to="/about"
-            class="motion-press hidden h-10 items-center rounded-[20px] bg-btn-primary-bg px-[18px] text-[16px] font-normal text-btn-primary-fg hover:opacity-88 sm:inline-flex"
+            v-if="user.isLoggedIn"
+            to="/console"
+            class="auth-btn bg-accent text-white hover:bg-accent-hover"
           >
-            {{ t('home.nav.cta') }}
+            {{ t('nav.console') }}
           </RouterLink>
-          -->
-
-          <!-- 次 CTA：描边药丸，radius 100px -->
-          <RouterLink
-            :to="user.isLoggedIn ? '/console' : '/login'"
-            class="motion-press inline-flex h-10 items-center gap-2 rounded-[100px] border border-border-strong px-[18px] text-[16px] font-normal hover:bg-bg-muted"
-          >
-            {{ user.isLoggedIn ? t('nav.console') : t('auth.signIn') }}
-            <LogIn class="size-3.5" />
-          </RouterLink>
+          <template v-else>
+            <!-- 两枚同色：参考站的 Sign in / Sign up 是同一个蓝，不分主次。
+                 用 --color-accent(#005eff) 而不是更亮的 accent-solid(#0a8dff)：
+                 后者配白字只有 3.35:1，15px 文字过不了 AA。 -->
+            <RouterLink to="/login" class="auth-btn bg-accent text-white hover:bg-accent-hover">
+              {{ t('auth.signIn') }}
+            </RouterLink>
+            <!-- 站点关闭注册时不挂这个入口：点进去只会撞上「未开放注册」 -->
+            <RouterLink
+              v-if="registerEnabled"
+              to="/register"
+              class="auth-btn hidden bg-accent text-white hover:bg-accent-hover sm:inline-flex"
+            >
+              {{ t('auth.signUp') }}
+            </RouterLink>
+          </template>
 
           <button
             class="motion-press rounded-full p-2 text-fg-muted hover:bg-bg-muted lg:hidden"
@@ -163,62 +176,63 @@ function toggleLocale() {
           </button>
         </div>
       </div>
+    </div>
 
-      <!-- 移动端展开菜单 -->
-      <div
-        v-if="mobileOpen"
-        class="pointer-events-auto mx-4 mt-2 rounded-2xl border border-border bg-bg-elevated p-2 shadow-lg lg:hidden"
+    <!-- 移动端展开菜单 -->
+    <div
+      v-if="mobileOpen"
+      class="pointer-events-auto mx-4 mt-2 rounded-2xl border border-border bg-bg-elevated p-2 shadow-lg lg:hidden"
+    >
+      <RouterLink
+        v-for="item in navItems"
+        :key="item.key"
+        :to="item.to"
+        class="motion-press block rounded-xl px-4 py-3 text-sm text-fg-muted hover:bg-bg-muted hover:text-fg"
+        :active-class="item.exact ? '' : 'text-accent'"
+        exact-active-class="text-accent"
+        @click="mobileOpen = false"
       >
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.key"
-          :to="item.to"
-          class="motion-press block rounded-xl px-4 py-3 text-sm text-fg-muted hover:bg-bg-muted hover:text-fg"
-          @click="mobileOpen = false"
-        >
-          {{ t(`nav.${item.key}`) }}
-        </RouterLink>
-      </div>
+        {{ t(`nav.${item.key}`) }}
+      </RouterLink>
     </div>
   </header>
 </template>
 
 <style scoped>
-/**
- * 滚动态的淡蓝渐变描边：::after 铺渐变，再用 mask 把内容区挖空，
- * 只留 1px 边圈。渐变取品牌色但压到低饱和（浅蓝为主），避免喧宾夺主。
- */
-.site-pill {
-  position: relative;
+/* 下划线用 ::after 而不是 border-bottom —— 后者会把链接盒子撑高，
+   一行里选中项和未选中项的基线就会错开。
+   默认 opacity:0 藏起来，hover 与当前页（active）都显示，文字转成品牌蓝。
+   颜色跟着 currentColor 走：hover 时 text-accent 生效，下划线便是同色。 */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: -8px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-out);
 }
-.site-pill--scrolled {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+.nav-link:hover::after,
+.nav-link--active::after {
+  opacity: 1;
 }
-@media (min-width: 1024px) {
-  .site-pill--scrolled {
-    box-shadow: 0 4px 24px rgba(10, 141, 255, 0.08);
-  }
-  .site-pill--scrolled::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(
-      90deg,
-      rgba(72, 84, 255, 0.35) 0%,
-      rgba(59, 202, 245, 0.45) 55%,
-      rgba(134, 239, 215, 0.35) 100%
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    pointer-events: none;
-  }
+.nav-link--active {
+  color: var(--color-accent);
+}
+
+/* 登录 / 注册 / 控制台三枚药丸共用尺寸，只有底色不同 */
+.auth-btn {
+  display: inline-flex;
+  height: 2.25rem;
+  align-items: center;
+  border-radius: 100px;
+  padding-inline: 1.125rem;
+  font-size: 15px;
+  font-weight: 500;
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    filter var(--duration-base) var(--ease-out);
 }
 </style>

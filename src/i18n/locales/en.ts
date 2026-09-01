@@ -176,6 +176,33 @@ export default {
       },
     },
   },
+  homeNew: {
+    hero: {
+      line1: 'Every model,',
+      line2: 'one endpoint',
+      subtitle:
+        'Reach the major model providers through a single interface with unified billing and quota management. OpenAI-compatible, so switching takes a few lines — no rewrite required.',
+      primaryCta: 'Start your AI journey',
+      secondaryCta: 'API docs',
+    },
+    models: {
+      title: '500+ models already integrated',
+      more: 'More',
+    },
+    demo: {
+      prompt: 'Hi, could you summarize this passage for me?',
+      tag: 'Multimodal understanding',
+      reply: 'Sure — here are the key points…',
+    },
+    badges: {
+      transparent: 'Transparent billing',
+      concurrency: 'High concurrency',
+      ops: 'Professional ops',
+      metered: 'Pay as you go',
+      stability: 'High stability',
+      support: 'Broad support',
+    },
+  },
   console: {
     dashboard: 'Overview',
     balance: 'Balance',
@@ -284,6 +311,7 @@ export default {
     fName: 'Name',
     fNamePlaceholder: 'e.g. production backend',
     fGroup: 'Group',
+    fGroupPlaceholder: 'Select a group',
     fGroupHint: 'Groups bill at different rates',
     fExpiry: 'Expires',
     expiry_never: 'Never',
@@ -401,6 +429,9 @@ export default {
     searchPlaceholder: 'Search name, vendor or description…',
     group: 'Pricing group',
     allGroups: 'All groups',
+    groupPlaceholder: 'Select groups (multi-select)',
+    groupAvailable: '{n} models',
+    groupRatio: '{n}x rate',
     allVendors: 'All vendors',
     vendorOther: 'Other',
     ratioHint: 'Prices below use group "{group}" at ×{ratio}',

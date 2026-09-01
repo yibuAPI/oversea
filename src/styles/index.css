@@ -73,6 +73,18 @@
     background: var(--brand-gradient);
   }
 
+  /* 首页 hero 专用的蓝紫渐变：字标走文字裁切，主按钮走底色 */
+  .text-hero-gradient {
+    background: var(--hero-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-hero-gradient {
+    background: var(--hero-gradient);
+  }
+
   /* ---------- 运动工具类 ----------
      给交互元素补上「按压/上浮」手感。transition-property 一把列出常用属性，
      hover 移走时同样平滑回弹（mouse-leave 靠对称 transition 实现）。

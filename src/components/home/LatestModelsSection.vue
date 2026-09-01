@@ -59,7 +59,7 @@ function perCall(v?: number | null): string {
 
 <template>
   <section v-if="shown.length" class="px-5 py-[100px]">
-    <div class="mx-auto max-w-[1100px]">
+    <div class="mx-auto max-w-[1400px]">
       <p class="text-[18px] font-semibold leading-[21.6px] text-brand">
         {{ t('home.latest.eyebrow') }}
       </p>

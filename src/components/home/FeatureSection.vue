@@ -22,7 +22,6 @@ const { t, tm } = useI18n()
 const blocks = [
   { key: 'unified', to: '/docs', visual: 'code' },
   { key: 'reliability', to: '/company', visual: 'failover' },
-  { key: 'support', to: '/about', visual: 'support' },
 ] as const
 
 /** 每段 3 条要点，从 i18n 数组取；缺失时该段只渲染标题 */
@@ -35,12 +34,11 @@ function points(key: string): string[] {
 <template>
   <section class="bg-bg-elevated px-5 pb-20 pt-16">
     <!--
-      容器 1100 而非 1256：1878px 实测 infron，页面主体容器是
-      「1100 居中」（出现 22 次），1256 只是 hero 那一层的宽度。
-      这里用 1256 会让四段特性比上下相邻区块各宽出 78px，
-      滚动时边界左右晃动 —— 正是「对不齐」的来源。
+      容器 1400 与 hero 对齐：新首页 hero 用 max-w-[1400px]，其余区块
+      之前停留在 1100（更窄的内容带）。用户要求「中间宽一点、左右边距收窄」，
+      统一提到 1400，让整页内容左边缘对齐、不再出现 hero 与下方区块宽窄交错。
     -->
-    <div class="mx-auto max-w-[1100px]">
+    <div class="mx-auto max-w-[1400px]">
       <div
         v-for="(b, i) in blocks"
         :key="b.key"

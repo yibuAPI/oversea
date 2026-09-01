@@ -6,7 +6,7 @@
  *   - 创建接口不返回 data，故建完必须重新拉列表
  *   - 分组是必填项（后端按 groups 路由），下拉数据来自 /user/self/groups
  */
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
@@ -19,6 +19,7 @@ import {
   Check,
   Ban,
   CircleCheck,
+  ChevronDown,
 } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
 import {
@@ -30,7 +31,7 @@ import {
   revealTokenKey,
   parseTokenGroups,
 } from '@/api/tokens'
-import { getMyGroups, getMyModels } from '@/api/models'
+import { getMyGroups, getMyModels, getPricing } from '@/api/models'
 import { TOKEN_STATUS, type ApiToken } from '@/api/types'
 import { formatDateTime, formatQuota, formatRelative } from '@/lib/format'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -55,6 +56,8 @@ const tokensQ = useQuery({
 
 const groupsQ = useQuery({ queryKey: ['my-groups'], queryFn: getMyGroups })
 const modelsQ = useQuery({ queryKey: ['my-models'], queryFn: () => getMyModels() })
+/** 模型库同源：每个分组开放多少可用模型（/api/pricing 的 enable_groups） */
+const pricingQ = useQuery({ queryKey: ['pricing'], queryFn: getPricing })
 
 const rows = computed(() => tokensQ.data.value?.items ?? [])
 
@@ -143,6 +146,48 @@ watch(groupOptions, (opts) => {
     form.value.groups = [opts.includes('default') ? 'default' : opts[0]!]
   }
 })
+
+/** 每个分组开放了多少可用模型（同模型库的「N 可用模型」标签） */
+const groupCounts = computed(() => {
+  const m = new Map<string, number>()
+  for (const x of pricingQ.data.value?.data ?? []) {
+    for (const g of x.enable_groups ?? []) m.set(g, (m.get(g) ?? 0) + 1)
+  }
+  return m
+})
+
+/** 分组倍率：auto 分组在 /user/self/groups 里可能是字符串，按 1 处理并原样展示 */
+const ratioOf = (g: string) => {
+  const v = groupsQ.data.value?.[g]?.ratio
+  return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 1
+}
+
+/** 倍率标签：1 → "1"，0.25 → "0.25"（去掉浮点尾噪，同模型库） */
+const ratioLabel = (n: number) => String(Number.parseFloat(n.toFixed(2)))
+
+/** 分组下拉的展开/收起，以及点击外部关闭（对齐模型库） */
+const groupOpen = ref(false)
+const groupWrap = ref<HTMLElement | null>(null)
+/** 过期时间下拉（同分组下拉，做成自定义样式） */
+const expiryOpen = ref(false)
+const expiryWrap = ref<HTMLElement | null>(null)
+function onDocClick(e: MouseEvent) {
+  const t = e.target as Node
+  if (!groupWrap.value || !groupWrap.value.contains(t)) groupOpen.value = false
+  if (!expiryWrap.value || !expiryWrap.value.contains(t)) expiryOpen.value = false
+}
+onMounted(() => document.addEventListener('click', onDocClick))
+onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
+
+function selectGroup(g: string) {
+  form.value.groups = [g]
+  groupOpen.value = false
+}
+
+function selectExpiry(v: string) {
+  form.value.expiry = v
+  expiryOpen.value = false
+}
 
 function openCreate() {
   form.value = blankForm()
@@ -474,30 +519,104 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
         </FormField>
 
         <FormField id="k-group" :label="t('keys.fGroup')" :hint="t('keys.fGroupHint')" required>
-          <select
-            id="k-group"
-            v-model="form.groups[0]"
-            class="h-9 w-full rounded-lg border border-border bg-bg px-2.5 text-[13px] outline-none transition-colors focus:border-accent"
-          >
-            <option v-for="g in groupOptions" :key="g" :value="g">
-              {{ g }}
-              <template v-if="groupsQ.data.value?.[g]">
-                （×{{ groupsQ.data.value[g]!.ratio }}）
-              </template>
-            </option>
-          </select>
+          <div ref="groupWrap" class="relative">
+            <button
+              type="button"
+              :aria-expanded="groupOpen"
+              :aria-label="t('keys.fGroup')"
+              class="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-accent"
+              @click="groupOpen = !groupOpen"
+            >
+              <span v-if="form.groups[0]" class="truncate">{{ form.groups[0] }}</span>
+              <span v-else class="truncate text-fg-muted">{{ t('keys.fGroupPlaceholder') }}</span>
+              <ChevronDown
+                class="ml-auto size-3.5 shrink-0 text-fg-subtle transition-transform"
+                :class="groupOpen ? 'rotate-180' : ''"
+              />
+            </button>
+
+            <div
+              v-if="groupOpen"
+              class="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-72 overflow-y-auto rounded-lg border border-border bg-bg-elevated py-1 shadow-lg"
+            >
+              <button
+                v-for="g in groupOptions"
+                :key="g"
+                type="button"
+                class="motion-press flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-bg-muted"
+                :class="form.groups[0] === g ? 'bg-bg-muted' : ''"
+                @click="selectGroup(g)"
+              >
+                <Check
+                  v-if="form.groups[0] === g"
+                  class="mt-0.5 size-3.5 shrink-0 text-accent"
+                />
+                <span v-else class="mt-0.5 size-3.5 shrink-0" />
+                <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span class="text-[12.5px] font-semibold text-fg">{{ g }}</span>
+                  <span
+                    v-if="groupsQ.data.value?.[g]?.desc && groupsQ.data.value[g]!.desc !== g"
+                    class="text-[11.5px] text-fg-muted"
+                  >
+                    {{ groupsQ.data.value[g]!.desc }}
+                  </span>
+                </span>
+                <span class="flex shrink-0 items-center gap-1.5 pt-0.5">
+                  <span
+                    class="rounded bg-success-bg px-2 py-1 text-[10.5px] leading-none text-success-fg"
+                  >
+                    {{ t('models.groupAvailable', { n: groupCounts.get(g) ?? 0 }) }}
+                  </span>
+                  <span
+                    class="rounded bg-info-bg px-2 py-1 text-[10.5px] leading-none text-info-fg"
+                  >
+                    {{ t('models.groupRatio', { n: ratioLabel(ratioOf(g)) }) }}
+                  </span>
+                </span>
+              </button>
+            </div>
+          </div>
         </FormField>
 
         <FormField id="k-expiry" :label="t('keys.fExpiry')">
-          <select
-            id="k-expiry"
-            v-model="form.expiry"
-            class="h-9 w-full rounded-lg border border-border bg-bg px-2.5 text-[13px] outline-none transition-colors focus:border-accent"
-          >
-            <option v-for="p in EXPIRY_PRESETS" :key="p.value" :value="p.value">
-              {{ t(`keys.expiry_${p.value}`) }}
-            </option>
-          </select>
+          <div ref="expiryWrap" class="relative">
+            <button
+              type="button"
+              :aria-expanded="expiryOpen"
+              :aria-label="t('keys.fExpiry')"
+              class="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-accent"
+              @click="expiryOpen = !expiryOpen"
+            >
+              <span class="truncate">{{ t(`keys.expiry_${form.expiry}`) }}</span>
+              <ChevronDown
+                class="ml-auto size-3.5 shrink-0 text-fg-subtle transition-transform"
+                :class="expiryOpen ? 'rotate-180' : ''"
+              />
+            </button>
+
+            <div
+              v-if="expiryOpen"
+              class="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-72 overflow-y-auto rounded-lg border border-border bg-bg-elevated py-1 shadow-lg"
+            >
+              <button
+                v-for="p in EXPIRY_PRESETS"
+                :key="p.value"
+                type="button"
+                class="motion-press flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-bg-muted"
+                :class="form.expiry === p.value ? 'bg-bg-muted' : ''"
+                @click="selectExpiry(p.value)"
+              >
+                <Check
+                  v-if="form.expiry === p.value"
+                  class="size-3.5 shrink-0 text-accent"
+                />
+                <span v-else class="size-3.5 shrink-0" />
+                <span class="flex-1 text-[12.5px] font-semibold text-fg">
+                  {{ t(`keys.expiry_${p.value}`) }}
+                </span>
+              </button>
+            </div>
+          </div>
           <input
             v-if="form.expiry === 'custom'"
             v-model="form.customExpiry"
