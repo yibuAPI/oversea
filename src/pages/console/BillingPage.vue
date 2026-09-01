@@ -337,7 +337,6 @@ const totalTopUp = computed(() =>
 
 /** 充值说明：站点固定文案 */
 const notes = computed(() => [
-  t('billing.note1'),
   t('billing.note2'),
   t('billing.note3'),
   t('billing.note4'),

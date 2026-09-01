@@ -533,7 +533,6 @@ export default {
     redeemSubmit: '兑换额度',
     redeemSuccess: '充值成功，到账 {v}',
     notesTitle: '充值说明',
-    note1: '为了您的财产安全保障，关于充值、退款等详细说明请务必查看文档',
     note2: '充值 1$:1$，计费清晰，Stripe 支付支持支付宝、微信、银联、信用卡等多种方式',
     note3: '在线支付不可开票，如需开票或企业充值请联系人工客服',
     note4: "email：aa524163920{'@'}gmail.com",
