@@ -95,9 +95,30 @@ watch(drawerOpen, (open) => {
           </ol>
         </nav>
 
+        <nav class="ml-auto flex items-center gap-1" aria-label="Shortcuts">
+          <RouterLink
+            to="/"
+            class="motion-press rounded-lg px-3 py-1.5 text-[15px] font-medium text-fg hover:bg-bg-muted"
+          >
+            {{ t('nav.home') }}
+          </RouterLink>
+          <RouterLink
+            to="/models"
+            class="motion-press rounded-lg px-3 py-1.5 text-[15px] font-medium text-fg hover:bg-bg-muted"
+          >
+            {{ t('nav.models') }}
+          </RouterLink>
+          <RouterLink
+            to="/docs"
+            class="motion-press rounded-lg px-3 py-1.5 text-[15px] font-medium text-fg hover:bg-bg-muted"
+          >
+            {{ t('nav.docs') }}
+          </RouterLink>
+        </nav>
+
         <button
           type="button"
-          class="motion-press ml-auto flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg"
+          class="motion-press ml-2 flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg"
           aria-label="Switch language"
           @click="toggleLocale"
         >
