@@ -3,6 +3,10 @@
  * 指标卡。infron 的 Usage & Activity 页顶部六连卡就是这个形状：
  *   小号灰标题 → 大号数值 → 可选的副标题/环比
  * loading 时用骨架条占位，避免数字从 0 跳到真值。
+ *
+ * tone 是可选的渐变着色（账单页三连卡用），只加一层极淡的色膜，
+ * 底色仍由 bg-bg-elevated 决定 —— 所以暗色主题下同样成立，
+ * 不需要为深浅两套主题各写一份色值。
  */
 import type { Component } from 'vue'
 
@@ -14,12 +18,21 @@ defineProps<{
   loading?: boolean
   /** 环比等趋势值，正数绿、负数红 */
   delta?: number | null
+  /** 可选的渐变着色 */
+  tone?: 'blue' | 'violet' | 'mint'
 }>()
+
+const TONE: Record<string, string> = {
+  blue: 'linear-gradient(135deg, rgb(59 130 246 / 0.12), rgb(59 130 246 / 0.03))',
+  violet: 'linear-gradient(135deg, rgb(168 85 247 / 0.12), rgb(168 85 247 / 0.03))',
+  mint: 'linear-gradient(135deg, rgb(16 185 129 / 0.12), rgb(16 185 129 / 0.03))',
+}
 </script>
 
 <template>
   <div
     class="motion-lift rounded-xl border border-border bg-bg-elevated p-4 hover:shadow-lg"
+    :style="tone ? { backgroundImage: TONE[tone] } : undefined"
   >
     <div class="flex items-start justify-between gap-2">
       <p class="text-[12.5px] text-fg-muted">{{ label }}</p>

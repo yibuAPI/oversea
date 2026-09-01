@@ -1,39 +1,39 @@
 <script setup lang="ts">
 /**
- * 账单与充值。合并 infron 的 Billing Transactions + Payments 两页：
- * 上半是充值入口（按后端真实开启的通道渲染），下半是交易流水。
+ * 账单与充值。版式对齐设计稿「账户与充值」：
+ *   三张渐变指标卡 -> 充值卡（快捷金额 / 金额输入 / 支付按钮 / 支付方式）
+ *   -> 兑换码 -> 充值说明；交易流水收进右上角「交易记录」弹窗。
  *
- * 支付通道有五种，全部由 /api/user/topup/info 的开关决定，
- * 一个没开就只显示兑换码 —— 绝不画点了会报错的按钮：
- *   enable_online_topup  易支付：返回表单字段，需前端构造 form POST
+ * 支付通道全部由 /api/user/topup/info 的开关决定，一个没开就只剩兑换码：
  *   enable_stripe_topup  Stripe：返回 pay_link，直接跳
- *   enable_creem_topup   Creem：预设商品，返回 checkout_url
  *   enable_usdt_topup    USDT：返回钱包地址，需轮询到账
  *   enable_redemption    兑换码：走标准 envelope
+ *
+ * 支付方式一行照设计稿摆六格，但只在对应开关打开时才渲染 —— 绝不画点了会报错的按钮。
+ * 其中前五格（银行卡 / Apple Pay / Link / 微信 / 支付宝）都属于 Stripe，
+ * 点哪一个都跳同一个 Stripe 收银台；第六格加密货币走 USDT。
  */
 import { computed, onUnmounted, ref, watch } from 'vue'
+import type { Component } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
-import {
-  ArrowUpRight,
-  Copy,
-  CreditCard,
-  Gift,
-  Receipt,
-  Wallet,
-} from 'lucide-vue-next'
+import { ArrowUpRight, Copy, Loader2, Receipt, Wallet } from 'lucide-vue-next'
+import IconAlipay from '@/components/icons/IconAlipay.vue'
+import IconApplePay from '@/components/icons/IconApplePay.vue'
+import IconBitcoin from '@/components/icons/IconBitcoin.vue'
+import IconCard from '@/components/icons/IconCard.vue'
+import IconLink from '@/components/icons/IconLink.vue'
+import IconWechatPay from '@/components/icons/IconWechatPay.vue'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 import {
   calcAmount,
+  calcStripeAmount,
   getTopUpInfo,
   getUsdtStatus,
   listTopUps,
-  parseCreemProducts,
-  payCreem,
-  payEpay,
   payStripe,
   payUsdt,
   redeemCode,
@@ -45,7 +45,6 @@ import DataTable, { type Column } from '@/components/ui/DataTable.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppModal from '@/components/ui/AppModal.vue'
-import FormField from '@/components/ui/FormField.vue'
 
 const site = useSiteStore()
 const userStore = useUserStore()
@@ -64,15 +63,10 @@ const recordsQ = useQuery({
 })
 
 const info = computed(() => infoQ.data.value ?? null)
-const creemProducts = computed(() => parseCreemProducts(info.value))
 
 /** 任一在线通道开着 */
 const anyOnline = computed(
-  () =>
-    info.value?.enable_online_topup ||
-    info.value?.enable_stripe_topup ||
-    info.value?.enable_creem_topup ||
-    info.value?.enable_usdt_topup,
+  () => info.value?.enable_stripe_topup || info.value?.enable_usdt_topup,
 )
 
 /** 快捷金额。后端可配 amount_options，没配就用一组常见档位 */
@@ -80,59 +74,133 @@ const amountOptions = computed(() =>
   info.value?.amount_options?.length ? info.value.amount_options : [5, 10, 20, 50, 100],
 )
 
-// ───────────────── 充值金额与试算 ─────────────────
-
-const amount = ref<number>(0)
 const minTopup = computed(() => info.value?.min_topup ?? 1)
 
-/** 后端试算的实付价（含折扣），只在有在线通道且金额合法时问 */
-const quoteQ = useQuery({
-  queryKey: computed(() => ['topup-quote', amount.value]),
-  queryFn: () => calcAmount(amount.value),
-  enabled: computed(
-    () => Boolean(anyOnline.value) && amount.value >= minTopup.value,
-  ),
-})
+// ---------------- 支付通道 ----------------
 
-const belowMin = computed(() => amount.value > 0 && amount.value < minTopup.value)
+type PayChannel = 'stripe' | 'usdt'
 
-// ───────────────── 易支付 ─────────────────
-
-/**
- * 易支付要求 form POST 而非跳转。动态建表单提交是唯一可行方式 ——
- * 后端返回的是待签名字段集，用 GET 拼 query 会丢签名。
- */
-function submitEpayForm(url: string, fields: Record<string, string>) {
-  const form = document.createElement('form')
-  form.method = 'POST'
-  form.action = url
-  form.target = '_blank'
-  for (const [k, v] of Object.entries(fields)) {
-    const input = document.createElement('input')
-    input.type = 'hidden'
-    input.name = k
-    input.value = String(v)
-    form.appendChild(input)
-  }
-  document.body.appendChild(form)
-  form.submit()
-  form.remove()
+interface PayOption {
+  key: string
+  channel: PayChannel
+  label: string
+  icon: Component
+  /** 品牌色，留空表示跟随选中态（currentColor）或图标自带配色 */
+  tint: string
+  /** 该通道自己的最低充值额，可能高于站点通用值 */
+  min: number
 }
 
-const epayMethod = ref('alipay')
+/**
+ * Stripe 收银台内部支持的几种方式。
+ *
+ * 后端 payStripe 只收金额，没有 payment_method 参数，所以这几格点下去
+ * 跳的是同一个 Stripe 收银台，具体用哪种在收银台里选 ——
+ * 摆出来是为了让人一眼看到支持什么，按钮下方的 stripeHint 会说明这一点。
+ */
+const STRIPE_METHODS: [string, string, Component, string][] = [
+  ['card', 'billing.mCard', IconCard, ''],
+  ['applepay', 'billing.mApplePay', IconApplePay, ''],
+  ['link', 'billing.mLink', IconLink, ''],
+  ['wechat', 'billing.mWechat', IconWechatPay, '#07C160'],
+  ['alipay', 'billing.mAlipay', IconAlipay, '#1677FF'],
+]
 
-const epayMut = useMutation({
-  mutationFn: () => payEpay(amount.value, epayMethod.value),
-  onSuccess: (res) => {
-    if (res.url) {
-      submitEpayForm(res.url, res.data ?? {})
-      toast.info(t('billing.newTabOpened'))
-    } else {
-      toast.error(t('billing.noPayUrl'))
+const payOptions = computed<PayOption[]>(() => {
+  const i = info.value
+  if (!i) return []
+  const list: PayOption[] = []
+
+  if (i.enable_stripe_topup) {
+    const min = i.stripe_min_topup ?? minTopup.value
+    for (const [k, label, icon, tint] of STRIPE_METHODS) {
+      list.push({ key: `stripe:${k}`, channel: 'stripe', label: t(label), icon, tint, min })
     }
-  },
-  onError: (e: Error) => toast.error(e.message),
+  }
+
+  if (i.enable_usdt_topup) {
+    list.push({
+      key: 'usdt',
+      channel: 'usdt',
+      label: t('billing.mCrypto'),
+      icon: IconBitcoin,
+      tint: '',
+      min: i.usdt_min_topup ?? minTopup.value,
+    })
+  }
+
+  return list
 })
+
+const methodKey = ref('')
+watch(
+  payOptions,
+  (list) => {
+    // 选中的通道被后端关掉时要落回第一个，否则会停在一个不存在的选项上
+    if (!list.some((o) => o.key === methodKey.value)) methodKey.value = list[0]?.key ?? ''
+  },
+  { immediate: true },
+)
+const method = computed(() => payOptions.value.find((o) => o.key === methodKey.value) ?? null)
+
+/** 当前通道的最低充值额 */
+const effMin = computed(() => method.value?.min ?? minTopup.value)
+
+// ---------------- 金额与试算 ----------------
+
+const amount = ref<number>(0)
+watch(
+  amountOptions,
+  (opts) => {
+    if (!amount.value && opts.length) amount.value = opts[0]
+  },
+  { immediate: true },
+)
+
+/**
+ * 折扣表是 { 金额: 倍率 } 且后端**精确匹配**（充 99 不会套用 100 的折扣），
+ * 所以只在快捷档位上标折扣；自定义金额一律以后端试算为准。
+ */
+function ratioOf(a: number): number {
+  const r = Number(info.value?.discount?.[String(a)])
+  return Number.isFinite(r) && r > 0 && r < 1 ? r : 1
+}
+
+const amountCards = computed(() =>
+  amountOptions.value.map((a) => {
+    const ratio = ratioOf(a)
+    return {
+      amount: a,
+      price: formatUsd(a * ratio),
+      tag:
+        ratio < 1
+          ? t('billing.discountTag', {
+              tenth: Number((ratio * 10).toFixed(2)),
+              off: Math.round((1 - ratio) * 100),
+            })
+          : '',
+    }
+  }),
+)
+
+const belowMin = computed(() => amount.value > 0 && amount.value < effMin.value)
+
+/** 后端试算实付价。Stripe 有独立算价接口，选中它时要走那条 */
+const quoteQ = useQuery({
+  queryKey: computed(() => ['topup-quote', amount.value, method.value?.channel ?? '']),
+  queryFn: () =>
+    method.value?.channel === 'stripe' ? calcStripeAmount(amount.value) : calcAmount(amount.value),
+  enabled: computed(() => payOptions.value.length > 0 && amount.value >= effMin.value),
+})
+
+/** 试算未回来时先用本地折扣估一个，别让按钮上的金额空着 */
+const payPrice = computed(() => {
+  const q = quoteQ.data.value
+  if (q && !belowMin.value) return `$${q}`
+  return formatUsd((amount.value || 0) * ratioOf(amount.value))
+})
+
+// ---------------- Stripe ----------------
 
 const stripeMut = useMutation({
   mutationFn: () =>
@@ -148,16 +216,7 @@ const stripeMut = useMutation({
   onError: (e: Error) => toast.error(e.message),
 })
 
-const creemMut = useMutation({
-  mutationFn: (productId: string) => payCreem(productId),
-  onSuccess: (d) => {
-    if (d.checkout_url) window.location.href = d.checkout_url
-    else toast.error(t('billing.noPayUrl'))
-  },
-  onError: (e: Error) => toast.error(e.message),
-})
-
-// ───────────────── USDT ─────────────────
+// ---------------- USDT ----------------
 
 /** USDT 是异步到账：拿到地址后要轮询状态 */
 const usdtOrder = ref<{
@@ -220,28 +279,38 @@ async function copyText(text: string) {
   }
 }
 
-// ───────────────── 兑换码 ─────────────────
+// ---------------- 支付确认 ----------------
 
-const redeemOpen = ref(false)
+const paying = computed(() => stripeMut.isPending.value || usdtMut.isPending.value)
+const canPay = computed(() => Boolean(method.value) && amount.value >= effMin.value)
+
+const confirmOpen = ref(false)
+
+function runPay() {
+  confirmOpen.value = false
+  const m = method.value
+  if (!m) return
+  if (m.channel === 'stripe') stripeMut.mutate()
+  else usdtMut.mutate()
+}
+
+// ---------------- 兑换码 ----------------
+
 const redeemKey = ref('')
 const redeemMut = useMutation({
   mutationFn: () => redeemCode(redeemKey.value.trim()),
   onSuccess: async (added) => {
-    toast.success(
-      t('billing.redeemSuccess', { v: formatQuota(added ?? 0, quotaPerUnit.value) }),
-    )
-    redeemOpen.value = false
+    toast.success(t('billing.redeemSuccess', { v: formatQuota(added ?? 0, quotaPerUnit.value) }))
     redeemKey.value = ''
     // 余额和流水都变了
-    await Promise.all([
-      userStore.fetchSelf(),
-      qc.invalidateQueries({ queryKey: ['topups'] }),
-    ])
+    await Promise.all([userStore.fetchSelf(), qc.invalidateQueries({ queryKey: ['topups'] })])
   },
   onError: (e: Error) => toast.error(e.message),
 })
 
-// ───────────────── 流水表 ─────────────────
+// ---------------- 流水 ----------------
+
+const txOpen = ref(false)
 
 const columns = computed<Column[]>(() => [
   { key: 'create_time', label: t('billing.colTime'), class: 'w-[150px]' },
@@ -265,33 +334,39 @@ const totalTopUp = computed(() =>
     .filter((r) => r.status === 'success')
     .reduce((s, r) => s + r.quota, 0),
 )
+
+/** 充值说明：站点固定文案 */
+const notes = computed(() => [
+  t('billing.note1'),
+  t('billing.note2'),
+  t('billing.note3'),
+  t('billing.note4'),
+])
 </script>
 
 <template>
   <div>
     <PageHeader :title="t('billing.title')" :description="t('billing.subtitle')">
       <template #actions>
-        <AppButton
-          v-if="info?.enable_redemption"
-          size="md"
-          @click="redeemOpen = true"
-        >
-          <Gift class="size-3.5" />
-          {{ t('billing.redeem') }}
+        <AppButton size="md" @click="txOpen = true">
+          <Receipt class="size-3.5" />
+          {{ t('billing.transactions') }}
         </AppButton>
       </template>
     </PageHeader>
 
-    <div class="mb-6 grid gap-3 sm:grid-cols-3">
+    <div class="mb-5 grid gap-3 sm:grid-cols-3">
       <StatCard
         :label="t('billing.balance')"
         :value="formatQuota(user?.quota ?? 0, quotaPerUnit)"
         :icon="Wallet"
+        tone="blue"
       />
       <StatCard
         :label="t('billing.lifetimeUsed')"
         :value="formatQuota(user?.used_quota ?? 0, quotaPerUnit)"
         :icon="Receipt"
+        tone="violet"
       />
       <StatCard
         :label="t('billing.recentTopUp')"
@@ -299,224 +374,144 @@ const totalTopUp = computed(() =>
         :hint="t('billing.recentHint')"
         :icon="ArrowUpRight"
         :loading="recordsQ.isLoading.value"
+        tone="mint"
       />
     </div>
 
-    <!-- 充值区 -->
+    <!-- 充值卡：有可用在线通道时才画 -->
     <section
-      v-if="anyOnline || info?.enable_redemption"
-      class="mb-8 rounded-xl border border-border bg-bg-elevated p-5"
+      v-if="payOptions.length"
+      class="mb-2 rounded-2xl border border-border bg-bg-elevated p-3.5"
     >
-      <h2 class="text-[15px] font-semibold tracking-tight">
-        {{ t('billing.addFunds') }}
-      </h2>
-
-      <template v-if="anyOnline">
-        <!-- 金额选择 -->
-        <div class="mt-4 flex flex-wrap gap-2">
-          <button
-            v-for="a in amountOptions"
-            :key="a"
-            type="button"
-            class="h-9 rounded-lg border px-3.5 text-[13px] font-medium tabular transition-colors"
-            :class="
-              amount === a
-                ? 'border-accent bg-accent-bg text-accent'
-                : 'border-border text-fg-muted hover:bg-bg-muted hover:text-fg'
-            "
-            @click="amount = a"
-          >
-            ${{ a }}
-          </button>
-          <div class="relative">
-            <span
-              class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-fg-subtle"
-            >
-              $
-            </span>
-            <input
-              v-model.number="amount"
-              type="number"
-              :min="minTopup"
-              step="1"
-              :aria-label="t('billing.customAmount')"
-              :placeholder="t('billing.customAmount')"
-              class="h-9 w-[130px] rounded-lg border border-border bg-bg pl-7 pr-3 text-[13px] tabular outline-none transition-colors focus:border-accent"
-            />
-          </div>
-        </div>
-
-        <p v-if="belowMin" class="mt-2 text-[12px] text-danger-fg">
-          {{ t('billing.belowMin', { v: `$${minTopup}` }) }}
-        </p>
-        <p
-          v-else-if="quoteQ.data.value && amount >= minTopup"
-          class="mt-2 text-[12.5px] text-fg-muted"
+      <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none">
+        <button
+          v-for="c in amountCards"
+          :key="c.amount"
+          type="button"
+          class="motion-press relative min-h-[68px] overflow-hidden rounded-xl border px-2 py-2 text-center transition-colors"
+          :class="
+            amount === c.amount
+              ? 'border-accent bg-accent-bg'
+              : 'border-border bg-bg-subtle hover:border-border-strong'
+          "
+          @click="amount = c.amount"
         >
-          {{ t('billing.quote', { amount: `$${amount}`, price: quoteQ.data.value }) }}
-        </p>
-
-        <!-- 支付通道 -->
-        <div class="mt-4 flex flex-wrap gap-2">
-          <!-- 易支付：需要选具体方式 -->
-          <template v-if="info?.enable_online_topup">
-            <select
-              v-model="epayMethod"
-              :aria-label="t('billing.epayMethod')"
-              class="h-9 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-accent"
-            >
-              <option
-                v-for="m in info.pay_methods ?? [{ name: '支付宝', type: 'alipay', color: '', min_topup: '1' }]"
-                :key="m.type"
-                :value="m.type"
-              >
-                {{ m.name }}
-              </option>
-            </select>
-            <AppButton
-              variant="primary"
-              :disabled="amount < minTopup"
-              :loading="epayMut.isPending.value"
-              @click="epayMut.mutate()"
-            >
-              <CreditCard class="size-3.5" />
-              {{ t('billing.payNow') }}
-            </AppButton>
-          </template>
-
-          <AppButton
-            v-if="info?.enable_stripe_topup"
-            :disabled="amount < (info.stripe_min_topup ?? minTopup)"
-            :loading="stripeMut.isPending.value"
-            @click="stripeMut.mutate()"
+          <span
+            v-if="c.tag"
+            class="absolute right-0 top-0 inline-flex h-4 items-center justify-center rounded-bl-lg rounded-tr-xl bg-success-fg px-1.5 text-[9px] font-bold text-white"
           >
-            {{ t('billing.payStripe') }}
-          </AppButton>
+            {{ c.tag }}
+          </span>
+          <span class="block text-[20px] font-bold leading-none tabular">$ {{ c.amount }}</span>
+          <span class="mt-1.5 block text-[11px] leading-tight text-fg-muted">
+            {{ t('billing.actualPay', { v: c.price }) }}
+          </span>
+        </button>
+      </div>
 
-          <AppButton
-            v-if="info?.enable_usdt_topup"
-            :disabled="amount < (info.usdt_min_topup ?? minTopup)"
-            :loading="usdtMut.isPending.value"
-            @click="usdtMut.mutate()"
+      <label for="topup-amount" class="mb-2 mt-4 block text-[15px] font-bold">
+        {{ t('billing.amountLabel') }}
+      </label>
+      <div class="relative">
+        <span
+          class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[16px] font-semibold text-fg-subtle"
+        >
+          $
+        </span>
+        <input
+          id="topup-amount"
+          v-model.number="amount"
+          type="number"
+          :min="effMin"
+          step="1"
+          :aria-label="t('billing.customAmount')"
+          class="h-[42px] w-full rounded-[10px] border border-border bg-bg-inset pl-8 pr-3 text-[22px] font-semibold tabular outline-none transition-colors focus:border-accent"
+        />
+      </div>
+
+      <p v-if="belowMin" class="mt-2 text-[12px] text-danger-fg">
+        {{ t('billing.belowMin', { v: `$${effMin}` }) }}
+      </p>
+
+      <button
+        type="button"
+        class="motion-press mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-btn-primary-bg text-[15px] font-bold text-btn-primary-fg transition-colors hover:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+        :disabled="!canPay || paying"
+        @click="confirmOpen = true"
+      >
+        <Loader2 v-if="paying" class="size-4 shrink-0 animate-spin" />
+        {{ t('billing.payAmount', { v: payPrice }) }}
+      </button>
+
+      <!-- 支付方式：按后端真实开关渲染 -->
+      <div class="mt-3.5 flex flex-wrap gap-2.5 sm:flex-nowrap">
+        <button
+          v-for="m in payOptions"
+          :key="m.key"
+          type="button"
+          class="motion-press w-[84px] sm:w-auto sm:flex-1 sm:basis-0"
+          :aria-pressed="methodKey === m.key"
+          @click="methodKey = m.key"
+        >
+          <span
+            class="flex h-[42px] items-center justify-center rounded-xl border transition-colors"
+            :class="
+              methodKey === m.key
+                ? 'border-accent bg-accent-bg text-accent'
+                : 'border-border bg-bg-subtle text-fg-muted hover:border-border-strong'
+            "
           >
-            {{ t('billing.payUsdt') }}
-          </AppButton>
-        </div>
+            <component
+              :is="m.icon"
+              class="h-5 w-auto max-w-[46px] shrink-0"
+              :style="m.tint ? { color: m.tint } : undefined"
+              aria-hidden="true"
+            />
+          </span>
+          <span class="mt-1.5 block truncate text-center text-[11px] text-fg-muted">
+            {{ m.label }}
+          </span>
+        </button>
+      </div>
 
-        <!-- Creem 是固定商品，与自定义金额互斥，单独一块 -->
-        <div v-if="info?.enable_creem_topup && creemProducts.length" class="mt-5">
-          <p class="mb-2 text-[12.5px] text-fg-muted">{{ t('billing.creemPackages') }}</p>
-          <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            <button
-              v-for="p in creemProducts"
-              :key="p.productId"
-              type="button"
-              class="rounded-xl border border-border p-3 text-left transition-colors hover:border-accent hover:bg-bg-subtle"
-              :disabled="creemMut.isPending.value"
-              @click="creemMut.mutate(p.productId)"
-            >
-              <p class="text-[13px] font-medium">{{ p.name }}</p>
-              <p class="mt-1 text-[16px] font-semibold tabular">
-                {{ p.currency === 'USD' ? '$' : '' }}{{ p.price }}
-              </p>
-              <p class="mt-0.5 text-[11.5px] text-fg-subtle">
-                {{ formatQuota(p.quota, quotaPerUnit) }}
-                <template v-if="p.bonus">
-                  · {{ t('billing.bonus', { v: formatQuota(p.bonus, quotaPerUnit) }) }}
-                </template>
-              </p>
-            </button>
-          </div>
-        </div>
-      </template>
-
-      <p v-else class="mt-3 text-[12.5px] text-fg-muted">
-        {{ t('billing.onlineDisabled') }}
+      <p v-if="info?.enable_stripe_topup" class="mt-2.5 text-[11.5px] text-fg-subtle">
+        {{ t('billing.stripeHint') }}
       </p>
     </section>
 
-    <!-- 没有任何充值方式：如实说明 -->
+    <!-- 在线通道全关：如实说明，别留空白 -->
     <div
-      v-else-if="!infoQ.isLoading.value"
-      class="mb-8 rounded-xl border border-border bg-bg-subtle px-4 py-3 text-[12.5px] text-fg-muted"
+      v-if="!anyOnline && info?.enable_redemption"
+      class="mb-2 rounded-2xl border border-border bg-bg-subtle px-4 py-3 text-[12.5px] text-fg-muted"
+    >
+      {{ t('billing.onlineDisabled') }}
+    </div>
+    <div
+      v-else-if="!anyOnline && !info?.enable_redemption && !infoQ.isLoading.value"
+      class="mb-2 rounded-2xl border border-border bg-bg-subtle px-4 py-3 text-[12.5px] text-fg-muted"
     >
       {{ t('billing.allDisabled') }}
     </div>
 
-    <!-- 流水 -->
-    <h2 class="mb-3 text-[15px] font-semibold tracking-tight">
-      {{ t('billing.transactions') }}
-    </h2>
-
-    <DataTable
-      :columns="columns"
-      :rows="recordsQ.data.value?.items ?? []"
-      :row-key="(r) => r.id"
-      :loading="recordsQ.isLoading.value"
-      :error="recordsQ.error.value ? String(recordsQ.error.value.message) : null"
-      @retry="recordsQ.refetch()"
-    >
-      <template #empty>
-        <Receipt class="mx-auto size-7 text-fg-subtle" />
-        <p class="mt-3 text-[13.5px] font-medium">{{ t('billing.emptyTitle') }}</p>
-        <p class="mt-1 text-[12.5px] text-fg-subtle">{{ t('billing.emptyDesc') }}</p>
-      </template>
-
-      <template #cell="{ row, column }">
-        <template v-if="column.key === 'create_time'">
-          {{ formatDateTime(row.create_time) }}
-        </template>
-        <template v-else-if="column.key === 'trade_no'">
-          <span class="font-mono text-[11.5px]">{{ row.trade_no || '—' }}</span>
-        </template>
-        <template v-else-if="column.key === 'payment_method'">
-          {{ row.payment_method || row.payment_provider || '—' }}
-        </template>
-        <template v-else-if="column.key === 'money'">
-          {{ row.money ? formatUsd(row.money) : '—' }}
-        </template>
-        <template v-else-if="column.key === 'quota'">
-          {{ formatQuota(row.quota, quotaPerUnit) }}
-        </template>
-        <template v-else-if="column.key === 'status'">
-          <span
-            class="inline-flex rounded-full border px-1.5 py-0.5 text-[10.5px] font-medium"
-            :class="STATUS_CLASS[row.status] ?? 'border-border bg-bg-muted text-fg-muted'"
-          >
-            {{ t(`billing.status_${row.status}`) }}
-          </span>
-        </template>
-      </template>
-    </DataTable>
-
-    <Pagination
-      v-model:page="page"
-      :page-size="PAGE_SIZE"
-      :total="recordsQ.data.value?.total ?? 0"
-    />
-
     <!-- 兑换码 -->
-    <AppModal
-      :open="redeemOpen"
-      :title="t('billing.redeemTitle')"
-      :description="t('billing.redeemDesc')"
-      @close="redeemOpen = false"
+    <section
+      v-if="info?.enable_redemption"
+      class="mb-2 rounded-2xl border border-border bg-bg-elevated"
     >
-      <FormField id="redeem-key" :label="t('billing.redeemLabel')" required>
+      <h2 class="border-b border-border px-4 py-3 text-[14px] font-bold">
+        {{ t('billing.redeemTitle') }}
+      </h2>
+      <div class="flex items-center gap-3 p-4">
         <input
-          id="redeem-key"
           v-model="redeemKey"
           type="text"
           autocomplete="off"
           spellcheck="false"
-          class="h-9 w-full rounded-lg border border-border bg-bg px-3 font-mono text-[13px] outline-none transition-colors focus:border-accent"
+          :aria-label="t('billing.redeemTitle')"
+          :placeholder="t('billing.redeemPlaceholder')"
+          class="h-9 min-w-0 flex-1 rounded-xl border border-border bg-bg-inset px-3.5 font-mono text-[13px] outline-none transition-colors focus:border-accent"
           @keydown.enter="redeemKey.trim() && redeemMut.mutate()"
         />
-      </FormField>
-      <template #footer>
-        <AppButton variant="ghost" @click="redeemOpen = false">
-          {{ t('common.cancel') }}
-        </AppButton>
         <AppButton
           variant="primary"
           :disabled="!redeemKey.trim()"
@@ -525,7 +520,110 @@ const totalTopUp = computed(() =>
         >
           {{ t('billing.redeemSubmit') }}
         </AppButton>
+      </div>
+    </section>
+
+    <!-- 充值说明 -->
+    <section class="rounded-2xl border border-border bg-bg-elevated">
+      <h2 class="border-b border-border px-4 py-3 text-[14px] font-bold">
+        {{ t('billing.notesTitle') }}
+      </h2>
+      <ul class="space-y-2 px-4 py-3.5 text-[13px] leading-relaxed text-fg-muted">
+        <li v-for="(n, i) in notes" :key="i" class="flex gap-2.5">
+          <span
+            class="mt-[7px] size-1.5 shrink-0 rounded-full"
+            :class="i === 0 ? 'bg-warning-fg' : 'bg-fg-subtle'"
+            aria-hidden="true"
+          />
+          <span>{{ n }}</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 充值确认 -->
+    <AppModal
+      :open="confirmOpen"
+      :title="t('billing.confirmTitle')"
+      :width="430"
+      @close="confirmOpen = false"
+    >
+      <div class="space-y-2.5 text-[13.5px]">
+        <div class="flex items-center justify-between">
+          <span class="text-fg-muted">{{ t('billing.confirmQuantity') }}</span>
+          <span class="tabular">{{ formatUsd(amount || 0) }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-fg-muted">{{ t('billing.confirmAmount') }}</span>
+          <strong class="text-[15px] tabular">{{ payPrice }}</strong>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-fg-muted">{{ t('billing.confirmMethod') }}</span>
+          <span>{{ method?.label ?? '—' }}</span>
+        </div>
+      </div>
+      <template #footer>
+        <AppButton variant="ghost" @click="confirmOpen = false">
+          {{ t('common.cancel') }}
+        </AppButton>
+        <AppButton variant="primary" :loading="paying" @click="runPay()">
+          {{ t('common.confirm') }}
+        </AppButton>
       </template>
+    </AppModal>
+
+    <!-- 交易记录 -->
+    <AppModal
+      :open="txOpen"
+      :title="t('billing.transactions')"
+      :width="1080"
+      @close="txOpen = false"
+    >
+      <DataTable
+        :columns="columns"
+        :rows="recordsQ.data.value?.items ?? []"
+        :row-key="(r) => r.id"
+        :loading="recordsQ.isLoading.value"
+        :error="recordsQ.error.value ? String(recordsQ.error.value.message) : null"
+        @retry="recordsQ.refetch()"
+      >
+        <template #empty>
+          <Receipt class="mx-auto size-7 text-fg-subtle" />
+          <p class="mt-3 text-[13.5px] font-medium">{{ t('billing.emptyTitle') }}</p>
+          <p class="mt-1 text-[12.5px] text-fg-subtle">{{ t('billing.emptyDesc') }}</p>
+        </template>
+
+        <template #cell="{ row, column }">
+          <template v-if="column.key === 'create_time'">
+            {{ formatDateTime(row.create_time) }}
+          </template>
+          <template v-else-if="column.key === 'trade_no'">
+            <span class="font-mono text-[11.5px]">{{ row.trade_no || '—' }}</span>
+          </template>
+          <template v-else-if="column.key === 'payment_method'">
+            {{ row.payment_method || row.payment_provider || '—' }}
+          </template>
+          <template v-else-if="column.key === 'money'">
+            {{ row.money ? formatUsd(row.money) : '—' }}
+          </template>
+          <template v-else-if="column.key === 'quota'">
+            {{ formatQuota(row.quota, quotaPerUnit) }}
+          </template>
+          <template v-else-if="column.key === 'status'">
+            <span
+              class="inline-flex rounded-full border px-1.5 py-0.5 text-[10.5px] font-medium"
+              :class="STATUS_CLASS[row.status] ?? 'border-border bg-bg-muted text-fg-muted'"
+            >
+              {{ t(`billing.status_${row.status}`) }}
+            </span>
+          </template>
+        </template>
+      </DataTable>
+
+      <Pagination
+        v-model:page="page"
+        :page-size="PAGE_SIZE"
+        :total="recordsQ.data.value?.total ?? 0"
+      />
     </AppModal>
 
     <!-- USDT 收款 -->
