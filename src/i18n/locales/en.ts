@@ -537,7 +537,7 @@ export default {
     note1: 'For your own protection, please read the docs on top-ups and refunds first',
     note2: 'Credit is 1:1 with USD. Stripe supports Alipay, WeChat Pay, UnionPay and credit cards',
     note3: 'Online payments cannot be invoiced — contact support for invoices or bulk top-ups',
-    note4: 'email: aa524163920@gmail.com',
+    note4: "email: aa524163920{'@'}gmail.com",
     transactions: 'Transactions',
     colTime: 'Time',
     colOrder: 'Order',
