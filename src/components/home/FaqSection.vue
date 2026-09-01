@@ -20,7 +20,7 @@ const items = ['models', 'billing', 'compat', 'limits', 'support'] as const
 
 <template>
   <section class="bg-bg-elevated px-5 py-[100px]">
-    <div class="mx-auto grid max-w-[1100px] gap-10 lg:grid-cols-[400px_minmax(0,652px)] lg:gap-12">
+    <div class="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[400px_minmax(0,1fr)] lg:gap-12">
       <div>
         <p class="text-[18px] font-semibold leading-[21.6px] text-brand">
           {{ t('home.faq.eyebrow') }}

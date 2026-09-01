@@ -21,7 +21,7 @@ const { t } = useI18n()
 
 <template>
   <section class="px-5 pb-[100px] pt-[60px]">
-    <div class="mx-auto max-w-[1100px] rounded-[12px] pt-2.5">
+    <div class="mx-auto max-w-[1400px] rounded-[12px] pt-2.5">
       <!-- 双色标题：弱化的引子 + 高对比的主张 -->
       <h2
         class="max-w-[855px] text-[32px] font-normal leading-[1.1] text-fg/45 lg:text-[48px] lg:leading-[52.8px]"

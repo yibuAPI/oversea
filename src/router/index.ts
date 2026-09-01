@@ -16,7 +16,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/pages/HomePage.vue'),
+      component: () => import('@/pages/NewHomePage.vue'),
     },
     {
       /** 文档站：独立 GitBook 式 chrome，不套 PublicLayout 的悬浮导航 */

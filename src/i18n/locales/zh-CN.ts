@@ -175,6 +175,33 @@ export default {
       },
     },
   },
+  homeNew: {
+    hero: {
+      line1: '接入全部模型',
+      line2: '只需一个接口',
+      subtitle:
+        '汇聚主流大模型能力，统一接口、统一计费、统一额度管理。兼容 OpenAI 协议，几行代码即可切换，无需改造现有系统。',
+      primaryCta: '开启AI新体验',
+      secondaryCta: 'API 文档',
+    },
+    models: {
+      title: '500+ 大模型已经接入',
+      more: '更多',
+    },
+    demo: {
+      prompt: '你好，帮我总结这段话。',
+      tag: '多模态理解',
+      reply: '好的，这是要点整理…',
+    },
+    badges: {
+      transparent: '透明计费',
+      concurrency: '超常并发',
+      ops: '专业运营',
+      metered: '按量付费',
+      stability: '高稳定性',
+      support: '广泛支持',
+    },
+  },
   console: {
     dashboard: '总览',
     balance: '账户余额',
@@ -283,6 +310,7 @@ export default {
     fName: '名称',
     fNamePlaceholder: '例如：生产环境后端',
     fGroup: '分组',
+    fGroupPlaceholder: '请选择分组',
     fGroupHint: '不同分组计费倍率不同',
     fExpiry: '过期时间',
     expiry_never: '永不过期',
@@ -400,6 +428,9 @@ export default {
     searchPlaceholder: '搜索模型名称、厂商或描述…',
     group: '计价分组',
     allGroups: '全部分组',
+    groupPlaceholder: '请选择分组，可多选',
+    groupAvailable: '{n} 可用模型',
+    groupRatio: '{n}x 倍率',
     allVendors: '全部厂商',
     vendorOther: '其他',
     ratioHint: '以下价格按分组「{group}」的倍率 ×{ratio} 计算',

@@ -11,10 +11,10 @@
  * 分组倍率跟着用户当前选中的分组变 —— 同一个模型在不同分组价格不同，
  * 这点不能糊，否则用户按页面报价做预算会算错。
  */
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuery } from '@tanstack/vue-query'
-import { Search, Boxes, Copy, Check } from 'lucide-vue-next'
+import { Search, Boxes, Copy, Check, ChevronDown } from 'lucide-vue-next'
 import { getPricing, inputPrice, outputPrice } from '@/api/models'
 import type { PricingModel } from '@/api/types'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -27,11 +27,11 @@ const pricingQ = useQuery({ queryKey: ['pricing'], queryFn: getPricing })
 const search = ref('')
 const vendorId = ref<number | 'all'>('all')
 /**
- * 分组筛选。'all' = 不按分组筛，展示全部可用模型；
- * 选中某个分组则只看该分组开放的模型（enable_groups）。
+ * 分组筛选。空 Set = 不按分组筛，展示全部可用模型；
+ * 选中任意分组则只看这些分组开放的模型（enable_groups）。
  * 报价用的分组见 activeGroup —— 两者独立：默认「全部分组」时报价仍落到用户基准分组。
  */
-const groupSel = ref<string>('all')
+const groupSel = ref<Set<string>>(new Set())
 
 /** 分页：默认每页 20 条，可选 10/20/50/100。列表是前端筛的，切片也放前端 */
 const page = ref(1)
@@ -57,16 +57,16 @@ const usableGroups = computed(() => {
 
 /**
  * 当前用于报价的分组。选中了具体分组就跟着它走；
- * 「全部分组」(all) 时回落到 default（用户基准分组），没有才取第一个。
+ * 未选分组时回落到 default（用户基准分组），没有才取第一个。
  */
 const activeGroup = computed({
   get: () => {
-    if (groupSel.value !== 'all') return groupSel.value
+    if (groupSel.value.size) return [...groupSel.value][0]
     if (usableGroups.value.some((g) => g.key === 'default')) return 'default'
     return usableGroups.value[0]?.key || 'default'
   },
   set: (v: string) => {
-    groupSel.value = v
+    groupSel.value = new Set([v])
   },
 })
 
@@ -97,9 +97,9 @@ const filtered = computed(() => {
   return models.value
     .filter((m) => {
       if (vendorId.value !== 'all' && (m.vendor_id ?? 0) !== vendorId.value) return false
-      if (groupSel.value !== 'all') {
+      if (groupSel.value.size) {
         const gs = m.enable_groups ?? []
-        if (!gs.some((g) => g === groupSel.value)) return false
+        if (!gs.some((g) => groupSel.value.has(g))) return false
       }
       if (!q) return true
       return (
@@ -146,6 +146,32 @@ const vendorCounts = computed(() => {
   return m
 })
 
+/** 每个分组开放了多少模型，给「N 可用模型」标签用 */
+const groupCounts = computed(() => {
+  const m = new Map<string, number>()
+  for (const x of models.value) {
+    for (const g of x.enable_groups ?? []) m.set(g, (m.get(g) ?? 0) + 1)
+  }
+  return m
+})
+
+function toggleGroup(key: string) {
+  const next = new Set(groupSel.value)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  groupSel.value = next
+}
+
+/** 分组下拉的展开/收起，以及点击外部关闭 */
+const groupOpen = ref(false)
+function onDocClick(e: MouseEvent) {
+  const el = groupWrap.value
+  if (!el || !el.contains(e.target as Node)) groupOpen.value = false
+}
+const groupWrap = ref<HTMLElement | null>(null)
+onMounted(() => document.addEventListener('click', onDocClick))
+onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
+
 /** 价格展示。按次计费的单位是「每次」，不能和 /M tokens 混排。
  *  动态计费（billing_mode=tiered_expr）与 quota_type=2 一样无固定单价，均按阶梯桶展示。 */
 function priceLabel(m: PricingModel) {
@@ -169,6 +195,9 @@ function priceLabel(m: PricingModel) {
 const tagsOf = (m: PricingModel) =>
   (m.tags ?? '').split(',').map((s) => s.trim()).filter(Boolean)
 
+/** 倍率标签：1 → "1"，0.25 → "0.25"（去掉浮点尾噪） */
+const ratioLabel = (n: number) => String(Number.parseFloat(n.toFixed(2)))
+
 const copied = ref<string | null>(null)
 async function copyName(name: string) {
   try {
@@ -187,7 +216,7 @@ async function copyName(name: string) {
 
     <!-- 工具条 -->
     <div class="mb-4 flex flex-wrap items-center gap-2">
-      <div class="relative min-w-[220px] flex-1">
+      <div class="relative flex-1">
         <Search
           class="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-fg-subtle"
         />
@@ -199,18 +228,70 @@ async function copyName(name: string) {
         />
       </div>
 
-      <select
-        v-model="groupSel"
-        :aria-label="t('models.group')"
-        class="h-9 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-accent"
-      >
-        <option value="all">{{ t('models.allGroups') }}</option>
-        <option v-for="g in usableGroups" :key="g.key" :value="g.key">
-          {{ g.key }}
-          <template v-if="g.ratio !== null">（×{{ g.ratio }}）</template>
-          <template v-else>{{ g.label }}</template>
-        </option>
-      </select>
+      <!-- 分组多选下拉 -->
+      <div ref="groupWrap" class="relative flex-1">
+        <button
+          type="button"
+          :aria-expanded="groupOpen"
+          :aria-label="t('models.group')"
+          class="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-bg px-3 text-[13px] outline-none focus:border-accent"
+          @click="groupOpen = !groupOpen"
+        >
+          <span v-if="groupSel.size" class="truncate">{{ [...groupSel].join('、') }}</span>
+          <span v-else class="truncate text-fg-muted">{{ t('models.groupPlaceholder') }}</span>
+          <ChevronDown
+            class="ml-auto size-3.5 shrink-0 text-fg-subtle transition-transform"
+            :class="groupOpen ? 'rotate-180' : ''"
+          />
+        </button>
+
+        <div
+          v-if="groupOpen"
+          class="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-72 overflow-y-auto rounded-lg border border-border bg-bg-elevated py-1 shadow-lg"
+        >
+          <button
+            type="button"
+            class="motion-press flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12.5px] text-fg-muted hover:bg-bg-muted hover:text-fg"
+            @click="groupSel = new Set()"
+          >
+            <Check v-if="!groupSel.size" class="size-3.5 shrink-0 text-accent" />
+            <span v-else class="size-3.5 shrink-0" />
+            {{ t('models.allGroups') }}
+          </button>
+          <div class="mx-2 my-1 border-t border-border" />
+          <button
+            v-for="g in usableGroups"
+            :key="g.key"
+            type="button"
+            class="motion-press flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-bg-muted"
+            @click="toggleGroup(g.key)"
+          >
+            <Check
+              v-if="groupSel.has(g.key)"
+              class="mt-0.5 size-3.5 shrink-0 text-accent"
+            />
+            <span v-else class="mt-0.5 size-3.5 shrink-0" />
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span class="text-[12.5px] font-semibold text-fg">{{ g.key }}</span>
+              <span v-if="g.label && g.label !== g.key" class="text-[11.5px] text-fg-muted">
+                {{ g.label }}
+              </span>
+            </span>
+            <span class="flex shrink-0 items-center gap-1.5 pt-0.5">
+              <span
+                class="rounded bg-success-bg px-2 py-1 text-[10.5px] leading-none text-success-fg"
+              >
+                {{ t('models.groupAvailable', { n: groupCounts.get(g.key) ?? 0 }) }}
+              </span>
+              <span
+                class="rounded bg-info-bg px-2 py-1 text-[10.5px] leading-none text-info-fg"
+              >
+                {{ t('models.groupRatio', { n: ratioLabel(g.ratio ?? 1) }) }}
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- 分组倍率提示：报价随分组变，必须说清当前算的是哪个 -->
