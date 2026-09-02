@@ -105,6 +105,12 @@ const router = createRouter({
           meta: { titleKey: 'console.nav.models' },
         },
         {
+          path: 'playground',
+          name: 'console-playground',
+          component: () => import('@/pages/console/PlaygroundPage.vue'),
+          meta: { titleKey: 'console.nav.playground' },
+        },
+        {
           path: 'docs',
           name: 'console-docs',
           component: () => import('@/pages/console/DocsPage.vue'),

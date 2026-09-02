@@ -50,6 +50,9 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        # /pg 的聊天接口走 SSE 流式，同样必须关缓冲并拉长读超时
+        proxy_buffering off;
+        proxy_read_timeout 600s;
     }
 
     # SPA 回退：任意路径都回 index.html，交给 vue-router

@@ -23,6 +23,9 @@ function toggleLocale() {
 
 const drawerOpen = ref(false)
 
+/** 操练场需要整页铺满（去掉 max-w-[1100px] 的宽度钳制） */
+const isPlayground = computed(() => route.name === 'console-playground')
+
 /** 面包屑取当前路由 meta.title，回落到「控制台」 */
 const pageTitle = computed(() => {
   const key = route.meta.titleKey
@@ -35,7 +38,7 @@ watch(drawerOpen, (open) => {
 </script>
 
 <template>
-  <div class="min-h-dvh bg-bg">
+  <div class="flex h-dvh flex-col bg-bg">
     <!-- 桌面侧栏 -->
     <div class="fixed inset-y-0 left-0 z-30 hidden lg:block">
       <ConsoleSidebar />
@@ -73,7 +76,7 @@ watch(drawerOpen, (open) => {
       </div>
     </Transition>
 
-    <div class="lg:pl-64">
+    <div class="flex min-h-0 flex-1 flex-col lg:pl-64">
       <!-- 顶栏 -->
       <header
         class="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-bg/85 px-4 backdrop-blur-md sm:px-6"
@@ -135,8 +138,11 @@ watch(drawerOpen, (open) => {
         </button>
       </header>
 
-      <main class="px-4 py-6 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-[1100px]">
+      <main class="flex min-h-0 flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
+        <div
+          class="mx-auto flex min-h-0 w-full flex-1 flex-col"
+          :class="isPlayground ? 'max-w-none' : 'max-w-[1100px]'"
+        >
           <RouterView />
         </div>
       </main>

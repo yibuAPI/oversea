@@ -18,6 +18,7 @@ import {
   KeyRound,
   Gauge,
   Boxes,
+  MessageSquare,
   FileText,
   PieChart,
   Receipt,
@@ -54,7 +55,13 @@ const initial = computed(() => (displayName.value[0] || '?').toUpperCase())
 /** 分组导航。与 infron 的三组分法一致 */
 const groups = computed(() => [
   {
-    label: null as string | null,
+    label: t('console.nav.groupChat'),
+    items: [
+      { to: '/console/playground', icon: MessageSquare, label: t('console.nav.playground') },
+    ],
+  },
+  {
+    label: t('console.nav.groupConsole'),
     items: [
       { to: '/console', icon: LayoutDashboard, label: t('console.nav.dashboard') },
       { to: '/console/keys', icon: KeyRound, label: t('console.nav.apiKeys') },
