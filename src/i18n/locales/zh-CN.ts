@@ -554,7 +554,6 @@ export default {
     mWechat: '微信',
     mAlipay: '支付宝',
     mCrypto: '加密货币',
-    stripeHint: '银行卡 / Apple Pay / Link / 微信 / 支付宝 均由 Stripe 收银台完成，跳转后可自由切换',
     confirmTitle: '充值确认',
     confirmQuantity: '充值数量',
     confirmAmount: '实付金额',

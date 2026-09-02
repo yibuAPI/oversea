@@ -555,7 +555,6 @@ export default {
     mWechat: 'WeChat Pay',
     mAlipay: 'Alipay',
     mCrypto: 'Crypto',
-    stripeHint: 'Card, Apple Pay, Link, WeChat Pay and Alipay all go through Stripe Checkout — pick one there',
     confirmTitle: 'Confirm top-up',
     confirmQuantity: 'Top-up amount',
     confirmAmount: 'You pay',

@@ -71,7 +71,7 @@ const anyOnline = computed(
 
 /** 快捷金额。后端可配 amount_options，没配就用一组常见档位 */
 const amountOptions = computed(() =>
-  info.value?.amount_options?.length ? info.value.amount_options : [5, 10, 20, 50, 100],
+  info.value?.amount_options?.length ? info.value.amount_options : [10, 20, 50, 100, 200],
 )
 
 const minTopup = computed(() => info.value?.min_topup ?? 1)
@@ -96,7 +96,7 @@ interface PayOption {
  *
  * 后端 payStripe 只收金额，没有 payment_method 参数，所以这几格点下去
  * 跳的是同一个 Stripe 收银台，具体用哪种在收银台里选 ——
- * 摆出来是为了让人一眼看到支持什么，按钮下方的 stripeHint 会说明这一点。
+ * 摆出来是为了让人一眼看到支持什么，点任一格即弹出支付确认。
  */
 const STRIPE_METHODS: [string, string, Component, string][] = [
   ['card', 'billing.mCard', IconCard, ''],
@@ -152,7 +152,10 @@ const amount = ref<number>(0)
 watch(
   amountOptions,
   (opts) => {
-    if (!amount.value && opts.length) amount.value = opts[0]
+    // 默认充值金额：优先取 $10 档位，没有就取第一个档位
+    if (!amount.value && opts.length) {
+      amount.value = opts.includes(10) ? 10 : opts[0]
+    }
   },
   { immediate: true },
 )
@@ -285,6 +288,12 @@ const paying = computed(() => stripeMut.isPending.value || usdtMut.isPending.val
 const canPay = computed(() => Boolean(method.value) && amount.value >= effMin.value)
 
 const confirmOpen = ref(false)
+
+/** 点击支付方式图标：选中它并直接弹出支付确认 */
+function selectPay(key: string) {
+  methodKey.value = key
+  confirmOpen.value = true
+}
 
 function runPay() {
   confirmOpen.value = false
@@ -442,23 +451,17 @@ const notes = computed(() => [
         {{ t('billing.payAmount', { v: payPrice }) }}
       </button>
 
-      <!-- 支付方式：按后端真实开关渲染 -->
+      <!-- 支付方式：按后端真实开关渲染；点图标直接发起支付 -->
       <div class="mt-3.5 flex flex-wrap gap-2.5 sm:flex-nowrap">
         <button
           v-for="m in payOptions"
           :key="m.key"
           type="button"
-          class="motion-press w-[84px] sm:w-auto sm:flex-1 sm:basis-0"
-          :aria-pressed="methodKey === m.key"
-          @click="methodKey = m.key"
+          class="motion-press group w-[84px] transition-transform duration-150 hover:scale-105 sm:w-auto sm:flex-1 sm:basis-0"
+          @click="selectPay(m.key)"
         >
           <span
-            class="flex h-[42px] items-center justify-center rounded-xl border transition-colors"
-            :class="
-              methodKey === m.key
-                ? 'border-accent bg-accent-bg text-accent'
-                : 'border-border bg-bg-subtle text-fg-muted hover:border-border-strong'
-            "
+            class="flex h-[42px] items-center justify-center rounded-xl border border-border bg-bg-subtle text-fg-muted transition-colors group-hover:border-border-strong group-hover:text-fg"
           >
             <component
               :is="m.icon"
@@ -472,10 +475,6 @@ const notes = computed(() => [
           </span>
         </button>
       </div>
-
-      <p v-if="info?.enable_stripe_topup" class="mt-2.5 text-[11.5px] text-fg-subtle">
-        {{ t('billing.stripeHint') }}
-      </p>
     </section>
 
     <!-- 在线通道全关：如实说明，别留空白 -->
@@ -564,7 +563,7 @@ const notes = computed(() => [
         <AppButton variant="ghost" @click="confirmOpen = false">
           {{ t('common.cancel') }}
         </AppButton>
-        <AppButton variant="primary" :loading="paying" @click="runPay()">
+        <AppButton variant="primary" :loading="paying" :disabled="!canPay" @click="runPay()">
           {{ t('common.confirm') }}
         </AppButton>
       </template>
