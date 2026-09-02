@@ -369,7 +369,7 @@ const mobileNav = ref(false)
       <!-- 移动端目录遮罩 -->
       <div
         v-if="mobileNav"
-        class="fixed inset-0 z-30 bg-black/40 lg:hidden"
+        class="fixed inset-0 z-30 cursor-pointer bg-black/40 lg:hidden"
         @click="mobileNav = false"
       />
 

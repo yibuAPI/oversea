@@ -42,6 +42,17 @@
     outline-offset: 2px;
   }
 
+  /* 浏览器对 <button>/<select> 等原生交互元素默认光标是 default，
+     统一改为手型；禁用态由 :disabled / [aria-disabled] 或工具类（utilities 层）覆盖 */
+  :where(button, [role='button'], a, select, summary, input[type='checkbox'],
+    input[type='radio'], input[type='range'], label[for]) {
+    cursor: pointer;
+  }
+
+  :where(button[disabled], select[disabled], input[disabled], [aria-disabled='true']) {
+    cursor: not-allowed;
+  }
+
   ::selection {
     background-color: var(--color-accent-bg);
     color: var(--color-accent-hover);

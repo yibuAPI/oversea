@@ -50,7 +50,7 @@ watch(drawerOpen, (open) => {
     >
       <div
         v-if="drawerOpen"
-        class="fixed inset-0 z-40 bg-black/40 lg:hidden"
+        class="fixed inset-0 z-40 cursor-pointer bg-black/40 lg:hidden"
         @click="drawerOpen = false"
       />
     </Transition>
