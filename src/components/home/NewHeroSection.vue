@@ -314,20 +314,12 @@ function stopDotLoopAll() {
           </g>
         </svg>
 
-        <!-- 中央堆叠方块 -->
-        <div
-          class="absolute left-1/2 top-1/2 h-[132px] w-[168px] -translate-x-1/2 -translate-y-1/2"
-        >
-          <div
-            class="absolute inset-x-3 top-0 h-[38px] rounded-xl bg-gradient-to-br from-violet-300/70 to-indigo-300/70 blur-[0.3px]"
-          />
-          <div
-            class="absolute inset-x-1 top-[30px] h-[46px] rounded-xl bg-gradient-to-br from-violet-400/80 to-indigo-400/80"
-          />
-          <div
-            class="absolute inset-x-0 top-[66px] h-[54px] rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 shadow-lg"
-          />
-        </div>
+        <!-- 中央堆叠方块（已换成自定义 PNG 插画） -->
+        <img
+          src="/model-library.png"
+          alt=""
+          class="absolute left-1/2 top-1/2 w-[176px] -translate-x-1/2 -translate-y-1/2 object-contain drop-shadow-sm"
+        />
 
         <!-- 左侧对话卡 -->
         <div

@@ -57,7 +57,7 @@ const cardCls =
     <!-- 滚动行：两翼 mask 渐隐，重复列表匀速左移。
          鼠标进入滚动区整条暂停，便于看清 / 点中某个 logo。 -->
     <div
-      class="marquee-hover relative min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]"
+      class="marquee-hover relative min-w-0 flex-1 overflow-hidden py-1 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]"
     >
       <ul
         class="marquee flex w-max items-stretch gap-3"

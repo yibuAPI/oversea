@@ -22,10 +22,12 @@ const props = withDefaults(
     format?: (v: number) => string
     /** bar 更适合稀疏的按天数据，area 适合密集的按小时数据 */
     kind?: 'area' | 'bar'
+    /** bar 填充色；area 走势线仍用 --chart-1 */
+    color?: string
     height?: number
     loading?: boolean
   }>(),
-  { kind: 'area', height: 220, format: (v: number) => String(v) },
+  { kind: 'area', color: 'var(--chart-1)', height: 220, format: (v: number) => String(v) },
 )
 
 const W = 1000
@@ -175,7 +177,7 @@ const uid = `ac-${Math.random().toString(36).slice(2, 8)}`
           :width="barWidth"
           :height="Math.max(PAD_T + inner.h - c.y, 1)"
           rx="2"
-          fill="var(--chart-1)"
+          :fill="props.color"
           :opacity="hover === null || hover === i ? 0.9 : 0.45"
         />
       </template>

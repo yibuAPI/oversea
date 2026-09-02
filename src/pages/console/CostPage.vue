@@ -220,6 +220,7 @@ function exportCsv() {
       <AreaChart
         :points="trendPoints"
         :kind="hourly ? 'area' : 'bar'"
+        color="#FF8A00"
         :height="240"
         :loading="dataQ.isLoading.value"
         :format="(v) => formatUsd(v)"
