@@ -19,7 +19,7 @@ import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
-import { ArrowUpRight, Copy, Loader2, Receipt, Wallet } from 'lucide-vue-next'
+import { ArrowUpRight, Copy, Receipt, Wallet } from 'lucide-vue-next'
 import IconAlipay from '@/components/icons/IconAlipay.vue'
 import IconApplePay from '@/components/icons/IconApplePay.vue'
 import IconBitcoin from '@/components/icons/IconBitcoin.vue'
@@ -289,9 +289,15 @@ const canPay = computed(() => Boolean(method.value) && amount.value >= effMin.va
 
 const confirmOpen = ref(false)
 
-/** 点击支付方式图标：选中它并直接弹出支付确认 */
+/** 点击支付方式图标：Stripe 弹支付确认；加密货币走 USDT 异步到账，直接支付 */
 function selectPay(key: string) {
   methodKey.value = key
+  const m = method.value
+  // 加密货币无需二次确认，金额合法就直接发起；金额不足时由 belowMin 提示兜底
+  if (m?.channel === 'usdt') {
+    if (canPay.value) usdtMut.mutate()
+    return
+  }
   confirmOpen.value = true
 }
 
@@ -399,7 +405,7 @@ const notes = computed(() => [
           class="motion-press relative min-h-[68px] overflow-hidden rounded-xl border px-2 py-2 text-center transition-colors"
           :class="
             amount === c.amount
-              ? 'border-accent bg-accent-bg'
+              ? 'border-border-selected bg-accent-bg'
               : 'border-border bg-bg-subtle hover:border-border-strong'
           "
           @click="amount = c.amount"
@@ -433,7 +439,7 @@ const notes = computed(() => [
           :min="effMin"
           step="1"
           :aria-label="t('billing.customAmount')"
-          class="h-[42px] w-full rounded-[10px] border border-border bg-bg-inset pl-8 pr-3 text-[22px] font-semibold tabular outline-none transition-colors focus:border-accent"
+          class="h-[42px] w-full rounded-[10px] border border-border bg-bg-inset pl-8 pr-3 text-[22px] font-semibold tabular outline-none transition-colors focus:border-border-selected"
         />
       </div>
 
@@ -441,17 +447,10 @@ const notes = computed(() => [
         {{ t('billing.belowMin', { v: `$${effMin}` }) }}
       </p>
 
-      <button
-        type="button"
-        class="motion-press mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-btn-primary-bg text-[15px] font-bold text-btn-primary-fg transition-colors hover:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
-        :disabled="!canPay || paying"
-        @click="confirmOpen = true"
-      >
-        <Loader2 v-if="paying" class="size-4 shrink-0 animate-spin" />
-        {{ t('billing.payAmount', { v: payPrice }) }}
-      </button>
-
       <!-- 支付方式：按后端真实开关渲染；点图标直接发起支付 -->
+      <p class="mt-5 text-left text-[15px] font-bold text-fg-muted">
+        {{ t('billing.selectMethod') }}
+      </p>
       <div class="mt-3.5 flex flex-wrap gap-2.5 sm:flex-nowrap">
         <button
           v-for="m in payOptions"
@@ -507,7 +506,7 @@ const notes = computed(() => [
           spellcheck="false"
           :aria-label="t('billing.redeemTitle')"
           :placeholder="t('billing.redeemPlaceholder')"
-          class="h-9 min-w-0 flex-1 rounded-xl border border-border bg-bg-inset px-3.5 font-mono text-[13px] outline-none transition-colors focus:border-accent"
+          class="h-9 min-w-0 flex-1 rounded-xl border border-border bg-bg-inset px-3.5 font-mono text-[13px] outline-none transition-colors focus:border-border-selected"
           @keydown.enter="redeemKey.trim() && redeemMut.mutate()"
         />
         <AppButton

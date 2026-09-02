@@ -524,7 +524,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
             type="text"
             maxlength="256"
             :placeholder="t('keys.fNamePlaceholder')"
-            class="h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-accent focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring"
+            class="h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring"
           />
         </FormField>
 
@@ -534,7 +534,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
               type="button"
               :aria-expanded="groupOpen"
               :aria-label="t('keys.fGroup')"
-              class="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-accent"
+              class="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected"
               @click="groupOpen = !groupOpen"
             >
               <span v-if="form.groups[0]" class="truncate">{{ form.groups[0] }}</span>
@@ -594,7 +594,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
               type="button"
               :aria-expanded="expiryOpen"
               :aria-label="t('keys.fExpiry')"
-              class="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-accent"
+              class="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected"
               @click="expiryOpen = !expiryOpen"
             >
               <span class="truncate">{{ t(`keys.expiry_${form.expiry}`) }}</span>
@@ -631,7 +631,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
             v-if="form.expiry === 'custom'"
             v-model="form.customExpiry"
             type="datetime-local"
-            class="mt-2 h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-accent"
+            class="mt-2 h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected"
           />
         </FormField>
 
@@ -656,7 +656,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
                 type="number"
                 step="0.01"
                 min="0"
-                class="h-9 w-full rounded-lg border border-border bg-bg pl-6 pr-3 text-[13px] tabular outline-none transition-colors focus:border-accent"
+                class="h-9 w-full rounded-lg border border-border bg-bg pl-6 pr-3 text-[13px] tabular outline-none transition-colors focus:border-border-selected"
               />
             </div>
             <p class="mt-1 text-[11.5px] text-fg-subtle">{{ t('keys.fQuotaHint') }}</p>
@@ -677,7 +677,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
             v-model="form.model_limits"
             multiple
             size="6"
-            class="mt-2 w-full rounded-lg border border-border bg-bg p-1.5 text-[12.5px] outline-none transition-colors focus:border-accent"
+            class="mt-2 w-full rounded-lg border border-border bg-bg p-1.5 text-[12.5px] outline-none transition-colors focus:border-border-selected"
           >
             <option v-for="m in modelsQ.data.value ?? []" :key="m" :value="m">
               {{ m }}
@@ -694,7 +694,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
             v-model="form.allow_ips"
             type="text"
             placeholder="203.0.113.1, 198.51.100.0/24"
-            class="h-9 w-full rounded-lg border border-border bg-bg px-3 font-mono text-[12.5px] outline-none transition-colors focus:border-accent"
+            class="h-9 w-full rounded-lg border border-border bg-bg px-3 font-mono text-[12.5px] outline-none transition-colors focus:border-border-selected"
           />
         </FormField>
 

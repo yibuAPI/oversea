@@ -251,7 +251,7 @@ const mobileNav = ref(false)
             v-model="search"
             type="search"
             :placeholder="t('publicDocs.searchPlaceholder')"
-            class="h-9 w-full rounded-lg border border-border bg-bg-muted pl-9 pr-16 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
+            class="h-9 w-full rounded-lg border border-border bg-bg-muted pl-9 pr-16 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-border-selected"
           />
           <span
             class="pointer-events-none absolute right-2.5 top-1/2 flex -translate-y-1/2 gap-1"
@@ -481,7 +481,7 @@ const mobileNav = ref(false)
                     class="-mb-px shrink-0 border-b-2 px-3 py-2.5 text-[12.5px] transition-colors"
                     :class="
                       activeTab(bi, b.tabs) === tab.key
-                        ? 'border-accent font-medium text-fg'
+                        ? 'border-border-selected font-medium text-fg'
                         : 'border-transparent text-fg-muted hover:text-fg'
                     "
                     @click="codeTab[bi] = tab.key"

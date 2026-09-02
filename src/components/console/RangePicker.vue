@@ -112,14 +112,14 @@ watch([customStart, customEnd], applyCustom)
         v-model="customStart"
         type="date"
         :aria-label="t('range.from')"
-        class="h-8 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-accent"
+        class="h-8 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-border-selected"
       />
       <span class="text-fg-subtle" aria-hidden="true">–</span>
       <input
         v-model="customEnd"
         type="date"
         :aria-label="t('range.to')"
-        class="h-8 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-accent"
+        class="h-8 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-border-selected"
       />
     </div>
 

@@ -224,7 +224,7 @@ async function copyName(name: string) {
           v-model="search"
           type="search"
           :placeholder="t('models.searchPlaceholder')"
-          class="h-9 w-full rounded-lg border border-border bg-bg pl-8 pr-3 text-[13px] outline-none focus:border-accent"
+          class="h-9 w-full rounded-lg border border-border bg-bg pl-8 pr-3 text-[13px] outline-none focus:border-border-selected"
         />
       </div>
 
@@ -234,7 +234,7 @@ async function copyName(name: string) {
           type="button"
           :aria-expanded="groupOpen"
           :aria-label="t('models.group')"
-          class="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-bg px-3 text-[13px] outline-none focus:border-accent"
+          class="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-bg px-3 text-[13px] outline-none focus:border-border-selected"
           @click="groupOpen = !groupOpen"
         >
           <span v-if="groupSel.size" class="truncate">{{ [...groupSel].join('、') }}</span>
@@ -310,7 +310,7 @@ async function copyName(name: string) {
         class="rounded-full border px-2.5 py-1 text-[12px] transition-colors"
         :class="
           vendorId === 'all'
-            ? 'border-accent bg-accent-bg text-accent'
+            ? 'border-border-selected bg-accent-bg text-accent'
             : 'border-border text-fg-muted hover:bg-bg-muted hover:text-fg'
         "
         @click="vendorId = 'all'"
@@ -325,7 +325,7 @@ async function copyName(name: string) {
         class="rounded-full border px-2.5 py-1 text-[12px] transition-colors"
         :class="
           vendorId === v.id
-            ? 'border-accent bg-accent-bg text-accent'
+            ? 'border-border-selected bg-accent-bg text-accent'
             : 'border-border text-fg-muted hover:bg-bg-muted hover:text-fg'
         "
         @click="vendorId = v.id"

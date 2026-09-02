@@ -396,7 +396,7 @@ const hasAnything = computed(
             min="0"
             step="0.01"
             :max="quotaToUsd(affQuota, quotaPerUnit)"
-            class="h-9 w-full rounded-lg border border-border bg-bg pl-7 pr-3 text-[13px] tabular outline-none transition-colors focus:border-accent"
+            class="h-9 w-full rounded-lg border border-border bg-bg pl-7 pr-3 text-[13px] tabular outline-none transition-colors focus:border-border-selected"
           />
         </div>
       </FormField>

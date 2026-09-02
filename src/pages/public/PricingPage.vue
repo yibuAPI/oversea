@@ -237,7 +237,7 @@ onUnmounted(() => observer?.disconnect())
             v-model="search"
             type="search"
             :placeholder="t('public.pricing.searchPlaceholder')"
-            class="h-10 w-full rounded-lg border border-border bg-bg pl-10 pr-4 text-[14px] outline-none transition-colors focus:border-accent"
+            class="h-10 w-full rounded-lg border border-border bg-bg pl-10 pr-4 text-[14px] outline-none transition-colors focus:border-border-selected"
           />
         </div>
 

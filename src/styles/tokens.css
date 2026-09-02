@@ -103,6 +103,9 @@
     --color-accent-border: var(--accent-200);
     --color-accent-solid: var(--accent-400); /* 大色块填充 */
 
+    /* 选中态边框：浅色下为近黑（与正文/主按钮同色），暗色下反白，保证可见 */
+    --color-border-selected: var(--color-fg);
+
     --color-ring: var(--accent-500);
 
     /* 主按钮：浅色主题下是深色底白字（infron 控制台实测） */
@@ -232,6 +235,7 @@
   --color-fg-on-accent: var(--color-fg-onAccent);
   --color-border: var(--color-border);
   --color-border-strong: var(--color-border-strong);
+  --color-border-selected: var(--color-border-selected);
   --color-accent: var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);
   --color-accent-bg: var(--color-accent-bg);

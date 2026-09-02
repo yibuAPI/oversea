@@ -227,7 +227,7 @@ const ENDPOINTS = [
                 class="-mb-px border-b-2 px-2.5 py-2 text-[12px] transition-colors"
                 :class="
                   lang === l.key
-                    ? 'border-accent font-medium text-fg'
+                    ? 'border-border-selected font-medium text-fg'
                     : 'border-transparent text-fg-muted hover:text-fg'
                 "
                 @click="lang = l.key"
@@ -380,7 +380,7 @@ const ENDPOINTS = [
                 class="-ml-px block border-l-2 py-1 pl-3 text-[12.5px] transition-colors"
                 :class="
                   activeSection === s
-                    ? 'border-accent font-medium text-fg'
+                    ? 'border-border-selected font-medium text-fg'
                     : 'border-transparent text-fg-muted hover:text-fg'
                 "
               >

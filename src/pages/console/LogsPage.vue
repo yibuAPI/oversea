@@ -240,7 +240,7 @@ const rowCache = (id: number) => cacheByRow.value.get(id) ?? EMPTY_CACHE
         class="-mb-px border-b-2 px-3 py-2 text-[13px] transition-colors"
         :class="
           tab === tb
-            ? 'border-accent font-medium text-fg'
+            ? 'border-border-selected font-medium text-fg'
             : 'border-transparent text-fg-muted hover:text-fg'
         "
         @click="tab = tb"
@@ -257,7 +257,7 @@ const rowCache = (id: number) => cacheByRow.value.get(id) ?? EMPTY_CACHE
         v-if="tab === 'logs'"
         v-model.number="logType"
         :aria-label="t('logs.colType')"
-        class="h-8 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-accent"
+        class="h-8 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-border-selected"
       >
         <option v-for="ty in LOG_TYPES" :key="ty" :value="ty">
           {{ t(`logs.type_${ty}`) }}
@@ -272,7 +272,7 @@ const rowCache = (id: number) => cacheByRow.value.get(id) ?? EMPTY_CACHE
           v-model="searchInput"
           type="search"
           :placeholder="tab === 'logs' ? t('logs.searchLog') : t('logs.searchTask')"
-          class="h-8 w-[240px] rounded-lg border border-border bg-bg pl-8 pr-2.5 text-[12.5px] outline-none focus:border-accent"
+          class="h-8 w-[240px] rounded-lg border border-border bg-bg pl-8 pr-2.5 text-[12.5px] outline-none focus:border-border-selected"
           @keydown.enter="applySearch"
         />
       </div>

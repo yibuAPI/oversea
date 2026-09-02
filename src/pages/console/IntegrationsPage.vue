@@ -206,7 +206,7 @@ const clientFields = computed(() => [
           class="rounded-full border px-2.5 py-1 text-[12px] transition-colors"
           :class="
             activeClient === c.key
-              ? 'border-accent bg-accent-bg text-accent'
+              ? 'border-border-selected bg-accent-bg text-accent'
               : 'border-border text-fg-muted hover:bg-bg-muted hover:text-fg'
           "
           :aria-pressed="activeClient === c.key"

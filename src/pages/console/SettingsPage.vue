@@ -54,7 +54,7 @@ const { user } = storeToRefs(userStore)
 const { t } = useI18n()
 
 const INPUT =
-  'h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-accent'
+  'h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected'
 
 /**
  * 安全区（2FA / Passkey / 注销账号）暂不对外开放，整块隐藏。

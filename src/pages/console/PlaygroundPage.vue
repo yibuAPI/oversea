@@ -416,7 +416,7 @@ onMounted(() => {
             class="flex-1 border-b-2 px-2 py-2 text-[13px] transition-colors"
             :class="
               tabs === tab
-                ? 'border-accent text-fg'
+                ? 'border-border-selected text-fg'
                 : 'border-transparent text-fg-subtle hover:text-fg'
             "
             @click="tabs = tab"

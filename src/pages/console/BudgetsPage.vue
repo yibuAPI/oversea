@@ -177,7 +177,7 @@ const saveMut = useMutation({
 })
 
 const INPUT =
-  'h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-accent'
+  'h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected'
 </script>
 
 <template>
@@ -286,7 +286,7 @@ const INPUT =
             class="rounded-xl border p-3 text-left transition-colors"
             :class="
               notifyType === c.key
-                ? 'border-accent bg-accent-bg'
+                ? 'border-border-selected bg-accent-bg'
                 : 'border-border hover:bg-bg-subtle'
             "
             :aria-pressed="notifyType === c.key"
