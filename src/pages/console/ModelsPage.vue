@@ -310,7 +310,7 @@ async function copyName(name: string) {
         class="rounded-full border px-2.5 py-1 text-[12px] transition-colors"
         :class="
           vendorId === 'all'
-            ? 'border-2 border-border-selected bg-accent-bg text-fg'
+            ? 'border-2 border-border-selected bg-[#F1F1F2] text-fg'
             : 'border border-border text-fg-muted hover:bg-bg-muted hover:text-fg'
         "
         @click="vendorId = 'all'"
@@ -325,7 +325,7 @@ async function copyName(name: string) {
         class="rounded-full border px-2.5 py-1 text-[12px] transition-colors"
         :class="
           vendorId === v.id
-            ? 'border-2 border-border-selected bg-accent-bg text-fg'
+            ? 'border-2 border-border-selected bg-[#F1F1F2] text-fg'
             : 'border border-border text-fg-muted hover:bg-bg-muted hover:text-fg'
         "
         @click="vendorId = v.id"

@@ -225,6 +225,7 @@ const loading = computed(() => dataQ.isLoading.value)
         <h2 class="mb-4 text-[14px] font-semibold">{{ t('usage.tokensChart') }}</h2>
         <AreaChart
           :points="tokenPoints"
+          color="#FF8A00"
           :loading="loading"
           :format="(v) => formatCompact(v)"
         >
@@ -236,6 +237,7 @@ const loading = computed(() => dataQ.isLoading.value)
         <h2 class="mb-4 text-[14px] font-semibold">{{ t('usage.cacheChart') }}</h2>
         <AreaChart
           :points="cachePoints"
+          color="#FF8A00"
           :loading="loading"
           :format="(v) => `${v.toFixed(1)}%`"
         >
@@ -250,6 +252,7 @@ const loading = computed(() => dataQ.isLoading.value)
       <AreaChart
         :points="spendPoints"
         :kind="hourly ? 'area' : 'bar'"
+        color="#FF8A00"
         :loading="loading"
         :format="(v) => formatUsd(v)"
       >

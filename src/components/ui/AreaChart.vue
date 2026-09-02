@@ -22,7 +22,7 @@ const props = withDefaults(
     format?: (v: number) => string
     /** bar 更适合稀疏的按天数据，area 适合密集的按小时数据 */
     kind?: 'area' | 'bar'
-    /** bar 填充色；area 走势线仍用 --chart-1 */
+    /** bar 填充色；area 走线/渐变也用它 */
     color?: string
     height?: number
     loading?: boolean
@@ -135,8 +135,8 @@ const uid = `ac-${Math.random().toString(36).slice(2, 8)}`
     >
       <defs>
         <linearGradient :id="`${uid}-fill`" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="var(--chart-1)" stop-opacity="0.28" />
-          <stop offset="100%" stop-color="var(--chart-1)" stop-opacity="0.02" />
+          <stop offset="0%" :stop-color="props.color" stop-opacity="0.28" />
+          <stop offset="100%" :stop-color="props.color" stop-opacity="0.02" />
         </linearGradient>
       </defs>
 
@@ -159,7 +159,7 @@ const uid = `ac-${Math.random().toString(36).slice(2, 8)}`
         <path
           :d="linePath"
           fill="none"
-          stroke="var(--chart-1)"
+          :stroke="props.color"
           stroke-width="2"
           stroke-linejoin="round"
           stroke-linecap="round"
@@ -200,7 +200,7 @@ const uid = `ac-${Math.random().toString(36).slice(2, 8)}`
           :cy="hoverPoint.y"
           r="4"
           fill="var(--color-bg-elevated)"
-          stroke="var(--chart-1)"
+          :stroke="props.color"
           stroke-width="2"
           vector-effect="non-scaling-stroke"
         />

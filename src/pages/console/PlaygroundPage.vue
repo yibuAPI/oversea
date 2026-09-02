@@ -319,7 +319,7 @@ onMounted(() => {
       <!-- 中栏：对话 -->
       <section class="flex min-h-0 min-w-0 flex-1 flex-col">
         <!-- 会话头部 -->
-        <div class="flex items-center justify-end border-b border-border px-4 py-2.5">
+        <div class="flex h-11 shrink-0 items-center justify-end border-b border-border px-4">
           <div class="flex shrink-0 items-center gap-2">
             <button
               type="button"
@@ -410,10 +410,10 @@ onMounted(() => {
               </button>
               <div
                 v-if="bottomPanelOpen"
-                class="absolute bottom-full left-0 z-20 mb-1.5 flex w-[420px] max-h-[360px] overflow-hidden rounded-xl border border-border bg-bg-elevated shadow-lg"
+                class="absolute bottom-full left-0 z-20 mb-1.5 flex w-[500px] max-h-[360px] overflow-hidden rounded-xl border border-border bg-bg-elevated shadow-lg"
               >
                 <!-- 左栏：模型分组 -->
-                <div class="flex min-h-0 w-36 shrink-0 flex-col border-r border-border">
+                <div class="flex min-h-0 w-52 shrink-0 flex-col border-r border-border bg-bg-subtle">
                   <div class="shrink-0 px-3 pt-2.5 pb-1 text-[11px] font-medium leading-none text-fg-subtle">
                     {{ t('console.playground.modelGroupList') }}
                   </div>
@@ -422,12 +422,10 @@ onMounted(() => {
                       v-for="g in groupOptions"
                       :key="g"
                       type="button"
-                      class="motion-press mx-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12.5px] text-fg-muted hover:bg-bg-muted hover:text-fg"
-                      :class="group === g ? 'bg-bg-muted text-fg' : ''"
+                      class="motion-press mx-2 flex w-[calc(100%-1rem)] items-center rounded-lg px-2 py-1.5 text-left text-[12.5px]"
+                      :class="group === g ? 'bg-bg-inset font-medium text-fg' : 'text-fg-muted hover:bg-bg-muted hover:text-fg'"
                       @click="changeGroup(g)"
                     >
-                      <Check v-if="group === g" class="size-3.5 shrink-0 text-accent" />
-                      <span v-else class="size-3.5 shrink-0" />
                       <span class="truncate">{{ g }}</span>
                     </button>
                   </div>
@@ -451,12 +449,10 @@ onMounted(() => {
                       v-for="m in modelOptions"
                       :key="m"
                       type="button"
-                      class="motion-press mx-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12.5px] text-fg-muted hover:bg-bg-muted hover:text-fg"
-                      :class="model === m ? 'bg-bg-muted text-fg' : ''"
+                      class="motion-press mx-2 flex w-[calc(100%-1rem)] items-center rounded-lg px-2 py-1.5 text-left text-[12.5px]"
+                      :class="model === m ? 'bg-bg-inset font-medium text-fg' : 'text-fg-muted hover:bg-bg-muted hover:text-fg'"
                       @click="model = m; bottomPanelOpen = false; search = ''"
                     >
-                      <Check v-if="model === m" class="size-3.5 shrink-0 text-accent" />
-                      <span v-else class="size-3.5 shrink-0" />
                       <span class="truncate">{{ m }}</span>
                     </button>
                     <p
@@ -503,8 +499,8 @@ onMounted(() => {
         class="hidden shrink-0 flex-col border-border bg-bg-subtle md:flex md:w-72"
         :class="configOpen ? '' : 'md:hidden'"
       >
-        <div class="flex items-center justify-between border-b border-border px-3 py-2.5">
-          <span class="flex items-center gap-1.5 text-[13px] font-medium text-fg">
+        <div class="flex h-11 shrink-0 items-center justify-between border-b border-border px-3">
+          <span class="flex items-center gap-1.5 text-[13px] font-medium leading-none text-fg">
             <Settings2 class="size-4 text-fg-muted" />
             {{ t('console.playground.cloudConfig') }}
           </span>
@@ -522,7 +518,7 @@ onMounted(() => {
                 class="flex items-center justify-between rounded-lg border border-border bg-bg-elevated px-3 py-2.5"
               >
                 <span class="text-[13px] font-medium text-fg">{{ t('console.playground.customBodyMode') }}</span>
-                <input v-model="customBody" type="checkbox" class="size-4 accent-[#000000] dark:accent-white" />
+                <input v-model="customBody" type="checkbox" class="size-4 accent-[#333333] dark:accent-white" />
               </label>
               <p v-if="customBody" class="text-[11px] text-fg-subtle">
                 {{ t('console.playground.customBodyModeDesc') }}
@@ -585,7 +581,7 @@ onMounted(() => {
                   min="0"
                   max="2"
                   step="0.1"
-                  class="mt-1 w-full accent-[#000000] dark:accent-white"
+                  class="mt-1 w-full accent-[#333333] dark:accent-white"
                 />
                 <p class="text-[11px] text-fg-subtle">{{ t('console.playground.temperatureDesc') }}</p>
               </div>
@@ -601,7 +597,7 @@ onMounted(() => {
                   min="0"
                   max="1"
                   step="0.01"
-                  class="mt-1 w-full accent-[#000000] dark:accent-white"
+                  class="mt-1 w-full accent-[#333333] dark:accent-white"
                 />
                 <p class="text-[11px] text-fg-subtle">{{ t('console.playground.topPDesc') }}</p>
               </div>
@@ -617,7 +613,7 @@ onMounted(() => {
                   min="-2"
                   max="2"
                   step="0.1"
-                  class="mt-1 w-full accent-[#000000] dark:accent-white"
+                  class="mt-1 w-full accent-[#333333] dark:accent-white"
                 />
                 <p class="text-[11px] text-fg-subtle">{{ t('console.playground.frequencyPenaltyDesc') }}</p>
               </div>
@@ -633,7 +629,7 @@ onMounted(() => {
                   min="-2"
                   max="2"
                   step="0.1"
-                  class="mt-1 w-full accent-[#000000] dark:accent-white"
+                  class="mt-1 w-full accent-[#333333] dark:accent-white"
                 />
                 <p class="text-[11px] text-fg-subtle">{{ t('console.playground.presencePenaltyDesc') }}</p>
               </div>
@@ -678,7 +674,7 @@ onMounted(() => {
                       {{ t('console.playground.streamIgnored') }}
                     </span>
                   </span>
-                  <input v-model="params.stream" type="checkbox" class="size-4 accent-[#000000] dark:accent-white" />
+                  <input v-model="params.stream" type="checkbox" class="size-4 accent-[#333333] dark:accent-white" />
                 </label>
                 <p class="text-[12px] text-fg-subtle">{{ t('console.playground.streamDesc') }}</p>
               </div>
@@ -697,7 +693,7 @@ onMounted(() => {
                   min="0"
                   max="2"
                   step="0.1"
-                  class="mt-1 w-full accent-[#000000] dark:accent-white"
+                  class="mt-1 w-full accent-[#333333] dark:accent-white"
                 />
                 <p class="text-[11px] text-fg-subtle">{{ t('console.playground.temperatureDesc') }}</p>
               </div>
@@ -713,7 +709,7 @@ onMounted(() => {
                   min="0"
                   max="1"
                   step="0.01"
-                  class="mt-1 w-full accent-[#000000] dark:accent-white"
+                  class="mt-1 w-full accent-[#333333] dark:accent-white"
                 />
                 <p class="text-[11px] text-fg-subtle">{{ t('console.playground.topPDesc') }}</p>
               </div>
@@ -729,7 +725,7 @@ onMounted(() => {
                   min="-2"
                   max="2"
                   step="0.1"
-                  class="mt-1 w-full accent-[#000000] dark:accent-white"
+                  class="mt-1 w-full accent-[#333333] dark:accent-white"
                 />
                 <p class="text-[11px] text-fg-subtle">{{ t('console.playground.frequencyPenaltyDesc') }}</p>
               </div>
@@ -745,7 +741,7 @@ onMounted(() => {
                   min="-2"
                   max="2"
                   step="0.1"
-                  class="mt-1 w-full accent-[#000000] dark:accent-white"
+                  class="mt-1 w-full accent-[#333333] dark:accent-white"
                 />
                 <p class="text-[11px] text-fg-subtle">{{ t('console.playground.presencePenaltyDesc') }}</p>
               </div>
@@ -787,7 +783,7 @@ onMounted(() => {
                     <Cpu class="size-4 text-fg-muted" />
                     {{ t('console.playground.stream') }}
                   </span>
-                  <input v-model="params.stream" type="checkbox" class="size-4 accent-[#000000] dark:accent-white" />
+                  <input v-model="params.stream" type="checkbox" class="size-4 accent-[#333333] dark:accent-white" />
                 </label>
                 <p class="text-[12px] text-fg-subtle">{{ t('console.playground.streamDesc') }}</p>
               </div>
