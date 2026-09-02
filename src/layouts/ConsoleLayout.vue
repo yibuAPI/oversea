@@ -32,6 +32,11 @@ const pageTitle = computed(() => {
   return typeof key === 'string' ? t(key) : t('nav.console')
 })
 
+/** 面包屑第一段：默认「控制台」；操练场属于「聊天」分组，前缀用「聊天」 */
+const breadcrumbRoot = computed(() =>
+  route.name === 'console-playground' ? t('console.nav.groupChat') : t('nav.console'),
+)
+
 watch(drawerOpen, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
 })
@@ -92,7 +97,7 @@ watch(drawerOpen, (open) => {
 
         <nav aria-label="Breadcrumb" class="min-w-0">
           <ol class="flex items-center gap-2 text-[13.5px]">
-            <li class="hidden text-fg-subtle sm:block">{{ t('nav.console') }}</li>
+            <li class="hidden text-fg-subtle sm:block">{{ breadcrumbRoot }}</li>
             <li class="hidden text-fg-subtle sm:block" aria-hidden="true">/</li>
             <li class="truncate font-medium">{{ pageTitle }}</li>
           </ol>

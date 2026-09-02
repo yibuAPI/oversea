@@ -405,8 +405,8 @@ const notes = computed(() => [
           class="motion-press relative min-h-[68px] overflow-hidden rounded-xl border px-2 py-2 text-center transition-colors"
           :class="
             amount === c.amount
-              ? 'border-border-selected bg-accent-bg'
-              : 'border-border bg-bg-subtle hover:border-border-strong'
+              ? 'border-2 border-border-selected bg-accent-bg'
+              : 'border border-border bg-bg-subtle hover:border-border-strong'
           "
           @click="amount = c.amount"
         >
