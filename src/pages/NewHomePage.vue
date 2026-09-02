@@ -60,13 +60,22 @@ function inFooter(y: number) {
   return y >= top
 }
 
+/**
+ * 只允许光晕出现在页面**最上面一段**：用绝对页面坐标（scrollY + clientY）
+ * 判断，落在首屏高度内才点亮。这样 hero 区跟着鼠标，一旦往下滚 / 往下走就
+ * 熄灭，不会再压到下面的特性、证言区块上 —— 那是用户嫌脏的部分。
+ */
+function inTopZone(clientY: number) {
+  return window.scrollY + clientY < window.innerHeight
+}
+
 function onMove(e: PointerEvent) {
   // 触屏/笔不触发：没有 hover 概念，光斑跟着点击点闪一下反而突兀
   if (e.pointerType !== 'mouse') return
   const { clientX: x, clientY: y } = e
   cancelAnimationFrame(raf)
   raf = requestAnimationFrame(() => {
-    glowOn.value = !inFooter(y)
+    glowOn.value = !inFooter(y) && inTopZone(y)
     glowPos.value = { x, y }
   })
 }
@@ -202,7 +211,6 @@ const vendorLogos: VendorLogo[] = [
   { src: '/vendors/gemini.png', name: 'Gemini' },
   { src: '/vendors/deepseek.png', name: 'DeepSeek' },
   { src: '/vendors/qwen.png', name: '通义千问' },
-  { src: '/vendors/kimi.png', name: 'Kimi' },
   { src: '/vendors/zhipu.png', name: '智谱' },
   { src: '/vendors/moonshot.png', name: 'Moonshot' },
   { src: '/vendors/mistral.png', name: 'Mistral' },
@@ -224,9 +232,9 @@ const vendorLogos: VendorLogo[] = [
          半透明区块交界处通治。
          只动 translate + opacity；pointer-events-none 不挡点击。 -->
     <div
-      class="glow pointer-events-none fixed left-0 top-0 z-40 size-[1100px]"
+      class="glow pointer-events-none fixed left-0 top-0 z-40 size-[640px]"
       :class="{ 'glow-on': glowOn }"
-      :style="{ translate: `${glowPos.x - 550}px ${glowPos.y - 550}px` }"
+      :style="{ translate: `${glowPos.x - 320}px ${glowPos.y - 320}px` }"
       aria-hidden="true"
     />
 
@@ -272,10 +280,10 @@ const vendorLogos: VendorLogo[] = [
   border-radius: 9999px;
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(139, 92, 246, 0.14) 0%,
-    rgba(139, 92, 246, 0.09) 30%,
-    rgba(47, 107, 255, 0.05) 55%,
-    transparent 72%
+    rgba(139, 92, 246, 0.09) 0%,
+    rgba(139, 92, 246, 0.05) 34%,
+    rgba(47, 107, 255, 0.03) 60%,
+    transparent 74%
   );
   opacity: 0;
   transition:
@@ -286,10 +294,10 @@ const vendorLogos: VendorLogo[] = [
 .dark .glow {
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(167, 139, 250, 0.2) 0%,
-    rgba(167, 139, 250, 0.12) 30%,
-    rgba(96, 150, 240, 0.07) 55%,
-    transparent 72%
+    rgba(167, 139, 250, 0.13) 0%,
+    rgba(167, 139, 250, 0.08) 34%,
+    rgba(96, 150, 240, 0.04) 60%,
+    transparent 74%
   );
 }
 

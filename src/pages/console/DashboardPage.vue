@@ -125,8 +125,7 @@ const weekRequests = computed(() =>
   (dataQ.data.value ?? []).reduce((s, r) => s + r.count, 0),
 )
 
-/**
- * 推广卡。infron 那三张是产品营销位；这里换成三个真实可去的地方 ——
+/** 推广卡。infron 那三张是产品营销位；这里换成三个真实可去的地方 ——
  * 编造「限时优惠」之类的内容不如指向实际有用的入口。
  */
 const promos = [
@@ -269,6 +268,7 @@ const promos = [
       <AreaChart
         :points="weekPoints"
         kind="bar"
+        color="#FF8A00"
         :height="200"
         :loading="dataQ.isLoading.value"
         :format="(v) => formatUsd(v)"
