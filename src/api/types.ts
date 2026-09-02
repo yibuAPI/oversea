@@ -85,7 +85,22 @@ export interface SiteStatus {
   /** 顶部导航模块开关（pricing / rankings 等，JSON 字符串） */
   HeaderNavModules?: string
   header_nav_modules?: string
+  /** 系统公告列表（console_setting.Announcements，AnnouncementsEnabled 开启时下发） */
+  announcements?: AnnouncementItem[]
   [k: string]: unknown
+}
+
+/** 单条系统公告（对应后端 console_setting 的 announcements 列表项） */
+export interface AnnouncementItem {
+  content?: string
+  /** RFC3339 时间串 */
+  publishDate?: string
+  /** default / ongoing / success / warning / error */
+  type?: string
+  /** all / personal / enterprise */
+  visibility?: string
+  /** 附带信息，≤200 字符 */
+  extra?: string
 }
 
 /** 当前登录用户 */

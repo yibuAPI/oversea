@@ -8,8 +8,9 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { Menu, X, Sun, Moon, Languages } from 'lucide-vue-next'
+import { Menu, X, Sun, Moon, Languages, Bell } from 'lucide-vue-next'
 import ConsoleSidebar from '@/components/console/ConsoleSidebar.vue'
+import MessageCenter from '@/components/layout/MessageCenter.vue'
 import { useThemeStore } from '@/stores/theme'
 import { setLocale } from '@/i18n'
 
@@ -22,6 +23,9 @@ function toggleLocale() {
 }
 
 const drawerOpen = ref(false)
+
+/** 消息中心（公告）面板开关 */
+const messageOpen = ref(false)
 
 /** 操练场需要整页铺满（去掉 max-w-[1100px] 的宽度钳制） */
 const isPlayground = computed(() => route.name === 'console-playground')
@@ -126,6 +130,14 @@ watch(drawerOpen, (open) => {
 
         <button
           type="button"
+          class="motion-press flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg"
+          :aria-label="t('notice.messageCenter')"
+          @click="messageOpen = true"
+        >
+          <Bell class="size-4.5" />
+        </button>
+        <button
+          type="button"
           class="motion-press ml-2 flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg"
           aria-label="Switch language"
           @click="toggleLocale"
@@ -141,6 +153,9 @@ watch(drawerOpen, (open) => {
           <Sun v-if="theme.isDark" class="size-4.5" />
           <Moon v-else class="size-4.5" />
         </button>
+
+        <!-- 消息中心（公告）面板 -->
+        <MessageCenter :open="messageOpen" @close="messageOpen = false" />
       </header>
 
       <main class="flex min-h-0 flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">

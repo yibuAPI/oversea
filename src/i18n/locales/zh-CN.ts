@@ -31,6 +31,21 @@ export default {
     docs: '文档',
     models: '模型',
   },
+  notice: {
+    messageCenter: '消息中心',
+    notifications: '通知',
+    system: '系统公告',
+    empty: '暂无通知',
+    systemEmpty: '暂无公告',
+    error: '公告加载失败',
+    announcementTypes: {
+      default: '一般',
+      ongoing: '进行中',
+      success: '成功',
+      warning: '警告',
+      error: '错误',
+    },
+  },
   home: {
     nav: { cta: '联系我们' },
     trustedBy: '他们在用',

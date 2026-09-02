@@ -31,6 +31,21 @@ export default {
     docs: 'Docs',
     models: 'Models',
   },
+  notice: {
+    messageCenter: 'Message Center',
+    notifications: 'Notifications',
+    system: 'Announcements',
+    empty: 'No notifications',
+    systemEmpty: 'No announcements',
+    error: 'Failed to load announcements',
+    announcementTypes: {
+      default: 'General',
+      ongoing: 'Ongoing',
+      success: 'Success',
+      warning: 'Warning',
+      error: 'Error',
+    },
+  },
   home: {
     nav: { cta: 'Contact us' },
     trustedBy: 'Trusted by',

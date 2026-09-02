@@ -30,8 +30,9 @@ import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { Sun, Moon, Languages, Menu, X } from 'lucide-vue-next'
+import { Sun, Moon, Languages, Menu, X, Bell } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
+import MessageCenter from '@/components/layout/MessageCenter.vue'
 import { useThemeStore } from '@/stores/theme'
 import { useUserStore } from '@/stores/user'
 import { setLocale } from '@/i18n'
@@ -44,6 +45,9 @@ const { isDark } = storeToRefs(theme)
 const { locale, t } = useI18n()
 
 const mobileOpen = ref(false)
+
+/** 消息中心（公告）面板开关 */
+const messageOpen = ref(false)
 
 /** 滚过顶部留白就加重投影，让悬浮药丸从滚动的内容里抬得更高 */
 const scrolled = ref(false)
@@ -132,6 +136,13 @@ const iconBtnCls =
           <div class="hidden items-center gap-0.5 sm:flex">
             <button
               :class="iconBtnCls"
+              :aria-label="t('notice.messageCenter')"
+              @click="messageOpen = true"
+            >
+              <Bell class="size-[18px]" />
+            </button>
+            <button
+              :class="iconBtnCls"
               :aria-label="t('theme.' + (isDark ? 'light' : 'dark'))"
               @click="theme.toggle()"
             >
@@ -195,6 +206,9 @@ const iconBtnCls =
         {{ t(`nav.${item.key}`) }}
       </RouterLink>
     </div>
+
+    <!-- 消息中心（公告）面板 -->
+    <MessageCenter :open="messageOpen" @close="messageOpen = false" />
   </header>
 </template>
 
