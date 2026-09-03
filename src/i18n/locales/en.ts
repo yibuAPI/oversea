@@ -36,7 +36,7 @@ export default {
     notifications: 'Notifications',
     system: 'Announcements',
     empty: 'No notifications',
-    systemEmpty: 'No announcements',
+    noticeEmpty: 'No announcements',
     error: 'Failed to load announcements',
     announcementTypes: {
       default: 'General',

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getStatus } from '@/api/auth'
+import { getStatus, getNotice } from '@/api/auth'
 import type { SiteStatus } from '@/api/types'
 
 /** 回落默认值 —— 仅在后端未配置时使用。见 PLAN.md §1.6 */
@@ -16,6 +16,11 @@ export const useSiteStore = defineStore('site', () => {
   const status = ref<SiteStatus | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+
+  // 系统公告（/api/notice → OptionMap["Notice"] 单条字符串），与 status 独立请求
+  const notice = ref<string | null>(null)
+  const noticeLoading = ref(false)
+  const noticeError = ref<string | null>(null)
 
   // 后端有值才用后端的，否则回落 —— 与现有 React 前端行为一致。
   // 对外品牌统一为 llmuni：后端 system_name 仍是旧值（New API 默认值 /
@@ -132,10 +137,27 @@ export const useSiteStore = defineStore('site', () => {
     }
   }
 
+  /** 拉取系统公告（/api/notice）。与 status 相互独立：失败不影响站名/导航等 */
+  async function loadNotice() {
+    noticeLoading.value = true
+    noticeError.value = null
+    try {
+      notice.value = await getNotice()
+    } catch (e) {
+      notice.value = null
+      noticeError.value = e instanceof Error ? e.message : String(e)
+    } finally {
+      noticeLoading.value = false
+    }
+  }
+
   return {
     status,
     loading,
     error,
+    notice,
+    noticeLoading,
+    noticeError,
     systemName,
     logo,
     registerEnabled,
@@ -147,5 +169,6 @@ export const useSiteStore = defineStore('site', () => {
     quotaPerUnit,
     displayInCurrency,
     load,
+    loadNotice,
   }
 })

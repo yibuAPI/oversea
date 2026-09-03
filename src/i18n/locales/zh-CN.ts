@@ -36,7 +36,7 @@ export default {
     notifications: '通知',
     system: '系统公告',
     empty: '暂无通知',
-    systemEmpty: '暂无公告',
+    noticeEmpty: '暂无系统公告',
     error: '公告加载失败',
     announcementTypes: {
       default: '一般',
