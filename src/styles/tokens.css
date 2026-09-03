@@ -75,6 +75,8 @@
     --danger-bg: #fdecec;
     --danger-fg: #b42318;
     --danger-border: #f7bdb8;
+    /* 未读红点专用 —— 亮红色，作实心信号徽标（非文字风险色） */
+    --danger-dot-fg: #e5484d;
     --info-bg: var(--accent-50);
     --info-fg: var(--accent-700);
     --info-border: var(--accent-200);
@@ -201,6 +203,8 @@
     --danger-bg: #2a1110;
     --danger-fg: #f87171;
     --danger-border: #4c1d1a;
+    /* 未读红点专用 —— 亮红色，深色下更醒目 */
+    --danger-dot-fg: #ff5a5a;
     --info-bg: #0d1b2a;
     --info-fg: #57b3ff;
     --info-border: #123a5c;
@@ -257,6 +261,7 @@
   --color-danger-bg: var(--danger-bg);
   --color-danger-fg: var(--danger-fg);
   --color-danger-border: var(--danger-border);
+  --color-danger-dot-fg: var(--danger-dot-fg);
   --color-info-bg: var(--info-bg);
   --color-info-fg: var(--info-fg);
   --color-info-border: var(--info-border);

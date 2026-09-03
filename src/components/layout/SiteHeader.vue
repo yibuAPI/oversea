@@ -143,7 +143,7 @@ const iconBtnCls =
               <!-- 有新公告时的未读红点，见 store.hasNewNotice -->
               <span
                 v-if="site.hasNewNotice"
-                class="absolute right-1 top-1 size-1.5 rounded-full bg-danger-fg ring-2 ring-bg"
+                class="absolute right-1 top-1 size-1.5 rounded-full bg-danger-dot-fg ring-2 ring-bg"
               />
             </button>
             <button :class="iconBtnCls" aria-label="Switch language" @click="toggleLocale">
