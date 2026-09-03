@@ -205,6 +205,12 @@ const payPrice = computed(() => {
 
 // ---------------- Stripe ----------------
 
+/**
+ * 支付落地页要开新窗口，但 window.open 在异步 onSuccess 里调用会被弹窗拦截。
+ * 所以在点击「确认」的同步手势里先开一个占位空白窗口，拿到 pay_link 后再让它跳转。
+ */
+let pendingWin: Window | null = null
+
 const stripeMut = useMutation({
   mutationFn: () =>
     payStripe({
@@ -213,10 +219,23 @@ const stripeMut = useMutation({
       cancel_url: `${window.location.origin}/console/billing`,
     }),
   onSuccess: (d) => {
-    if (d.pay_link) window.location.href = d.pay_link
-    else toast.error(t('billing.noPayUrl'))
+    if (!d.pay_link) {
+      toast.error(t('billing.noPayUrl'))
+      return
+    }
+    if (pendingWin) {
+      pendingWin.location.href = d.pay_link
+      pendingWin = null
+    } else {
+      // 占位窗口没开成（被拦截等）就退回到当前页跳转，别让支付断了
+      window.location.href = d.pay_link
+    }
   },
-  onError: (e: Error) => toast.error(e.message),
+  onError: (e: Error) => {
+    pendingWin?.close()
+    pendingWin = null
+    toast.error(e.message)
+  },
 })
 
 // ---------------- USDT ----------------
@@ -305,8 +324,13 @@ function runPay() {
   confirmOpen.value = false
   const m = method.value
   if (!m) return
-  if (m.channel === 'stripe') stripeMut.mutate()
-  else usdtMut.mutate()
+  if (m.channel === 'stripe') {
+    // 在点击手势里同步开占位窗口，避免异步回调里 window.open 被弹窗拦截
+    pendingWin = window.open('about:blank', '_blank')
+    stripeMut.mutate()
+  } else {
+    usdtMut.mutate()
+  }
 }
 
 // ---------------- 兑换码 ----------------
