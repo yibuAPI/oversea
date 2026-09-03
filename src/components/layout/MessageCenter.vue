@@ -91,7 +91,7 @@ function formatDate(value: string | undefined): string {
     @close="emit('close')"
   >
     <!-- -mx-5 抵消 AppModal 内胆的 px-5，让左侧边栏贴到面板左缘 -->
-    <div class="-mx-5 flex items-start">
+    <div class="-mx-5 flex">
       <!-- 左：标签栏，系统公告在上 -->
       <nav
         class="w-44 shrink-0 border-r border-border p-2"
