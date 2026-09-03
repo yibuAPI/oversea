@@ -141,15 +141,15 @@ const iconBtnCls =
             >
               <Bell class="size-[18px]" />
             </button>
+            <button :class="iconBtnCls" aria-label="Switch language" @click="toggleLocale">
+              <Languages class="size-[18px]" />
+            </button>
             <button
               :class="iconBtnCls"
               :aria-label="t('theme.' + (isDark ? 'light' : 'dark'))"
               @click="theme.toggle()"
             >
               <component :is="isDark ? Sun : Moon" class="size-[18px]" />
-            </button>
-            <button :class="iconBtnCls" aria-label="Switch language" @click="toggleLocale">
-              <Languages class="size-[18px]" />
             </button>
           </div>
 
