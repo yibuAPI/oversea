@@ -46,6 +46,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import FormField from '@/components/ui/FormField.vue'
+import PasswordInput from '@/components/ui/PasswordInput.vue'
 
 const site = useSiteStore()
 const userStore = useUserStore()
@@ -285,21 +286,17 @@ async function copyText(text: string, id: string) {
           <p class="mb-3 text-[13px] font-medium">{{ t('settings.changePassword') }}</p>
           <div class="grid gap-4 sm:grid-cols-3">
             <FormField id="set-origpwd" :label="t('settings.currentPassword')">
-              <input
+              <PasswordInput
                 id="set-origpwd"
                 v-model="originalPassword"
-                type="password"
                 autocomplete="current-password"
-                :class="INPUT"
               />
             </FormField>
             <FormField id="set-newpwd" :label="t('settings.newPassword')">
-              <input
+              <PasswordInput
                 id="set-newpwd"
                 v-model="newPassword"
-                type="password"
                 autocomplete="new-password"
-                :class="INPUT"
               />
             </FormField>
             <FormField
@@ -307,12 +304,10 @@ async function copyText(text: string, id: string) {
               :label="t('settings.confirmNewPassword')"
               :error="passwordMismatch ? t('auth.passwordMismatch') : null"
             >
-              <input
+              <PasswordInput
                 id="set-newpwd2"
                 v-model="newPassword2"
-                type="password"
                 autocomplete="new-password"
-                :class="INPUT"
                 :aria-invalid="passwordMismatch"
               />
             </FormField>

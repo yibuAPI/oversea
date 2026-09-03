@@ -23,6 +23,7 @@ import { register } from '@/api/auth'
 import { sendEmailCode } from '@/api/account'
 import { ApiError } from '@/api/types'
 import ProviderIcon from '@/components/auth/ProviderIcon.vue'
+import PasswordInput from '@/components/ui/PasswordInput.vue'
 import { setLocale } from '@/i18n'
 import { clearAffCode, readAffCode } from '@/utils/aff-code'
 
@@ -248,14 +249,13 @@ const INPUT_CLASS =
               <label for="reg-password" class="block text-[13px] text-[#8a8a8a]">
                 {{ t('auth.password') }}
               </label>
-              <input
+              <PasswordInput
                 id="reg-password"
                 v-model="password"
-                type="password"
+                variant="dark"
                 autocomplete="new-password"
                 required
                 :placeholder="t('auth.passwordPlaceholder')"
-                :class="INPUT_CLASS"
               />
             </div>
 
@@ -263,14 +263,13 @@ const INPUT_CLASS =
               <label for="reg-password2" class="block text-[13px] text-[#8a8a8a]">
                 {{ t('auth.confirmPassword') }}
               </label>
-              <input
+              <PasswordInput
                 id="reg-password2"
                 v-model="password2"
-                type="password"
+                variant="dark"
                 autocomplete="new-password"
                 required
                 :placeholder="t('auth.passwordPlaceholder')"
-                :class="INPUT_CLASS"
                 :aria-invalid="mismatch"
               />
               <p v-if="mismatch" class="text-[12.5px] text-[#f87171]">

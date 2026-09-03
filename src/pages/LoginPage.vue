@@ -40,6 +40,7 @@ import { useUserStore } from '@/stores/user'
 import { ApiError } from '@/api/types'
 import ProviderIcon from '@/components/auth/ProviderIcon.vue'
 import TypewriterText from '@/components/common/TypewriterText.vue'
+import PasswordInput from '@/components/ui/PasswordInput.vue'
 import { setLocale } from '@/i18n'
 
 const site = useSiteStore()
@@ -189,14 +190,13 @@ async function onSubmit() {
                 {{ t('auth.forgotPassword') }}
               </RouterLink>
             </div>
-            <input
+            <PasswordInput
               id="password"
               v-model="password"
-              type="password"
+              variant="dark"
               autocomplete="current-password"
               required
               :placeholder="t('auth.passwordPlaceholder')"
-              class="h-10 w-full rounded-[6px] border border-[#2e2e2e] bg-transparent px-3 text-[14px] text-[#f2f2f2] outline-none transition-colors placeholder:text-[#6b6b6b] focus:border-[#5a5a5a]"
             />
           </div>
 

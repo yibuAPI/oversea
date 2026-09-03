@@ -27,6 +27,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import StatCard from '@/components/ui/StatCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import FormField from '@/components/ui/FormField.vue'
+import PasswordInput from '@/components/ui/PasswordInput.vue'
 
 const site = useSiteStore()
 const userStore = useUserStore()
@@ -342,12 +343,10 @@ const INPUT =
               :label="t('budgets.webhookSecretLabel')"
               :hint="t('budgets.webhookSecretHint')"
             >
-              <input
+              <PasswordInput
                 id="webhook-secret"
                 v-model="webhookSecret"
-                type="password"
                 autocomplete="off"
-                :class="INPUT"
               />
             </FormField>
           </template>

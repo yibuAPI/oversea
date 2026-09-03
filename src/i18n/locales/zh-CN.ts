@@ -16,6 +16,8 @@ export default {
     back: '返回',
     close: '关闭',
     submit: '提交',
+    showPassword: '显示密码',
+    hidePassword: '隐藏密码',
     total: '共 {n} 条',
     perPage: '每页',
     prevPage: '上一页',

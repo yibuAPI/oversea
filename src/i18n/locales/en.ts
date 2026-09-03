@@ -16,6 +16,8 @@ export default {
     back: 'Back',
     close: 'Close',
     submit: 'Submit',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
     total: '{n} total',
     perPage: 'Per page',
     prevPage: 'Previous page',
