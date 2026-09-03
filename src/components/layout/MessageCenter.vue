@@ -10,7 +10,7 @@
  *     type/visibility/extra），AnnouncementsEnabled 开启时下发。见 auth.ts。
  * 面板以此为据：系统公告在上，通知在下。
  */
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Bell, Megaphone } from 'lucide-vue-next'
 import AppModal from '@/components/ui/AppModal.vue'
@@ -22,8 +22,18 @@ import type { AnnouncementItem } from '@/api/types'
 const { t, locale } = useI18n()
 const site = useSiteStore()
 
-defineProps<{ open: boolean }>()
+const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ close: [] }>()
+
+/** 打开即视为已读（即使内容尚未加载完也先记录，避免关掉又亮）。
+    内容在面板打开期间才加载完时会在下面重触发一次，把已展示的公告记为已读。
+    见 store.markNoticeSeen。 */
+watch(
+  [() => props.open, () => site.notice, () => site.status?.announcements],
+  ([open]) => {
+    if (open) site.markNoticeSeen()
+  },
+)
 
 type Tab = 'system' | 'notifications'
 /** 默认停在「系统公告」—— 面板上方标签，对应 /api/notice */

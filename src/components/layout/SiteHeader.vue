@@ -135,11 +135,16 @@ const iconBtnCls =
         <div class="ml-auto flex items-center gap-3">
           <div class="hidden items-center gap-0.5 sm:flex">
             <button
-              :class="iconBtnCls"
+              :class="[iconBtnCls, 'relative']"
               :aria-label="t('notice.messageCenter')"
               @click="messageOpen = true"
             >
               <Bell class="size-[18px]" />
+              <!-- 有新公告时的未读红点，见 store.hasNewNotice -->
+              <span
+                v-if="site.hasNewNotice"
+                class="absolute right-1 top-1 size-1.5 rounded-full bg-danger-fg ring-2 ring-bg"
+              />
             </button>
             <button :class="iconBtnCls" aria-label="Switch language" @click="toggleLocale">
               <Languages class="size-[18px]" />

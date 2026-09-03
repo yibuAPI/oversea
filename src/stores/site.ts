@@ -151,6 +151,69 @@ export const useSiteStore = defineStore('site', () => {
     }
   }
 
+  // ---------- 公告未读红点 ----------
+  // 「有新公告」= 系统公告内容变了，或通知里出现比上次更晚的 publishDate。
+  // 查看标记持久化到 localStorage，刷新后不重复亮红点；隐私模式下不可用则忽略。
+  const UNREAD_STORAGE_KEY = 'onestep-notice-unread'
+
+  interface NoticeUnreadState {
+    /** 最近一次查看消息中心的时间（ms epoch），与通知 publishDate 比较判断是否更新 */
+    seenAt: number
+    /** 最近一次看过的系统公告内容，用于判断系统公告是否有新发布 */
+    seenNotice: string
+  }
+
+  function readUnreadState(): NoticeUnreadState {
+    try {
+      const raw = localStorage.getItem(UNREAD_STORAGE_KEY)
+      if (!raw) return { seenAt: 0, seenNotice: '' }
+      const parsed = JSON.parse(raw) as Partial<NoticeUnreadState>
+      return {
+        seenAt: typeof parsed.seenAt === 'number' ? parsed.seenAt : 0,
+        seenNotice: typeof parsed.seenNotice === 'string' ? parsed.seenNotice : '',
+      }
+    } catch {
+      return { seenAt: 0, seenNotice: '' }
+    }
+  }
+
+  const unreadState = ref<NoticeUnreadState>(readUnreadState())
+
+  /** 通知里最新一条 publishDate（ms epoch），无有效值则为 0 */
+  const latestAnnounceAt = computed(() => {
+    const list = status.value?.announcements ?? []
+    let latest = 0
+    for (const a of list) {
+      if (!a.publishDate) continue
+      const ts = new Date(a.publishDate).getTime()
+      if (Number.isFinite(ts) && ts > latest) latest = ts
+    }
+    return latest
+  })
+
+  /** 是否有未读公告：系统公告内容有更新，或通知晚于上次查看时间 */
+  const hasNewNotice = computed(() => {
+    const freshNotice =
+      notice.value !== null &&
+      notice.value.trim() !== '' &&
+      notice.value !== unreadState.value.seenNotice
+    const freshAnnounce = latestAnnounceAt.value > unreadState.value.seenAt
+    return freshNotice || freshAnnounce
+  })
+
+  /** 打开消息中心即视为已读：记录当前时间与公告内容，清除铃铛红点 */
+  function markNoticeSeen() {
+    unreadState.value = {
+      seenAt: Math.max(Date.now(), latestAnnounceAt.value),
+      seenNotice: notice.value ?? '',
+    }
+    try {
+      localStorage.setItem(UNREAD_STORAGE_KEY, JSON.stringify(unreadState.value))
+    } catch {
+      /* 隐私模式下 localStorage 不可用，忽略 */
+    }
+  }
+
   return {
     status,
     loading,
@@ -170,5 +233,7 @@ export const useSiteStore = defineStore('site', () => {
     displayInCurrency,
     load,
     loadNotice,
+    hasNewNotice,
+    markNoticeSeen,
   }
 })

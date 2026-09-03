@@ -12,11 +12,13 @@ import { Menu, X, Sun, Moon, Languages, Bell } from 'lucide-vue-next'
 import ConsoleSidebar from '@/components/console/ConsoleSidebar.vue'
 import MessageCenter from '@/components/layout/MessageCenter.vue'
 import { useThemeStore } from '@/stores/theme'
+import { useSiteStore } from '@/stores/site'
 import { setLocale } from '@/i18n'
 
 const route = useRoute()
 const { t, locale } = useI18n()
 const theme = useThemeStore()
+const site = useSiteStore()
 
 function toggleLocale() {
   setLocale(locale.value === 'zh-CN' ? 'en' : 'zh-CN')
@@ -130,11 +132,16 @@ watch(drawerOpen, (open) => {
 
         <button
           type="button"
-          class="motion-press flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg"
+          class="motion-press relative flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg"
           :aria-label="t('notice.messageCenter')"
           @click="messageOpen = true"
         >
           <Bell class="size-4.5" />
+          <!-- 有新公告时的未读红点，见 store.hasNewNotice -->
+          <span
+            v-if="site.hasNewNotice"
+            class="absolute right-1 top-1 size-1.5 rounded-full bg-danger-fg ring-2 ring-bg"
+          />
         </button>
         <button
           type="button"
