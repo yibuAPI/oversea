@@ -406,7 +406,7 @@ const notes = computed(() => [
           :class="
             amount === c.amount
               ? 'border-2 border-border-selected bg-[#F1F1F2]'
-              : 'border border-border bg-[#F1F1F2] hover:border-border-strong'
+              : 'border border-border bg-white hover:border-border-strong'
           "
           @click="amount = c.amount"
         >
