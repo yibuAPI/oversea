@@ -36,16 +36,20 @@ defineSlots<{
 </script>
 
 <template>
-  <div class="motion-lift overflow-hidden rounded-xl border border-border bg-bg-elevated hover:shadow-lg">
-    <div class="overflow-x-auto">
+  <div
+    class="motion-lift flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-bg-elevated hover:shadow-lg"
+  >
+    <!-- 行多于可视高度时纵向滚动，表头 sticky 常驻 -->
+    <div class="min-h-0 flex-1 overflow-auto">
       <table class="w-full border-collapse text-[13px]">
-        <thead>
-          <tr class="border-b border-border bg-bg-subtle">
+        <thead class="sticky top-0 z-10">
+          <tr class="bg-bg-subtle">
+            <!-- border-collapse 下 sticky 的 border 会跟着内容滚走，用 shadow 画底线 -->
             <th
               v-for="col in props.columns"
               :key="col.key"
               scope="col"
-              class="whitespace-nowrap px-4 py-2.5 text-[11.5px] font-medium uppercase tracking-wide text-fg-subtle"
+              class="whitespace-nowrap bg-bg-subtle px-4 py-2.5 text-[11.5px] font-medium uppercase tracking-wide text-fg-subtle shadow-[inset_0_-1px_0_0_var(--color-border)]"
               :class="[col.class, col.numeric ? 'text-right' : 'text-left']"
             >
               {{ col.label }}

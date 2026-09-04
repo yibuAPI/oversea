@@ -29,8 +29,10 @@ const drawerOpen = ref(false)
 /** 消息中心（公告）面板开关 */
 const messageOpen = ref(false)
 
-/** 操练场需要整页铺满（去掉 max-w-[1100px] 的宽度钳制） */
-const isPlayground = computed(() => route.name === 'console-playground')
+/** 操练场、API 密钥列表需要整页铺满（去掉 max-w-[1100px] 的宽度钳制，宽表格不被挤压） */
+const isFullWidth = computed(
+  () => route.name === 'console-playground' || route.name === 'console-keys',
+)
 
 /** 面包屑取当前路由 meta.title，回落到「控制台」 */
 const pageTitle = computed(() => {
@@ -168,7 +170,7 @@ watch(drawerOpen, (open) => {
       <main class="flex min-h-0 flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
         <div
           class="mx-auto flex min-h-0 w-full flex-1 flex-col"
-          :class="isPlayground ? 'max-w-none' : 'max-w-[1100px]'"
+          :class="isFullWidth ? 'max-w-none' : 'max-w-[1100px]'"
         >
           <RouterView />
         </div>

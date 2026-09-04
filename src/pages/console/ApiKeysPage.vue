@@ -20,6 +20,8 @@ import {
   Ban,
   CircleCheck,
   ChevronDown,
+  ChevronUp,
+  ArrowRight,
 } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
 import {
@@ -47,12 +49,19 @@ const { t } = useI18n()
 const qc = useQueryClient()
 
 const page = ref(1)
-const PAGE_SIZE = 10
+const pageSize = ref(20)
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 
 const tokensQ = useQuery({
-  queryKey: computed(() => ['tokens', page.value]),
-  queryFn: () => listTokens({ p: page.value, page_size: PAGE_SIZE }),
+  queryKey: computed(() => ['tokens', page.value, pageSize.value]),
+  queryFn: () => listTokens({ p: page.value, page_size: pageSize.value }),
 })
+
+/** 改每页条数后总页数变了，回到第 1 页避免停在越界页 */
+function onPageSizeChange(n: number) {
+  pageSize.value = n
+  page.value = 1
+}
 
 const groupsQ = useQuery({ queryKey: ['my-groups'], queryFn: getMyGroups })
 const modelsQ = useQuery({ queryKey: ['my-models'], queryFn: () => getMyModels() })
@@ -62,12 +71,13 @@ const pricingQ = useQuery({ queryKey: ['pricing'], queryFn: getPricing })
 const rows = computed(() => tokensQ.data.value?.items ?? [])
 
 const columns: Column[] = [
-  { key: 'name', label: t('keys.colName') },
+  { key: 'name', label: t('keys.colName'), class: 'w-[200px]' },
+  { key: 'group', label: t('keys.colGroup'), class: 'w-[260px]' },
   { key: 'key', label: t('keys.colKey'), class: 'w-[210px]' },
   { key: 'status', label: t('keys.colStatus'), class: 'w-[100px]' },
-  { key: 'quota', label: t('keys.colUsage'), class: 'w-[130px]', numeric: true },
-  { key: 'created_time', label: t('keys.colCreated'), class: 'w-[150px]' },
-  { key: 'accessed_time', label: t('keys.colLastUsed'), class: 'w-[120px]' },
+  { key: 'quota', label: t('keys.colUsage'), class: 'w-[150px]', numeric: true },
+  { key: 'created_time', label: t('keys.colCreated'), class: 'w-[170px]' },
+  { key: 'accessed_time', label: t('keys.colLastUsed'), class: 'w-[140px]' },
   { key: 'actions', label: '', class: 'w-[120px]' },
 ]
 
@@ -109,6 +119,7 @@ interface FormState {
   id: number | null
   name: string
   groups: string[]
+  cross_group_retry: boolean
   unlimited_quota: boolean
   /** 表单里用美元，提交前换算成 quota */
   quotaUsd: string
@@ -125,6 +136,7 @@ function blankForm(): FormState {
     id: null,
     name: '',
     groups: [],
+    cross_group_retry: false,
     unlimited_quota: true,
     quotaUsd: '',
     expiry: 'never',
@@ -176,12 +188,18 @@ function onDocClick(e: MouseEvent) {
   if (!groupWrap.value || !groupWrap.value.contains(t)) groupOpen.value = false
   if (!expiryWrap.value || !expiryWrap.value.contains(t)) expiryOpen.value = false
 }
-onMounted(() => document.addEventListener('click', onDocClick))
-onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
+onMounted(() => {
+  document.addEventListener('click', onDocClick)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick)
+})
 
-function selectGroup(g: string) {
-  form.value.groups = [g]
-  groupOpen.value = false
+/** 切换分组选择（多选）；下拉保留展开以便继续勾选 */
+function toggleGroupForm(g: string) {
+  const i = form.value.groups.indexOf(g)
+  if (i >= 0) form.value.groups.splice(i, 1)
+  else form.value.groups.push(g)
 }
 
 function selectExpiry(v: string) {
@@ -202,6 +220,7 @@ function openEdit(row: ApiToken) {
     id: row.id,
     name: row.name,
     groups: parseTokenGroups(row),
+    cross_group_retry: row.cross_group_retry,
     unlimited_quota: row.unlimited_quota,
     quotaUsd: row.unlimited_quota
       ? ''
@@ -244,11 +263,41 @@ function resolveExpiry(): number | null {
   return Math.floor(Date.now() / 1000) + Number(f.expiry) * 86400
 }
 
-/** 名称列下仅展示前 3 个分组，超出隐藏并以 +N 提示 */
-function groupLabel(row: ApiToken): string {
-  const groups = parseTokenGroups(row)
-  if (groups.length <= 3) return groups.join(', ')
-  return `${groups.slice(0, 3).join(', ')} +${groups.length - 3}`
+/** 分组列默认最多展示 3 个，超出折叠到「+N」按钮里 */
+const GROUP_VISIBLE = 3
+
+/** 点开「+N」展开完整分组的行 id 集合（按行独立，翻页后自然重置） */
+const groupExpanded = ref<Set<number>>(new Set())
+
+function toggleGroupExpand(id: number) {
+  const next = new Set(groupExpanded.value)
+  if (!next.delete(id)) next.add(id)
+  groupExpanded.value = next
+}
+
+/** 分组徽章：分组名 + 各自倍率（×n）。未展开时截断到 GROUP_VISIBLE 个 */
+function groupBadges(row: ApiToken): { name: string; ratio: number }[] {
+  const all = parseTokenGroups(row)
+  const list = groupExpanded.value.has(row.id) ? all : all.slice(0, GROUP_VISIBLE)
+  return list.map((g) => ({ name: g, ratio: ratioOf(g) }))
+}
+
+// ───────────────── 分组列彩色标签（对齐模型库色调） ─────────────────
+
+const TOKEN_TONES = [
+  'text-sky-600 dark:text-sky-400',
+  'text-violet-600 dark:text-violet-400',
+  'text-amber-600 dark:text-amber-400',
+  'text-emerald-600 dark:text-emerald-400',
+  'text-rose-600 dark:text-rose-400',
+  'text-cyan-600 dark:text-cyan-400',
+]
+
+/** 给分组名映射一个稳定的文字色（同 ModelTable 的 toneOf） */
+function toneOf(name: string) {
+  let h = 0
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) | 0
+  return TOKEN_TONES[Math.abs(h) % TOKEN_TONES.length]
 }
 
 const saveMut = useMutation({
@@ -270,7 +319,7 @@ const saveMut = useMutation({
       model_limits: f.model_limits.join(','),
       // 空串和 null 后端都当「不限制」，统一传 null 更明确
       allow_ips: f.allow_ips.trim() || null,
-      cross_group_retry: false,
+      cross_group_retry: f.cross_group_retry,
       groups: f.groups,
     }
 
@@ -349,7 +398,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
 </script>
 
 <template>
-  <div>
+  <div class="flex min-h-0 flex-1 flex-col">
     <PageHeader :title="t('keys.title')" :description="t('keys.subtitle')">
       <template #actions>
         <AppButton variant="primary" @click="openCreate">
@@ -360,6 +409,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
     </PageHeader>
 
     <DataTable
+      class="flex-1"
       :columns="columns"
       :rows="rows"
       :row-key="(r) => r.id"
@@ -380,18 +430,59 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
       </template>
 
       <template #cell="{ row, column }">
-        <!-- 名称 + 分组 -->
+        <!-- 名称 -->
         <template v-if="column.key === 'name'">
           <p class="truncate font-medium">{{ row.name }}</p>
-          <p
-            :title="parseTokenGroups(row).join(', ')"
-            class="mt-0.5 truncate text-[11.5px] text-fg-subtle"
-          >
-            {{ groupLabel(row) || '—' }}
-            <template v-if="row.model_limits_enabled">
-              · {{ t('keys.modelLimited') }}
-            </template>
+          <p v-if="row.model_limits_enabled" class="mt-0.5 text-[11px] text-fg-subtle">
+            {{ t('keys.modelLimited') }}
           </p>
+        </template>
+
+        <!-- 分组 + 倍率：彩色标签纯展示（编辑走右侧「编辑」按钮） -->
+        <template v-else-if="column.key === 'group'">
+          <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <template v-if="groupBadges(row).length">
+              <template v-for="(g, i) in groupBadges(row)" :key="g.name">
+                <span
+                  :title="`${g.name} ×${ratioLabel(g.ratio)}`"
+                  class="inline-flex max-w-[120px] items-center gap-1 whitespace-nowrap"
+                >
+                  <span
+                    class="truncate rounded bg-bg-muted px-1.5 py-0.5 text-[11px] font-medium leading-none"
+                    :class="toneOf(g.name)"
+                  >{{ g.name }}</span>
+                  <span class="text-[10.5px] leading-none text-fg-subtle">
+                    ×{{ ratioLabel(g.ratio) }}
+                  </span>
+                </span>
+                <!-- 分组按顺序命中，用箭头表达先后 -->
+                <ArrowRight
+                  v-if="i < groupBadges(row).length - 1"
+                  class="size-3 shrink-0 text-fg-subtle"
+                />
+              </template>
+            </template>
+            <span v-else class="text-[11px] leading-none text-fg-muted">{{ t('keys.fGroupPlaceholder') }}</span>
+            <!-- 超过 3 个分组时折叠，箭头图标展开/收起 -->
+            <button
+              v-if="parseTokenGroups(row).length > GROUP_VISIBLE"
+              type="button"
+              class="motion-press flex size-5 items-center justify-center rounded text-fg-subtle hover:bg-bg-muted hover:text-fg"
+              :title="
+                groupExpanded.has(row.id)
+                  ? t('common.collapse')
+                  : parseTokenGroups(row).join(' → ')
+              "
+              @click="toggleGroupExpand(row.id)"
+            >
+              <ChevronUp v-if="groupExpanded.has(row.id)" class="size-3.5" />
+              <ChevronDown v-else class="size-3.5" />
+            </button>
+          </div>
+          <p
+            v-if="row.cross_group_retry"
+            class="mt-1 inline-flex items-center rounded-full border border-info-border bg-info-bg px-1.5 py-0.5 text-[10.5px] leading-none text-info-fg"
+          >{{ t('keys.crossGroupRetry') }}</p>
         </template>
 
         <!-- 密钥（列表只显示打码版，复制走接口拿真值） -->
@@ -504,8 +595,10 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
 
     <Pagination
       v-model:page="page"
-      :page-size="tokensQ.data.value?.page_size || PAGE_SIZE"
+      :page-size="pageSize"
       :total="tokensQ.data.value?.total ?? 0"
+      :page-size-options="PAGE_SIZE_OPTIONS"
+      @update:page-size="onPageSizeChange"
     />
 
     <!-- 新建 / 编辑 -->
@@ -537,7 +630,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
               class="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected"
               @click="groupOpen = !groupOpen"
             >
-              <span v-if="form.groups[0]" class="truncate">{{ form.groups[0] }}</span>
+              <span v-if="form.groups.length" class="truncate">{{ form.groups.join(', ') }}</span>
               <span v-else class="truncate text-fg-muted">{{ t('keys.fGroupPlaceholder') }}</span>
               <ChevronDown
                 class="ml-auto size-3.5 shrink-0 text-fg-subtle transition-transform"
@@ -554,11 +647,11 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
                 :key="g"
                 type="button"
                 class="motion-press flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-bg-muted"
-                :class="form.groups[0] === g ? 'bg-bg-muted' : ''"
-                @click="selectGroup(g)"
+                :class="form.groups.includes(g) ? 'bg-bg-muted' : ''"
+                @click="toggleGroupForm(g)"
               >
                 <Check
-                  v-if="form.groups[0] === g"
+                  v-if="form.groups.includes(g)"
                   class="mt-0.5 size-3.5 shrink-0 text-accent"
                 />
                 <span v-else class="mt-0.5 size-3.5 shrink-0" />
@@ -587,6 +680,18 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
             </div>
           </div>
         </FormField>
+
+        <div>
+          <label class="flex items-center gap-2 text-[12.5px]">
+            <input
+              v-model="form.cross_group_retry"
+              type="checkbox"
+              class="size-3.5 rounded border-border accent-[var(--color-accent)]"
+            />
+            {{ t('keys.crossGroupRetry') }}
+          </label>
+          <p class="mt-1 text-[11.5px] text-fg-subtle">{{ t('keys.crossGroupHint') }}</p>
+        </div>
 
         <FormField id="k-expiry" :label="t('keys.fExpiry')">
           <div ref="expiryWrap" class="relative">

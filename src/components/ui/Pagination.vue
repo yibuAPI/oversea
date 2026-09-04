@@ -8,7 +8,7 @@
  */
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-vue-next'
 
 const props = defineProps<{
   page: number
@@ -30,8 +30,22 @@ const showPageSize = computed(() => options.value.length > 0)
 const pageCount = computed(() =>
   props.pageSize > 0 ? Math.max(1, Math.ceil(props.total / props.pageSize)) : 1,
 )
-const from = computed(() => (props.page - 1) * props.pageSize + 1)
-const to = computed(() => Math.min(props.page * props.pageSize, props.total))
+/** 数字页码序列（带省略号）：1 … 3 4 [5] 6 7 … 12 */
+const pages = computed<(number | '…')[]>(() => {
+  const n = pageCount.value
+  const cur = props.page
+  if (n <= 7) return Array.from({ length: n }, (_, i) => i + 1)
+  const set = new Set<number>([1, 2, n - 1, n, cur - 1, cur, cur + 1])
+  const sorted = [...set].filter((p) => p >= 1 && p <= n).sort((a, b) => a - b)
+  const out: (number | '…')[] = []
+  let prev = 0
+  for (const p of sorted) {
+    if (prev && p - prev > 1) out.push('…')
+    out.push(p)
+    prev = p
+  }
+  return out
+})
 
 /** 改每页条数后页数会变，统一回到第 1 页（配合父组件把当前页重置为 1） */
 function onPageSizeChange(e: Event) {
@@ -43,45 +57,63 @@ function onPageSizeChange(e: Event) {
 <template>
   <div
     v-if="total > 0"
-    class="mt-3 flex flex-wrap items-center justify-between gap-2 text-[12.5px] text-fg-muted"
+    class="mt-3 flex flex-wrap items-center justify-end gap-2 text-[12.5px] text-fg-muted"
   >
-    <p class="tabular">{{ from }}–{{ to }} / {{ total }}</p>
+    <span class="tabular">{{ t('common.totalPages', { n: pageCount }) }}</span>
+
     <div class="flex items-center gap-1">
       <button
         type="button"
-        class="motion-press flex size-8 items-center justify-center rounded-md border border-border hover:bg-bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
+        class="motion-press flex size-8 items-center justify-center rounded-md text-fg-muted hover:bg-bg-muted disabled:opacity-30 disabled:hover:bg-transparent"
         :disabled="page <= 1"
         :aria-label="t('common.prevPage')"
         @click="emit('update:page', page - 1)"
       >
         <ChevronLeft class="size-4" />
       </button>
-      <span class="px-2 tabular">{{ page }} / {{ pageCount }}</span>
+
+      <template v-for="(p, i) in pages" :key="`${p}-${i}`">
+        <span v-if="p === '…'" class="flex size-8 items-center justify-center text-fg-subtle">…</span>
+        <button
+          v-else
+          type="button"
+          class="motion-press flex size-8 items-center justify-center rounded-md tabular hover:bg-bg-muted"
+          :class="
+            p === page
+              ? 'bg-bg-muted font-semibold text-fg'
+              : 'text-fg-muted'
+          "
+          :aria-current="p === page ? 'page' : undefined"
+          @click="emit('update:page', p)"
+        >
+          {{ p }}
+        </button>
+      </template>
+
       <button
         type="button"
-        class="motion-press flex size-8 items-center justify-center rounded-md border border-border hover:bg-bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
+        class="motion-press flex size-8 items-center justify-center rounded-md text-fg-muted hover:bg-bg-muted disabled:opacity-30 disabled:hover:bg-transparent"
         :disabled="page >= pageCount"
         :aria-label="t('common.nextPage')"
         @click="emit('update:page', page + 1)"
       >
         <ChevronRight class="size-4" />
       </button>
-      <label
-        v-if="showPageSize"
-        class="ml-1 flex items-center gap-1 text-[12.5px] text-fg-muted"
-      >
-        <span>{{ t('common.perPage') }}</span>
-        <select
-          :value="pageSize"
-          class="motion-press h-8 appearance-none rounded-md border border-border bg-bg-elevated pl-2 pr-7 text-[12.5px] font-medium text-fg-muted outline-none"
-          :aria-label="t('common.perPage')"
-          @change="onPageSizeChange"
-        >
-          <option v-for="n in options" :key="n" :value="n" class="bg-bg-elevated">
-            {{ n }}
-          </option>
-        </select>
-      </label>
     </div>
+
+    <label v-if="showPageSize" class="ml-1 flex items-center gap-1">
+      <span>{{ t('common.perPage') }}</span>
+      <select
+        :value="pageSize"
+        class="motion-press h-8 appearance-none rounded-md border border-border bg-bg-elevated pl-2 pr-7 text-[12.5px] font-medium text-fg outline-none"
+        :aria-label="t('common.perPage')"
+        @change="onPageSizeChange"
+      >
+        <option v-for="n in options" :key="n" :value="n" class="bg-bg-elevated">
+          {{ n }}
+        </option>
+      </select>
+      <ChevronDown class="pointer-events-none -ml-6 size-3.5 text-fg-muted" />
+    </label>
   </div>
 </template>
