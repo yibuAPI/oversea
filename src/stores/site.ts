@@ -115,6 +115,23 @@ export const useSiteStore = defineStore('site', () => {
   }
   const hasNavModule = (name: string) => !disabledNavModules.value.has(name)
 
+  /**
+   * 对外可访问的 API 基址。后端管理台配的 server_address 优先 ——
+   * 站点可能挂在反代/自定义域名后，此时 window.location.origin 未必是
+   * 客户端该填的地址。未配置才回落到当前站点源。去掉末尾斜杠，
+   * 便于调用方直接拼 `/v1` 之类的路径。
+   */
+  const serverAddress = computed(() => {
+    const raw = status.value?.server_address
+    const base =
+      typeof raw === 'string' && raw.trim()
+        ? raw.trim()
+        : typeof window !== 'undefined'
+          ? window.location.origin
+          : ''
+    return base.replace(/\/+$/, '')
+  })
+
   /** 额度换算：后端以 quota 整数存储，展示需除以 quota_per_unit */
   const quotaPerUnit = computed(() => status.value?.quota_per_unit ?? 500_000)
   const displayInCurrency = computed(
@@ -229,6 +246,7 @@ export const useSiteStore = defineStore('site', () => {
     turnstileEnabled,
     oauthProviders,
     hasNavModule,
+    serverAddress,
     quotaPerUnit,
     displayInCurrency,
     load,

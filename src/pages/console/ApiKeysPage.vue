@@ -13,12 +13,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import {
   Plus,
   Copy,
-  Trash2,
-  Pencil,
   KeyRound,
   Check,
-  Ban,
-  CircleCheck,
   ChevronDown,
   ChevronUp,
   ArrowRight,
@@ -42,6 +38,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import FormField from '@/components/ui/FormField.vue'
 import Pagination from '@/components/ui/Pagination.vue'
+import CcSwitchModal from '@/components/console/CcSwitchModal.vue'
 
 const site = useSiteStore()
 const { quotaPerUnit } = storeToRefs(site)
@@ -78,7 +75,7 @@ const columns: Column[] = [
   { key: 'quota', label: t('keys.colUsage'), class: 'w-[150px]', numeric: true },
   { key: 'created_time', label: t('keys.colCreated'), class: 'w-[170px]' },
   { key: 'accessed_time', label: t('keys.colLastUsed'), class: 'w-[140px]' },
-  { key: 'actions', label: '', class: 'w-[120px]' },
+  { key: 'actions', label: '', class: 'w-[270px]' },
 ]
 
 // ───────────────── 复制密钥（显示打码，复制真值） ─────────────────
@@ -100,6 +97,33 @@ async function onCopy(id: number) {
     toast(e instanceof Error ? e.message : String(e), true)
   } finally {
     copying.value = null
+  }
+}
+
+// ───────────────── 填入 CC Switch ─────────────────
+
+/**
+ * CC Switch 需要明文密钥，和复制一样得走 revealTokenKey 现取 ——
+ * 列表里的 key 是打码的。取 key 的接口有 CriticalRateLimit，
+ * 所以只在用户点开时取一次，不预取。
+ */
+const ccOpen = ref(false)
+const ccKey = ref('')
+const ccName = ref('')
+/** 正在取 key 的行 id，用于禁用按钮避免重复点 */
+const ccLoading = ref<number | null>(null)
+
+async function openCcSwitch(row: ApiToken) {
+  ccLoading.value = row.id
+  try {
+    const { key } = await revealTokenKey(row.id)
+    ccKey.value = key
+    ccName.value = row.name
+    ccOpen.value = true
+  } catch (e) {
+    toast(e instanceof Error ? e.message : String(e), true)
+  } finally {
+    ccLoading.value = null
   }
 }
 
@@ -551,12 +575,10 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
 
         <!-- 操作 -->
         <template v-else-if="column.key === 'actions'">
-          <div class="flex items-center justify-end gap-0.5">
+          <div class="flex items-center justify-end gap-1">
             <button
               type="button"
-              class="flex size-7 items-center justify-center rounded-md text-fg-subtle transition-colors hover:bg-bg-muted hover:text-fg"
-              :title="row.status === TOKEN_STATUS.ENABLED ? t('keys.disable') : t('keys.enable')"
-              :aria-label="row.status === TOKEN_STATUS.ENABLED ? t('keys.disable') : t('keys.enable')"
+              class="motion-press whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-[12px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
               @click="
                 statusMut.mutate({
                   id: row.id,
@@ -567,26 +589,30 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
                 })
               "
             >
-              <Ban v-if="row.status === TOKEN_STATUS.ENABLED" class="size-3.5" />
-              <CircleCheck v-else class="size-3.5" />
+              {{ row.status === TOKEN_STATUS.ENABLED ? t('keys.disable') : t('keys.enable') }}
             </button>
             <button
               type="button"
-              class="flex size-7 items-center justify-center rounded-md text-fg-subtle transition-colors hover:bg-bg-muted hover:text-fg"
-              :title="t('common.edit')"
-              :aria-label="t('common.edit')"
+              class="motion-press whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-[12px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg disabled:opacity-50"
+              :title="t('ccswitch.action')"
+              :disabled="ccLoading === row.id"
+              @click="openCcSwitch(row)"
+            >
+              {{ t('ccswitch.actionShort') }}
+            </button>
+            <button
+              type="button"
+              class="motion-press whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-[12px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
               @click="openEdit(row)"
             >
-              <Pencil class="size-3.5" />
+              {{ t('common.edit') }}
             </button>
             <button
               type="button"
-              class="flex size-7 items-center justify-center rounded-md text-fg-subtle transition-colors hover:bg-danger-bg hover:text-danger-fg"
-              :title="t('common.delete')"
-              :aria-label="t('common.delete')"
+              class="motion-press whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-[12px] text-fg-muted transition-colors hover:border-danger-border hover:bg-danger-bg hover:text-danger-fg"
               @click="delTarget = row"
             >
-              <Trash2 class="size-3.5" />
+              {{ t('common.delete') }}
             </button>
           </div>
         </template>
@@ -813,6 +839,16 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
         </AppButton>
       </template>
     </AppModal>
+
+    <!-- 填入 CC Switch -->
+    <CcSwitchModal
+      :open="ccOpen"
+      :token-key="ccKey"
+      :token-name="ccName"
+      :models="modelsQ.data.value ?? []"
+      @close="ccOpen = false"
+      @opened="toast(t('ccswitch.opened'))"
+    />
 
     <!-- 删除确认 -->
     <AppModal
