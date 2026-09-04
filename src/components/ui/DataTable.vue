@@ -16,6 +16,11 @@ export interface Column {
   class?: string
   /** 表头是否右对齐（数值列） */
   numeric?: boolean
+  /**
+   * 横向滚动时钉在右缘。表格比容器宽时（分组多的行会撑开），
+   * 操作按钮不该被滚走 —— 那是用户最常点的一列。
+   */
+  stickyRight?: boolean
 }
 
 const props = defineProps<{
@@ -33,11 +38,18 @@ defineSlots<{
   cell(props: { row: T; column: Column }): unknown
   empty(): unknown
 }>()
+
+/**
+ * 钉住列的公共类。单元格必须自带不透明底色，否则横向滚动时
+ * 下层内容会直接从它身下透出来。
+ */
+const STICKY =
+  'sticky right-0 bg-bg-elevated shadow-[inset_1px_0_0_0_var(--color-border)] transition-colors group-hover:bg-bg-subtle'
 </script>
 
 <template>
   <div
-    class="motion-lift flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-bg-elevated hover:shadow-lg"
+    class="flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-bg-elevated"
   >
     <!-- 行多于可视高度时纵向滚动，表头 sticky 常驻 -->
     <div class="min-h-0 flex-1 overflow-auto">
@@ -49,8 +61,17 @@ defineSlots<{
               v-for="col in props.columns"
               :key="col.key"
               scope="col"
-              class="whitespace-nowrap bg-bg-subtle px-4 py-2.5 text-[11.5px] font-medium uppercase tracking-wide text-fg-subtle shadow-[inset_0_-1px_0_0_var(--color-border)]"
-              :class="[col.class, col.numeric ? 'text-right' : 'text-left']"
+              class="whitespace-nowrap bg-bg-subtle px-4 py-2.5 text-[11.5px] font-medium uppercase tracking-wide text-fg-subtle"
+              :class="[
+                col.class,
+                col.numeric ? 'text-right' : 'text-left',
+                // 底线用 inset shadow 画（见上）；右钉列再叠一条左分界线。
+                // 两个 shadow 必须合成一条声明 —— 分成两个 shadow-[] 工具类
+                // 只会互相覆盖，胜负还取决于生成顺序。
+                col.stickyRight
+                  ? 'sticky right-0 z-20 shadow-[inset_0_-1px_0_0_var(--color-border),inset_1px_0_0_0_var(--color-border)]'
+                  : 'shadow-[inset_0_-1px_0_0_var(--color-border)]',
+              ]"
             >
               {{ col.label }}
             </th>
@@ -63,9 +84,14 @@ defineSlots<{
             <tr
               v-for="i in props.skeletonRows ?? 5"
               :key="`sk-${i}`"
-              class="border-b border-border last:border-0"
+              class="group border-b border-border last:border-0"
             >
-              <td v-for="col in props.columns" :key="col.key" class="px-4 py-3">
+              <td
+                v-for="col in props.columns"
+                :key="col.key"
+                class="px-4 py-3"
+                :class="col.stickyRight ? STICKY : ''"
+              >
                 <div class="h-3.5 animate-pulse rounded bg-bg-inset" />
               </td>
             </tr>
@@ -97,13 +123,17 @@ defineSlots<{
             v-for="row in props.rows"
             v-else
             :key="props.rowKey(row)"
-            class="border-b border-border transition-colors last:border-0 hover:bg-bg-subtle"
+            class="group border-b border-border transition-colors last:border-0 hover:bg-bg-subtle"
           >
             <td
               v-for="col in props.columns"
               :key="col.key"
               class="px-4 py-2.5 align-middle"
-              :class="[col.class, col.numeric ? 'text-right tabular' : '']"
+              :class="[
+                col.class,
+                col.numeric ? 'text-right tabular' : '',
+                col.stickyRight ? STICKY : '',
+              ]"
             >
               <slot name="cell" :row="row" :column="col">
                 {{ row[col.key] }}
