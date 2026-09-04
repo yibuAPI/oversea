@@ -47,11 +47,26 @@ export const useUserStore = defineStore('user', () => {
     return user.value
   }
 
+  /**
+   * 登录。
+   *
+   * ⚠️ POST /api/user/login 返回的是**精简**用户对象（id/username/role/status...），
+   * 不含 quota / used_quota —— 只有 GET /api/user/self 才带。若直接拿它当完整
+   * SelfUser 存下来，侧边栏与总览的余额会一直是 $0.0000，直到用户手动刷新页面
+   * （刷新时路由守卫走 ensureResolved -> fetchSelf 才补上）。
+   * 故登录后必须再拉一次 self 补全。
+   */
   async function login(username: string, password: string) {
     const u = await loginApi({ username, password })
+    // 先落 uid：/user/self 需要 New-Api-User 头，否则 401
     setUser(u)
     resolved.value = true
-    return u
+    try {
+      setUser(await getSelf())
+    } catch {
+      // 补全失败不影响登录本身，保留精简态即可
+    }
+    return user.value ?? u
   }
 
   async function logout() {
