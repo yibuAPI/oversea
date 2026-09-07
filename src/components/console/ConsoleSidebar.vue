@@ -17,7 +17,6 @@ import {
   LayoutDashboard,
   KeyRound,
   Gauge,
-  Boxes,
   MessageSquare,
   FileText,
   PieChart,
@@ -66,7 +65,8 @@ const groups = computed(() => [
       { to: '/console', icon: LayoutDashboard, label: t('console.nav.dashboard') },
       { to: '/console/keys', icon: KeyRound, label: t('console.nav.apiKeys') },
       { to: '/console/limits', icon: Gauge, label: t('console.nav.quotaLimit') },
-      { to: '/console/models', icon: Boxes, label: t('console.nav.models') },
+      // 暂隐藏模型库入口，后续再开放
+      // { to: '/console/models', icon: Boxes, label: t('console.nav.models') },
       { to: '/console/docs', icon: FileText, label: t('console.nav.docs') },
     ],
   },

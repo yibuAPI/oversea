@@ -30,7 +30,7 @@ const props = defineProps<{
   iconOf: (m: PricingModel) => string | null
 }>()
 
-const emit = defineEmits<{ copy: [name: string] }>()
+const emit = defineEmits<{ copy: [name: string]; select: [model: PricingModel] }>()
 
 const { t } = useI18n()
 
@@ -179,7 +179,12 @@ const rows = computed(() =>
         <tr
           v-for="row in rows"
           :key="row.name"
-          class="group border-b border-[#EDEDED] transition-colors last:border-b-0 hover:bg-[#FAFAFA] dark:border-neutral-800/70 dark:hover:bg-neutral-900/50"
+          tabindex="0"
+          role="button"
+          class="group cursor-pointer border-b border-[#EDEDED] transition-colors last:border-b-0 hover:bg-[#FAFAFA] dark:border-neutral-800/70 dark:hover:bg-neutral-900/50"
+          @click="emit('select', row.model)"
+          @keydown.enter.prevent="emit('select', row.model)"
+          @keydown.space.prevent="emit('select', row.model)"
         >
           <!-- 模型：图标 + 名 + 悬停复制 -->
           <td class="px-4 py-4 align-middle">

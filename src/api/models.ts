@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { PricingResponse, SummaryAllResult, UserGroup } from './types'
+import type { PerfQueryResult, PricingResponse, SummaryAllResult, UserGroup } from './types'
 
 /**
  * 模型库与定价。
@@ -16,6 +16,13 @@ export const getMyModels = (group?: string) =>
 /** 所有模型的性能指标汇总：延迟 / 成功率 / 吞吐（公开，未登录也可访问） */
 export const getPerfMetricsSummary = () =>
   api.get<SummaryAllResult>('/perf-metrics/summary')
+
+/**
+ * 单个模型在指定时间窗口内、按用户分组的健康指标（公开，未登录也可访问）。
+ * hours：24（最近一天）或 168（最近七天）。
+ */
+export const getPerfMetrics = (model: string, hours: number) =>
+  api.get<PerfQueryResult>('/perf-metrics', { params: { model, hours } })
 
 /** 分组倍率与说明。auto 分组的 ratio 是字符串「自动」 */
 export const getMyGroups = () => api.get<Record<string, UserGroup>>('/user/self/groups')
