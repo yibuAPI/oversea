@@ -42,6 +42,7 @@ import {
 } from 'lucide-vue-next'
 import { getPricing, inputPrice, getPerfMetricsSummary } from '@/api/models'
 import type { ModelSummary, PricingModel } from '@/api/types'
+import { resolveModelVendor } from '@/utils/modelVendor'
 import ModelCard from '@/components/common/ModelCard.vue'
 import ModelTable from '@/components/common/ModelTable.vue'
 import ModelDetailModal from '@/components/common/ModelDetailModal.vue'
@@ -69,7 +70,7 @@ const perfMap = computed<Record<string, ModelSummary>>(() => {
 })
 
 const search = ref('')
-const vendorSel = ref<Set<number>>(new Set())
+const vendorSel = ref<Set<string>>(new Set())
 type BillKind = 'token' | 'call' | 'tiered'
 const billSel = ref<Set<BillKind>>(new Set())
 const groupSel = ref<Set<string>>(new Set())
@@ -82,7 +83,14 @@ const page = ref(1)
 const pageSize = ref(20)
 
 const models = computed(() => pricingQ.data.value?.data ?? [])
-const vendors = computed(() => pricingQ.data.value?.vendors ?? [])
+const modelVendors = computed(() => new Map(models.value.map((m) => [
+  m, resolveModelVendor(m, pricingQ.data.value?.vendors ?? [], t('models.vendorOther')),
+])))
+const vendorOf = (m: PricingModel) => modelVendors.value.get(m)
+  ?? resolveModelVendor(m, pricingQ.data.value?.vendors ?? [], t('models.vendorOther'))
+const vendors = computed(() => [...new Map(
+  [...modelVendors.value.values()].map((v) => [v.id, v]),
+).values()].sort((a, b) => a.name.localeCompare(b.name)))
 
 /** 分组倍率映射：group → ratio，用于价格换算 */
 const groupRatioMap = computed<Record<string, number>>(
@@ -96,11 +104,8 @@ const groupRatio = computed(() => {
   return typeof first === 'number' ? first : 1
 })
 
-const vendorName = (id?: number) =>
-  vendors.value.find((v) => v.id === id)?.name ?? t('models.vendorOther')
-/** 图标名：模型自己的 icon 优先（"OpenAI.Color" 这类 lobehub 名），否则用厂商的 */
-const iconOf = (m: PricingModel) =>
-  m.icon || vendors.value.find((v) => v.id === m.vendor_id)?.icon || null
+const vendorName = (m: PricingModel) => vendorOf(m).name
+const iconOf = (m: PricingModel) => vendorOf(m).icon
 
 const tagsOf = (m: PricingModel) =>
   (m.tags ?? '').split(',').map((s) => s.trim()).filter(Boolean)
@@ -134,7 +139,7 @@ const groups = computed(() => {
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
   const list = models.value.filter((m) => {
-    if (vendorSel.value.size && !vendorSel.value.has(m.vendor_id ?? 0)) return false
+    if (vendorSel.value.size && !vendorSel.value.has(vendorOf(m).id)) return false
     if (billSel.value.size) {
       const kind = billingKind(m)
       if (!billSel.value.has(kind)) return false
@@ -148,7 +153,7 @@ const filtered = computed(() => {
     return (
       m.model_name.toLowerCase().includes(q) ||
       (m.description ?? '').toLowerCase().includes(q) ||
-      vendorName(m.vendor_id).toLowerCase().includes(q)
+      vendorName(m).toLowerCase().includes(q)
     )
   })
   if (sortKey.value === 'priceAsc')
@@ -157,7 +162,7 @@ const filtered = computed(() => {
     return [...list].sort((a, b) => comparablePrice(b) - comparablePrice(a))
   return [...list].sort(
     (a, b) =>
-      (a.vendor_id ?? 999) - (b.vendor_id ?? 999) ||
+      vendorName(a).localeCompare(vendorName(b)) ||
       a.model_name.localeCompare(b.model_name),
   )
 })
@@ -191,9 +196,9 @@ function onPageSizeChange(e: Event) {
 }
 
 const vendorCounts = computed(() => {
-  const m = new Map<number, number>()
+  const m = new Map<string, number>()
   for (const x of models.value) {
-    const id = x.vendor_id ?? 0
+    const id = vendorOf(x).id
     m.set(id, (m.get(id) ?? 0) + 1)
   }
   return m
@@ -211,7 +216,7 @@ const billCounts = computed(() => {
   return { token, call, tiered }
 })
 
-function toggleVendor(id: number) {
+function toggleVendor(id: string) {
   const next = new Set(vendorSel.value)
   if (next.has(id)) next.delete(id)
   else next.add(id)
@@ -677,7 +682,7 @@ const autoGroups = computed(() => pricingQ.data.value?.auto_groups ?? [])
                   v-for="m in paged"
                   :key="m.model_name"
                   :model="m"
-                  :vendor-name="vendorName(m.vendor_id)"
+                  :vendor-name="vendorName(m)"
                   :icon="iconOf(m)"
                   :group-ratio="groupRatio"
                   :copied="copied === m.model_name"
@@ -762,7 +767,7 @@ const autoGroups = computed(() => pricingQ.data.value?.auto_groups ?? [])
     <ModelDetailModal
       v-if="selected"
       :model="selected"
-      :vendor-name="vendorName(selected.vendor_id)"
+      :vendor-name="vendorName(selected)"
       :icon="iconOf(selected)"
       :group-ratio="groupRatioMap"
       :usable-group="usableGroup"

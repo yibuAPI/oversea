@@ -25,8 +25,8 @@ const props = defineProps<{
   /** 已复制的模型名（父级统一维护，保证同一时间只有一行显示对勾） */
   copied: string | null
   /** 模型 → 厂商名，父级已处理「其他」兜底 */
-  vendorName: (id?: number) => string
-  /** 模型 → 图标名，模型自带优先、否则取厂商的 */
+  vendorName: (m: PricingModel) => string
+  /** 模型 → 与厂商名称一致的图标 */
   iconOf: (m: PricingModel) => string | null
 }>()
 
@@ -130,7 +130,7 @@ const rows = computed(() =>
       model: m,
       name: m.model_name,
       icon: props.iconOf(m),
-      vendor: props.vendorName(m.vendor_id),
+      vendor: props.vendorName(m),
       billing: { label: billingLabel(m), tone: billingTone(m) },
       price: priceOf(m),
       cache: cacheOf(m),
