@@ -516,7 +516,7 @@ onBeforeUnmount(() => {
                     <span
                       v-for="b in row.buckets"
                       :key="b.ts"
-                      class="group/tt relative inline-flex h-7 min-w-3 flex-1 items-center justify-center rounded-[3px]"
+                      class="group/tt relative inline-flex h-5 min-w-3 flex-1 items-center justify-center rounded-[3px]"
                       :class="toneOf(b.successRate, b.requestCount > 0).bg"
                     >
                       <span
@@ -686,7 +686,7 @@ onBeforeUnmount(() => {
                         {{ row.label }}
                       </span>
                     </td>
-                    <td class="whitespace-nowrap px-3 py-2.5 text-right text-sm tabular-nums text-[#0A0A0A] dark:text-neutral-100">
+                    <td class="whitespace-nowrap px-3 py-2.5 text-right text-sm tabular-nums text-[#000] dark:text-neutral-100">
                       <template v-if="billingKind === 'call'">
                         <div>
                           <span class="font-mono">{{ row.input }}</span>
@@ -695,19 +695,19 @@ onBeforeUnmount(() => {
                       </template>
                       <template v-else>
                         <div>
-                          <span class="text-xs text-[#9CA3AF] dark:text-neutral-500">{{ t('public.models.detail.priceInput') }}</span>
-                          <span class="font-mono"> {{ row.input }}</span>
-                          <span class="pl-0.5 text-[10px] text-[#9CA3AF] dark:text-neutral-500">/{{ t('public.models.detail.priceUnit') }}</span>
+                          <span class="text-xs text-[#000] dark:text-neutral-100">{{ t('public.models.detail.priceInput') }}</span>
+                          <span class="pl-1 font-mono"> {{ row.input }}</span>
+                          <span class="text-[10px] text-[#000] dark:text-neutral-100"> /{{ t('public.models.detail.priceUnit') }}</span>
                         </div>
                         <div>
-                          <span class="text-xs text-[#9CA3AF] dark:text-neutral-500">{{ t('public.models.detail.priceOutput') }}</span>
-                          <span class="font-mono"> {{ row.output }}</span>
-                          <span class="pl-0.5 text-[10px] text-[#9CA3AF] dark:text-neutral-500">/{{ t('public.models.detail.priceUnit') }}</span>
+                          <span class="text-xs text-[#000] dark:text-neutral-100">{{ t('public.models.detail.priceOutput') }}</span>
+                          <span class="pl-1 font-mono"> {{ row.output }}</span>
+                          <span class="text-[10px] text-[#000] dark:text-neutral-100"> /{{ t('public.models.detail.priceUnit') }}</span>
                         </div>
                         <div v-if="billingKind === 'token' && row.cache">
-                          <span class="text-xs text-[#9CA3AF] dark:text-neutral-500">{{ t('public.models.detail.priceCache') }}</span>
-                          <span class="font-mono"> {{ row.cache }}</span>
-                          <span class="pl-0.5 text-[10px] text-[#9CA3AF] dark:text-neutral-500">/{{ t('public.models.detail.priceUnit') }}</span>
+                          <span class="text-xs text-[#000] dark:text-neutral-100">{{ t('public.models.detail.priceCache') }}</span>
+                          <span class="pl-1 font-mono"> {{ row.cache }}</span>
+                          <span class="text-[10px] text-[#000] dark:text-neutral-100"> /{{ t('public.models.detail.priceUnit') }}</span>
                         </div>
                       </template>
                     </td>
