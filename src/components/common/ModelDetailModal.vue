@@ -676,7 +676,7 @@ onBeforeUnmount(() => {
                       <span
                         class="inline-flex h-6 items-center justify-center rounded-full border border-[#DBEAFE] bg-[#EFF6FF] px-2.5 text-xs font-semibold text-[#3B82F6] dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300"
                       >
-                        {{ Number.isInteger(row.ratio) ? row.ratio : row.ratio.toFixed(1) }}x
+                        {{ row.ratio.toFixed(4) }}x
                       </span>
                     </td>
                     <td class="whitespace-nowrap px-3 py-2.5 text-sm">

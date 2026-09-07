@@ -233,7 +233,7 @@ function toggleBill(kind: BillKind) {
 function groupRatioLabel(key: string): string {
   const r = groupRatioMap.value[key]
   if (typeof r !== 'number') return '—'
-  return t('public.models.groupRatio', { n: Number.isInteger(r) ? r : r.toFixed(1) })
+  return t('public.models.groupRatio', { n: r.toFixed(4) })
 }
 
 function toggleGroup(key: string) {
