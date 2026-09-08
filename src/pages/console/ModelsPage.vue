@@ -45,14 +45,25 @@ const groupRatios = computed(() => pricingQ.data.value?.group_ratio ?? {})
  * 用户可用的分组（后端已按用户权限过滤）。
  * 下拉选项与「新增密钥」保持一致：分组名（key）+ 倍率，即 `default（×2）`。
  * usable_group 的 value 是可读描述，仅在无倍率时兜底显示。
+ *
+ * 展示顺序：default 置顶，其余按倍率从低到高，同倍率按名称。
+ * 无倍率（auto 分组）按 1 参与排序，与其他页面一致。
  */
 const usableGroups = computed(() => {
   const g = pricingQ.data.value?.usable_group ?? {}
   const ratios = pricingQ.data.value?.group_ratio ?? {}
-  return Object.entries(g).map(([key, label]) => {
-    const ratio = ratios[key]
-    return { key, label, ratio: typeof ratio === 'number' ? ratio : null }
-  })
+  const DEFAULT_GROUP = 'default'
+  return Object.entries(g)
+    .map(([key, label]) => {
+      const ratio = ratios[key]
+      return { key, label, ratio: typeof ratio === 'number' ? ratio : null }
+    })
+    .sort((a, b) => {
+      if (a.key === DEFAULT_GROUP) return b.key === DEFAULT_GROUP ? 0 : -1
+      if (b.key === DEFAULT_GROUP) return 1
+      const r = (a.ratio ?? 1) - (b.ratio ?? 1)
+      return r !== 0 ? r : a.label.localeCompare(b.label)
+    })
 })
 
 /**
