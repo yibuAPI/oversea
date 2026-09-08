@@ -778,7 +778,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
             type="text"
             maxlength="256"
             :placeholder="t('keys.fNamePlaceholder')"
-            class="h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring"
+            class="h-9 w-full rounded-xl border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring"
           />
         </FormField>
 
@@ -806,7 +806,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
               type="button"
               :aria-expanded="expiryOpen"
               :aria-label="t('keys.fExpiry')"
-              class="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected"
+              class="flex h-9 w-full items-center gap-2 rounded-xl border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected"
               @click="expiryOpen = !expiryOpen"
             >
               <span class="truncate">{{ t(`keys.expiry_${form.expiry}`) }}</span>
@@ -818,7 +818,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
 
             <div
               v-if="expiryOpen"
-              class="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-72 overflow-y-auto rounded-lg border border-border bg-bg-elevated py-1 shadow-lg"
+              class="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-72 overflow-y-auto rounded-xl border border-border bg-bg-elevated py-1 shadow-lg"
             >
               <button
                 v-for="p in EXPIRY_PRESETS"
@@ -843,7 +843,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
             v-if="form.expiry === 'custom'"
             v-model="form.customExpiry"
             type="datetime-local"
-            class="mt-2 h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected"
+            class="mt-2 h-9 w-full rounded-xl border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected"
           />
         </FormField>
 
@@ -852,7 +852,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
             <input
               v-model="form.unlimited_quota"
               type="checkbox"
-              class="size-3.5 rounded border-border accent-[var(--color-accent)]"
+              class="size-4 shrink-0 cursor-pointer rounded border-border accent-[var(--color-btn-primary-bg)]"
             />
             {{ t('keys.fUnlimited') }}
           </label>
@@ -868,7 +868,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
                 type="number"
                 step="0.01"
                 min="0"
-                class="h-9 w-full rounded-lg border border-border bg-bg pl-6 pr-3 text-[13px] tabular outline-none transition-colors focus:border-border-selected"
+                class="h-9 w-full rounded-xl border border-border bg-bg pl-6 pr-3 text-[13px] tabular outline-none transition-colors focus:border-border-selected"
               />
             </div>
             <p class="mt-1 text-[11.5px] text-fg-subtle">{{ t('keys.fQuotaHint') }}</p>
@@ -880,24 +880,44 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
             <input
               v-model="form.model_limits_enabled"
               type="checkbox"
-              class="size-3.5 rounded border-border accent-[var(--color-accent)]"
+              class="size-4 shrink-0 cursor-pointer rounded border-border accent-[var(--color-btn-primary-bg)]"
             />
             {{ t('keys.fModelLimit') }}
           </label>
-          <select
-            v-if="form.model_limits_enabled"
-            v-model="form.model_limits"
-            multiple
-            size="6"
-            class="mt-2 w-full rounded-lg border border-border bg-bg p-1.5 text-[12.5px] outline-none transition-colors focus:border-border-selected"
-          >
-            <option v-for="m in modelsQ.data.value ?? []" :key="m" :value="m">
-              {{ m }}
-            </option>
-          </select>
-          <p v-if="form.model_limits_enabled" class="mt-1 text-[11.5px] text-fg-subtle">
-            {{ t('keys.fModelLimitHint') }}
-          </p>
+          <div v-if="form.model_limits_enabled" class="mt-2">
+            <!-- 复选框列表替代原生 multiple select：原生多选要按 Ctrl 才能连选，
+                 普通用户根本不知道，点哪个亮哪个、选不了第二个。改成一行一个勾选框，
+                 点一下即选中/取消，和表单里其它勾选交互一致。
+                 勾选框样式与分组下拉保持一致：原生 checkbox + accent-[var(--color-btn-primary-bg)]。 -->
+            <div
+              class="max-h-56 overflow-y-auto rounded-xl border border-border p-1.5"
+            >
+              <label
+                v-for="m in modelsQ.data.value ?? []"
+                :key="m"
+                class="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-bg-muted"
+              >
+                <input
+                  type="checkbox"
+                  :checked="form.model_limits.includes(m)"
+                  class="size-4 shrink-0 cursor-pointer rounded border-border accent-[var(--color-btn-primary-bg)]"
+                  @change="(e) => {
+                    const c = (e.target as HTMLInputElement).checked
+                    form.model_limits = c
+                      ? [...form.model_limits, m]
+                      : form.model_limits.filter((v) => v !== m)
+                  }"
+                />
+                <span class="min-w-0 flex-1 truncate text-[12.5px] text-fg">{{ m }}</span>
+              </label>
+            </div>
+            <p class="mt-1 text-[11.5px] text-fg-subtle">
+              {{ t('keys.fModelLimitHint') }}
+              <span v-if="form.model_limits.length" class="text-fg-muted">
+                · {{ t('keys.modelLimited', { n: form.model_limits.length }) }}
+              </span>
+            </p>
+          </div>
         </div>
 
         <FormField id="k-ips" :label="t('keys.fAllowIps')" :hint="t('keys.fAllowIpsHint')">
@@ -906,7 +926,7 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
             v-model="form.allow_ips"
             type="text"
             placeholder="203.0.113.1, 198.51.100.0/24"
-            class="h-9 w-full rounded-lg border border-border bg-bg px-3 font-mono text-[12.5px] outline-none transition-colors focus:border-border-selected"
+            class="h-9 w-full rounded-xl border border-border bg-bg px-3 font-mono text-[12.5px] outline-none transition-colors focus:border-border-selected"
           />
         </FormField>
 

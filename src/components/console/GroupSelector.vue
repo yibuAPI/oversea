@@ -198,7 +198,7 @@ onBeforeUnmount(() => {
       <li
         v-for="(g, i) in model"
         :key="g"
-        class="flex items-center gap-2 rounded-lg bg-bg-muted px-2.5 py-2"
+        class="flex items-center gap-2 rounded-xl bg-bg-muted px-2.5 py-2"
       >
         <span
           class="flex size-5 shrink-0 items-center justify-center rounded bg-bg-elevated text-[11px] font-semibold tabular text-fg-muted"
@@ -241,12 +241,12 @@ onBeforeUnmount(() => {
         </button>
       </li>
     </ul>
-    <p v-else class="mb-2 rounded-lg bg-bg-muted px-2.5 py-2.5 text-[12px] text-fg-muted">
+    <p v-else class="mb-2 rounded-xl bg-bg-muted px-2.5 py-2.5 text-[12px] text-fg-muted">
       {{ t('keys.fGroupPlaceholder') }}
     </p>
 
     <!-- 可选分组：勾选加入末尾 -->
-    <div class="max-h-44 overflow-y-auto rounded-lg border border-border">
+    <div class="max-h-44 overflow-y-auto rounded-xl border border-border">
       <label
         v-for="g in allOptions"
         :key="g"
@@ -295,7 +295,7 @@ onBeforeUnmount(() => {
     <Teleport to="body">
       <div
         v-if="tipGroup"
-        class="fixed z-[60] overflow-hidden rounded-lg bg-[#2c2c30] p-2 shadow-lg"
+        class="fixed z-[60] overflow-hidden rounded-xl bg-[#2c2c30] p-2 shadow-lg"
         :style="{
           top: `${tipPos.top}px`,
           left: `${tipPos.left}px`,

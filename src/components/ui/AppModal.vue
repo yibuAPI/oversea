@@ -62,7 +62,7 @@ onUnmounted(() => {
           aria-modal="true"
           :aria-label="title"
           tabindex="-1"
-          class="max-h-[90dvh] w-full overflow-y-auto rounded-t-2xl border border-border bg-bg-elevated shadow-lg outline-none sm:rounded-2xl"
+          class="max-h-[90dvh] w-full overflow-y-auto rounded-t-[20px] border border-border bg-bg-elevated shadow-lg outline-none sm:rounded-[20px]"
           :style="{ maxWidth: `${width ?? 480}px` }"
         >
           <div class="flex items-start gap-3 border-b border-border px-5 py-4">
@@ -74,7 +74,7 @@ onUnmounted(() => {
             </div>
             <button
               type="button"
-              class="-mr-1 -mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-subtle transition-colors hover:bg-bg-muted hover:text-fg"
+              class="-mr-1 -mt-1 flex size-8 shrink-0 items-center justify-center rounded-full text-fg-subtle transition-colors hover:bg-bg-muted hover:text-fg"
               aria-label="关闭"
               @click="emit('close')"
             >
