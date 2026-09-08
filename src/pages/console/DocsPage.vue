@@ -356,13 +356,6 @@ const ENDPOINTS = [
               {{ t('console.nav.quotaLimit') }}
               <ExternalLink class="size-3" />
             </RouterLink>
-            <RouterLink
-              to="/console/models"
-              class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-[12.5px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
-            >
-              {{ t('console.nav.models') }}
-              <ExternalLink class="size-3" />
-            </RouterLink>
           </div>
         </section>
       </div>

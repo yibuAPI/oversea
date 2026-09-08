@@ -98,12 +98,13 @@ const router = createRouter({
           component: () => import('@/pages/console/QuotaLimitPage.vue'),
           meta: { titleKey: 'console.nav.quotaLimit' },
         },
-        {
-          path: 'models',
-          name: 'console-models',
-          component: () => import('@/pages/console/ModelsPage.vue'),
-          meta: { titleKey: 'console.nav.models' },
-        },
+        // 暂隐藏 /console/models，后续再开放
+        // {
+        //   path: 'models',
+        //   name: 'console-models',
+        //   component: () => import('@/pages/console/ModelsPage.vue'),
+        //   meta: { titleKey: 'console.nav.models' },
+        // },
         {
           path: 'playground',
           name: 'console-playground',

@@ -26,7 +26,6 @@ import {
   Activity,
   Coins,
   BookOpen,
-  Boxes,
   LifeBuoy,
 } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
@@ -125,18 +124,10 @@ const weekRequests = computed(() =>
   (dataQ.data.value ?? []).reduce((s, r) => s + r.count, 0),
 )
 
-/** 推广卡。infron 那三张是产品营销位；这里换成三个真实可去的地方 ——
+/** 推广卡。infron 那三张是产品营销位；这里换成几个真实可去的地方 ——
  * 编造「限时优惠」之类的内容不如指向实际有用的入口。
  */
 const promos = [
-  {
-    icon: Boxes,
-    title: 'dash.promoModelsTitle',
-    desc: 'dash.promoModelsDesc',
-    to: '/console/models',
-    from: 'from-[#c9dcff]',
-    to2: 'to-[#e9f2ff]',
-  },
   {
     icon: BookOpen,
     title: 'dash.promoDocsTitle',
@@ -278,7 +269,7 @@ const promos = [
     </section>
 
     <!-- 推广卡。渐变抄 infron 三张卡的实测配色：baby-blue / 暖米-薄荷 / 灰蓝-紫粉 -->
-    <div class="grid gap-3 sm:grid-cols-3">
+    <div class="grid gap-3 sm:grid-cols-2">
       <RouterLink
         v-for="p in promos"
         :key="p.to"

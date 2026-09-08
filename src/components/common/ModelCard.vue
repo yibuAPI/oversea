@@ -28,7 +28,7 @@ const props = withDefaults(
   { metric: undefined },
 )
 
-const emit = defineEmits<{ copy: [name: string] }>()
+const emit = defineEmits<{ copy: [name: string]; select: [model: PricingModel] }>()
 
 const { t, locale } = useI18n()
 
@@ -216,9 +216,14 @@ const statusTone = computed(() => {
 </script>
 
 <template>
-  <!-- 网格竖卡 -->
+  <!-- 网格竖卡（整卡可点，打开模型详情；复制按钮内嵌并 .stop 拦截） -->
   <article
+    role="button"
+    tabindex="0"
     class="group relative isolate flex cursor-pointer flex-col rounded-[10px] border border-[#E5E5E5] bg-white transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-px hover:border-[#D4D4D4] hover:shadow-[0_6px_18px_rgba(15,23,42,0.06)] xl:min-h-[248px] dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-700"
+    @click="emit('select', model)"
+    @keydown.enter.prevent="emit('select', model)"
+    @keydown.space.prevent="emit('select', model)"
   >
 
     <div class="grid flex-1 gap-3 px-6 pb-3 pt-5" style="grid-template-rows: auto minmax(0, 1fr) auto">

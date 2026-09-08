@@ -7,8 +7,8 @@
  *   四列    列标题 14px/400 lh14 ls -0.14px #919191 全大写
  *           链接 16px/400 lh16 ls -0.16px 白 85%，行距 32px
  *
- * 之前做成浅色页脚是我自己的发挥；实测是深色收尾，
- * 和上方浅色 CTA 形成对比 —— 这是整页的节奏收口。
+ * 背景/文字跟随主题 token（bg-bg/text-fg），不写死颜色值 ——
+ * 日间白底深色字、夜间深底浅色字，和上方 CTA 的明暗对比由主题自然给出。
  * 站名与 logo 走 site store，运行时可由后台改动。
  */
 import { computed } from 'vue'
@@ -44,7 +44,7 @@ const hrefs: Record<string, string> = {
 </script>
 
 <template>
-  <footer class="bg-black text-white">
+  <footer class="bg-bg text-fg">
     <div class="mx-auto max-w-[1100px] px-6 py-[100px]">
       <div class="grid gap-10 lg:grid-cols-[1fr_repeat(2,auto)] lg:gap-10">
         <div>
@@ -56,14 +56,14 @@ const hrefs: Record<string, string> = {
           </RouterLink>
 
           <p
-            class="mt-8 inline-flex items-center gap-2 text-[14px] leading-[18.2px] tracking-[-0.14px] text-white/85"
+            class="mt-8 inline-flex items-center gap-2 text-[14px] leading-[18.2px] tracking-[-0.14px] text-fg-muted"
           >
             <span class="size-1.5 rounded-full bg-success-fg" aria-hidden="true" />
             {{ t('home.footer.operational') }}
           </p>
 
           <p
-            class="mt-2.5 max-w-[280px] text-[14px] leading-[18.2px] tracking-[-0.14px] text-white/85"
+            class="mt-2.5 max-w-[280px] text-[14px] leading-[18.2px] tracking-[-0.14px] text-fg-muted"
           >
             {{ t('home.footer.tagline') }}
           </p>
@@ -71,7 +71,7 @@ const hrefs: Record<string, string> = {
 
         <div v-for="col in columns" :key="col.key" class="lg:min-w-[140px]">
           <h3
-            class="text-[14px] font-normal uppercase leading-[14px] tracking-[-0.14px] text-[#919191]"
+            class="text-[14px] font-normal uppercase leading-[14px] tracking-[-0.14px] text-fg-subtle"
           >
             {{ t(`home.footer.${col.key}`) }}
           </h3>
@@ -79,7 +79,7 @@ const hrefs: Record<string, string> = {
             <li v-for="l in col.links" :key="l">
               <RouterLink
                 :to="hrefs[l] || '/'"
-                class="text-[16px] font-normal leading-4 tracking-[-0.16px] text-white/85 transition-colors hover:text-white"
+                class="text-[16px] font-normal leading-4 tracking-[-0.16px] text-fg-muted transition-colors hover:text-fg"
               >
                 {{ t(`home.footer.link.${l}`) }}
               </RouterLink>
@@ -89,10 +89,10 @@ const hrefs: Record<string, string> = {
       </div>
 
       <div
-        class="mt-16 flex flex-col gap-3 border-t border-white/15 pt-8 text-[14px] leading-[18.2px] tracking-[-0.14px] text-white/85 sm:flex-row sm:items-center sm:justify-between"
+        class="mt-16 flex flex-col gap-3 border-t border-border pt-8 text-[14px] leading-[18.2px] tracking-[-0.14px] text-fg-muted sm:flex-row sm:items-center sm:justify-between"
       >
         <p>© {{ new Date().getFullYear() }} {{ systemName }}</p>
-        <span v-if="version" class="font-mono text-xs text-white/60">
+        <span v-if="version" class="font-mono text-xs text-fg-subtle">
           v{{ version }}
         </span>
       </div>

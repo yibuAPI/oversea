@@ -42,8 +42,10 @@ import {
 } from 'lucide-vue-next'
 import { getPricing, inputPrice, getPerfMetricsSummary } from '@/api/models'
 import type { ModelSummary, PricingModel } from '@/api/types'
+import { resolveModelVendor } from '@/utils/modelVendor'
 import ModelCard from '@/components/common/ModelCard.vue'
 import ModelTable from '@/components/common/ModelTable.vue'
+import ModelDetailModal from '@/components/common/ModelDetailModal.vue'
 
 /** 网格/列表视图：默认网格，记忆到 localStorage，切换无需经过父级状态 */
 type ViewMode = 'grid' | 'list'
@@ -68,7 +70,7 @@ const perfMap = computed<Record<string, ModelSummary>>(() => {
 })
 
 const search = ref('')
-const vendorSel = ref<Set<number>>(new Set())
+const vendorSel = ref<Set<string>>(new Set())
 type BillKind = 'token' | 'call' | 'tiered'
 const billSel = ref<Set<BillKind>>(new Set())
 const groupSel = ref<Set<string>>(new Set())
@@ -81,7 +83,14 @@ const page = ref(1)
 const pageSize = ref(20)
 
 const models = computed(() => pricingQ.data.value?.data ?? [])
-const vendors = computed(() => pricingQ.data.value?.vendors ?? [])
+const modelVendors = computed(() => new Map(models.value.map((m) => [
+  m, resolveModelVendor(m, pricingQ.data.value?.vendors ?? [], t('models.vendorOther')),
+])))
+const vendorOf = (m: PricingModel) => modelVendors.value.get(m)
+  ?? resolveModelVendor(m, pricingQ.data.value?.vendors ?? [], t('models.vendorOther'))
+const vendors = computed(() => [...new Map(
+  [...modelVendors.value.values()].map((v) => [v.id, v]),
+).values()].sort((a, b) => a.name.localeCompare(b.name)))
 
 /** 分组倍率映射：group → ratio，用于价格换算 */
 const groupRatioMap = computed<Record<string, number>>(
@@ -95,11 +104,8 @@ const groupRatio = computed(() => {
   return typeof first === 'number' ? first : 1
 })
 
-const vendorName = (id?: number) =>
-  vendors.value.find((v) => v.id === id)?.name ?? t('models.vendorOther')
-/** 图标名：模型自己的 icon 优先（"OpenAI.Color" 这类 lobehub 名），否则用厂商的 */
-const iconOf = (m: PricingModel) =>
-  m.icon || vendors.value.find((v) => v.id === m.vendor_id)?.icon || null
+const vendorName = (m: PricingModel) => vendorOf(m).name
+const iconOf = (m: PricingModel) => vendorOf(m).icon
 
 const tagsOf = (m: PricingModel) =>
   (m.tags ?? '').split(',').map((s) => s.trim()).filter(Boolean)
@@ -139,7 +145,7 @@ const groups = computed(() => {
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
   const list = models.value.filter((m) => {
-    if (vendorSel.value.size && !vendorSel.value.has(m.vendor_id ?? 0)) return false
+    if (vendorSel.value.size && !vendorSel.value.has(vendorOf(m).id)) return false
     if (billSel.value.size) {
       const kind = billingKind(m)
       if (!billSel.value.has(kind)) return false
@@ -153,7 +159,7 @@ const filtered = computed(() => {
     return (
       m.model_name.toLowerCase().includes(q) ||
       (m.description ?? '').toLowerCase().includes(q) ||
-      vendorName(m.vendor_id).toLowerCase().includes(q)
+      vendorName(m).toLowerCase().includes(q)
     )
   })
   if (sortKey.value === 'priceAsc')
@@ -162,7 +168,7 @@ const filtered = computed(() => {
     return [...list].sort((a, b) => comparablePrice(b) - comparablePrice(a))
   return [...list].sort(
     (a, b) =>
-      (a.vendor_id ?? 999) - (b.vendor_id ?? 999) ||
+      vendorName(a).localeCompare(vendorName(b)) ||
       a.model_name.localeCompare(b.model_name),
   )
 })
@@ -196,9 +202,9 @@ function onPageSizeChange(e: Event) {
 }
 
 const vendorCounts = computed(() => {
-  const m = new Map<number, number>()
+  const m = new Map<string, number>()
   for (const x of models.value) {
-    const id = x.vendor_id ?? 0
+    const id = vendorOf(x).id
     m.set(id, (m.get(id) ?? 0) + 1)
   }
   return m
@@ -216,7 +222,7 @@ const billCounts = computed(() => {
   return { token, call, tiered }
 })
 
-function toggleVendor(id: number) {
+function toggleVendor(id: string) {
   const next = new Set(vendorSel.value)
   if (next.has(id)) next.delete(id)
   else next.add(id)
@@ -229,13 +235,12 @@ function toggleBill(kind: BillKind) {
   billSel.value = next
 }
 
-const groupCounts = computed(() => {
-  const m = new Map<string, number>()
-  for (const x of models.value) {
-    for (const g of x.enable_groups ?? []) m.set(g, (m.get(g) ?? 0) + 1)
-  }
-  return m
-})
+/** 分组右侧数字：显示该分组的计费倍率（如 ×2），而非模型数量 */
+function groupRatioLabel(key: string): string {
+  const r = groupRatioMap.value[key]
+  if (typeof r !== 'number') return '—'
+  return t('public.models.groupRatio', { n: r.toFixed(4) })
+}
 
 function toggleGroup(key: string) {
   const next = new Set(groupSel.value)
@@ -271,6 +276,33 @@ async function copyName(name: string) {
     /* 剪贴板不可用时静默 */
   }
 }
+
+/** 选中的模型（打开详情弹窗）。弹窗关闭时在模板里清空 */
+const selected = ref<PricingModel | null>(null)
+function select(m: PricingModel) {
+  selected.value = m
+}
+
+/**
+ * 计价分组 → { 描述, 倍率 }。后端 usable_group 是本 fork 的富结构
+ * （group → {desc, ratio}），PricingResponse 声明成 string 是旧形态，
+ * 这里只按富结构读取倍率，取不到时回退到 group_ratio。
+ */
+const usableGroup = computed<Record<string, { desc: string; ratio: number }>>(() => {
+  const raw = pricingQ.data.value?.usable_group
+  if (!raw) return {}
+  const out: Record<string, { desc: string; ratio: number }> = {}
+  for (const [k, v] of Object.entries(raw)) {
+    if (v && typeof v === 'object') {
+      out[k] = v as unknown as { desc: string; ratio: number }
+    }
+  }
+  return out
+})
+
+/** 端点类型 → { path, method }（后台 supported_endpoint 配置） */
+const endpointMap = computed(() => pricingQ.data.value?.supported_endpoint ?? {})
+const autoGroups = computed(() => pricingQ.data.value?.auto_groups ?? [])
 </script>
 
 <template>
@@ -373,8 +405,49 @@ async function copyName(name: string) {
                   </span>
                 </div>
 
+                <!-- 分组 -->
+                <div class="mt-5 border-t border-[#E5E5E5] pt-4 dark:border-neutral-800">
+                  <button
+                    type="button"
+                    class="motion-press flex w-full items-center justify-between pb-3"
+                    @click="toggleSection('group')"
+                  >
+                    <span class="text-sm font-semibold text-[#0A0A0A] dark:text-neutral-50">
+                      {{ t('public.models.filterGroup') }}
+                    </span>
+                    <component
+                      :is="collapsed.group ? ChevronDown : ChevronUp"
+                      class="size-4 text-[#737373]"
+                    />
+                  </button>
+                  <ul v-if="!collapsed.group" class="flex flex-col gap-1 pb-1">
+                    <li v-for="g in groups" :key="g.key">
+                      <label
+                        class="motion-press flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
+                      >
+                        <input
+                          type="checkbox"
+                          :checked="groupSel.has(g.key)"
+                          class="size-4 shrink-0 accent-[#0A0A0A] dark:accent-white"
+                          @change="toggleGroup(g.key)"
+                        />
+                        <span
+                          class="min-w-0 flex-1 truncate text-sm font-normal text-[#0A0A0A] dark:text-neutral-200"
+                        >
+                          {{ g.label }}
+                        </span>
+                        <span
+                          class="min-w-[18px] shrink-0 text-right text-sm font-normal leading-5 text-[#737373] dark:text-neutral-500"
+                        >
+                          {{ groupRatioLabel(g.key) }}
+                        </span>
+                      </label>
+                    </li>
+                  </ul>
+                </div>
+
                 <!-- 厂商 -->
-                <div class="border-t border-[#E5E5E5] pt-4 dark:border-neutral-800">
+                <div class="mt-5 border-t border-[#E5E5E5] pt-4 dark:border-neutral-800">
                   <button
                     type="button"
                     class="motion-press flex w-full items-center justify-between pb-3"
@@ -481,47 +554,6 @@ async function copyName(name: string) {
                         </span>
                         <span class="text-right text-sm text-[#737373] dark:text-neutral-500">
                           {{ billCounts.tiered }}
-                        </span>
-                      </label>
-                    </li>
-                  </ul>
-                </div>
-
-                <!-- 分组 -->
-                <div class="mt-5 border-t border-[#E5E5E5] pt-4 dark:border-neutral-800">
-                  <button
-                    type="button"
-                    class="motion-press flex w-full items-center justify-between pb-3"
-                    @click="toggleSection('group')"
-                  >
-                    <span class="text-sm font-semibold text-[#0A0A0A] dark:text-neutral-50">
-                      {{ t('public.models.filterGroup') }}
-                    </span>
-                    <component
-                      :is="collapsed.group ? ChevronDown : ChevronUp"
-                      class="size-4 text-[#737373]"
-                    />
-                  </button>
-                  <ul v-if="!collapsed.group" class="flex flex-col gap-1 pb-1">
-                    <li v-for="g in groups" :key="g.key">
-                      <label
-                        class="motion-press flex h-8 cursor-pointer items-center gap-2 rounded-md px-1 hover:bg-[#F5F5F5] dark:hover:bg-neutral-900"
-                      >
-                        <input
-                          type="checkbox"
-                          :checked="groupSel.has(g.key)"
-                          class="size-4 shrink-0 accent-[#0A0A0A] dark:accent-white"
-                          @change="toggleGroup(g.key)"
-                        />
-                        <span
-                          class="min-w-0 flex-1 truncate text-sm font-normal text-[#0A0A0A] dark:text-neutral-200"
-                        >
-                          {{ g.label }}
-                        </span>
-                        <span
-                          class="min-w-[18px] shrink-0 text-right text-sm font-normal leading-5 text-[#737373] dark:text-neutral-500"
-                        >
-                          {{ groupCounts.get(g.key) ?? 0 }}
                         </span>
                       </label>
                     </li>
@@ -647,6 +679,7 @@ async function copyName(name: string) {
                 :vendor-name="vendorName"
                 :icon-of="iconOf"
                 @copy="copyName"
+                @select="select"
               />
 
               <!-- 网格视图：模型卡 -->
@@ -655,12 +688,13 @@ async function copyName(name: string) {
                   v-for="m in paged"
                   :key="m.model_name"
                   :model="m"
-                  :vendor-name="vendorName(m.vendor_id)"
+                  :vendor-name="vendorName(m)"
                   :icon="iconOf(m)"
                   :group-ratio="groupRatio"
                   :copied="copied === m.model_name"
                   :metric="perfMap[m.model_name]"
                   @copy="copyName"
+                  @select="select"
                 />
               </div>
 
@@ -734,6 +768,19 @@ async function copyName(name: string) {
       </div>
     </div>
     </div>
+
+    <!-- ============ 模型详情弹窗 ============ -->
+    <ModelDetailModal
+      v-if="selected"
+      :model="selected"
+      :vendor-name="vendorName(selected)"
+      :icon="iconOf(selected)"
+      :group-ratio="groupRatioMap"
+      :usable-group="usableGroup"
+      :auto-groups="autoGroups"
+      :endpoint-map="endpointMap"
+      @close="selected = null"
+    />
 </template>
 
 <style scoped>

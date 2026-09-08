@@ -52,7 +52,7 @@ const glowPos = ref({ x: 0, y: 0 })
 const footerEl = ref<HTMLElement | null>(null)
 let raf = 0
 
-/** 指针是否落在页脚上 —— 页脚是深色实心块，光晕压上去只会脏 */
+/** 指针是否落在页脚上 —— 页脚是页面收尾的实心隔断，光晕压上去只会脏 */
 function inFooter(y: number) {
   const el = footerEl.value
   if (!el) return false

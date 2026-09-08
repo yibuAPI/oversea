@@ -432,6 +432,35 @@ export interface UserGroup {
   desc: string
 }
 
+/** GET /api/perf-metrics？model=…&hours=… 的逐分组、逐时间桶统计 */
+export interface PerfBucketPoint {
+  ts: number
+  avg_ttft_ms: number
+  avg_latency_ms: number
+  /** 0~1 成功率 */
+  success_rate: number
+  avg_tps: number
+  request_count: number
+  success_count: number
+}
+
+export interface PerfGroupResult {
+  group: string
+  avg_ttft_ms: number
+  avg_latency_ms: number
+  success_rate: number
+  avg_tps: number
+  request_count: number
+  success_count: number
+  series: PerfBucketPoint[]
+}
+
+export interface PerfQueryResult {
+  model_name: string
+  series_schema: string
+  groups: PerfGroupResult[]
+}
+
 // ───────────────────── 模型性能指标（/api/perf-metrics） ─────────────────────
 
 /** 单个模型的聚合指标：延迟、成功率、吞吐。recent_success_rates 为近期逐桶成功率。 */

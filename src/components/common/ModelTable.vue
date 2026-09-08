@@ -25,12 +25,12 @@ const props = defineProps<{
   /** 已复制的模型名（父级统一维护，保证同一时间只有一行显示对勾） */
   copied: string | null
   /** 模型 → 厂商名，父级已处理「其他」兜底 */
-  vendorName: (id?: number) => string
-  /** 模型 → 图标名，模型自带优先、否则取厂商的 */
+  vendorName: (m: PricingModel) => string
+  /** 模型 → 与厂商名称一致的图标 */
   iconOf: (m: PricingModel) => string | null
 }>()
 
-const emit = defineEmits<{ copy: [name: string] }>()
+const emit = defineEmits<{ copy: [name: string]; select: [model: PricingModel] }>()
 
 const { t } = useI18n()
 
@@ -130,7 +130,7 @@ const rows = computed(() =>
       model: m,
       name: m.model_name,
       icon: props.iconOf(m),
-      vendor: props.vendorName(m.vendor_id),
+      vendor: props.vendorName(m),
       billing: { label: billingLabel(m), tone: billingTone(m) },
       price: priceOf(m),
       cache: cacheOf(m),
@@ -179,7 +179,12 @@ const rows = computed(() =>
         <tr
           v-for="row in rows"
           :key="row.name"
-          class="group border-b border-[#EDEDED] transition-colors last:border-b-0 hover:bg-[#FAFAFA] dark:border-neutral-800/70 dark:hover:bg-neutral-900/50"
+          tabindex="0"
+          role="button"
+          class="group cursor-pointer border-b border-[#EDEDED] transition-colors last:border-b-0 hover:bg-[#FAFAFA] dark:border-neutral-800/70 dark:hover:bg-neutral-900/50"
+          @click="emit('select', row.model)"
+          @keydown.enter.prevent="emit('select', row.model)"
+          @keydown.space.prevent="emit('select', row.model)"
         >
           <!-- 模型：图标 + 名 + 悬停复制 -->
           <td class="px-4 py-4 align-middle">
