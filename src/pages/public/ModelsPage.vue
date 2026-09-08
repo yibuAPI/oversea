@@ -121,13 +121,19 @@ const categories = computed(() => {
 })
 
 /** 可用分组列表：以 group_ratio 的键（即后台「定价分组」配置）为准，保证与后台一致。
- *  分组即便目前没有模型（count 为 0）也列出，避免前端筛选面板和后台表格对不上。 */
+ *  分组即便目前没有模型（count 为 0）也列出，避免前端筛选面板和后台表格对不上。
+ *  展示顺序：default 置顶，其余按倍率从低到高，同倍率按名称。 */
 const groups = computed(() => {
+  const DEFAULT_GROUP = 'default'
   return Object.keys(groupRatioMap.value)
     .map((key) => ({ key, label: key }))
-    .sort((a, b) =>
-      a.key === 'default' ? -1 : b.key === 'default' ? 1 : a.label.localeCompare(b.label),
-    )
+    .sort((a, b) => {
+      if (a.key === DEFAULT_GROUP) return b.key === DEFAULT_GROUP ? 0 : -1
+      if (b.key === DEFAULT_GROUP) return 1
+      const d =
+        (groupRatioMap.value[a.key] ?? 1) - (groupRatioMap.value[b.key] ?? 1)
+      return d !== 0 ? d : a.label.localeCompare(b.label)
+    })
 })
 
 const filtered = computed(() => {

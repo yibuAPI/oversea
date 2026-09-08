@@ -68,10 +68,20 @@ function toneOf(name: string) {
 /**
  * 可选列表 = 后端给的分组 ∪ 已选里那些后端已不再返回的「陈旧分组」。
  * 不并进来的话，陈旧分组在列表里既取消不掉也看不见来源。
+ *
+ * 展示顺序：default 置顶，其余按倍率（价格）从低到高，同倍率按名称。
+ * 只影响这个复选列表的观感，不改 groups 数组本身的语义顺序。
  */
 const allOptions = computed(() => {
   const seen = new Set(props.options)
-  return [...props.options, ...model.value.filter((g) => !seen.has(g))]
+  const merged = [...props.options, ...model.value.filter((g) => !seen.has(g))]
+  const DEFAULT_GROUP = 'default'
+  return [...merged].sort((a, b) => {
+    if (a === DEFAULT_GROUP) return b === DEFAULT_GROUP ? 0 : -1
+    if (b === DEFAULT_GROUP) return 1
+    const d = ratioOf(a) - ratioOf(b)
+    return d !== 0 ? d : a.localeCompare(b)
+  })
 })
 
 /** 已不在后端分组表里的历史分组，单独标记提醒 */
