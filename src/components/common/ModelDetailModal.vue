@@ -89,12 +89,12 @@ const HEALTH_BINS = [
   },
   {
     key: 'normal',
-    bg: 'bg-[#10B981] dark:bg-[#059669]',
+    bg: 'bg-[#22C55E] dark:bg-[#16A34A]',
     text: 'text-white',
   },
   {
     key: 'lt2',
-    bg: 'bg-[#34D399] dark:bg-[#10B981]',
+    bg: 'bg-[#86EFAC] dark:bg-[#4ADE80]',
     text: 'text-white',
   },
   {
