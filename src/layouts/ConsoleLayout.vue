@@ -111,7 +111,8 @@ watch(drawerOpen, (open) => {
           </ol>
         </nav>
 
-        <nav class="ml-auto flex items-center gap-1" aria-label="Shortcuts">
+        <!-- 快捷导航：窄屏放不下（汉堡抽屉里已有完整导航），sm 以下隐藏 -->
+        <nav class="ml-auto hidden items-center gap-1 sm:flex" aria-label="Shortcuts">
           <RouterLink
             to="/"
             class="motion-press rounded-lg px-3 py-1.5 text-[15px] font-medium text-fg hover:bg-bg-muted"
@@ -134,7 +135,7 @@ watch(drawerOpen, (open) => {
 
         <button
           type="button"
-          class="motion-press relative flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg"
+          class="motion-press relative ml-auto flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg sm:ml-0"
           :aria-label="t('notice.messageCenter')"
           @click="messageOpen = true"
         >
@@ -147,7 +148,7 @@ watch(drawerOpen, (open) => {
         </button>
         <button
           type="button"
-          class="motion-press ml-2 flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg"
+          class="motion-press flex size-9 items-center justify-center rounded-lg text-fg-muted hover:bg-bg-muted hover:text-fg sm:ml-2"
           aria-label="Switch language"
           @click="toggleLocale"
         >

@@ -523,6 +523,8 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
       </template>
     </PageHeader>
 
+    <!-- 桌面端表格视图。md 以下 11 列放不下，换成下方的卡片视图；两者共用同一份数据与操作 -->
+    <div class="hidden min-h-0 flex-1 flex-col md:flex">
     <DataTable
       class="flex-1"
       :columns="columns"
@@ -738,6 +740,275 @@ const STATUS_META: Record<number, { key: string; cls: string }> = {
         </template>
       </template>
     </DataTable>
+    </div>
+
+    <!-- 移动端卡片视图：一行一个字段（名称居左、值居右），操作按钮收在卡片底部。
+         窄屏下表格的 11 列会被压到不可读，这里对齐参考图的卡片布局。
+         loading / error / empty 三态与 DataTable 保持一致。 -->
+    <div class="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto md:hidden">
+      <!-- 加载中：骨架卡 -->
+      <template v-if="tokensQ.isLoading.value">
+        <div
+          v-for="i in 4"
+          :key="`msk-${i}`"
+          class="shrink-0 space-y-3.5 rounded-xl border border-border bg-bg-elevated p-4"
+        >
+          <div v-for="j in 6" :key="j" class="h-3 animate-pulse rounded bg-bg-inset" />
+        </div>
+      </template>
+
+      <!-- 出错 -->
+      <div
+        v-else-if="tokensQ.error.value"
+        class="shrink-0 rounded-xl border border-border bg-bg-elevated px-4 py-12 text-center"
+      >
+        <p class="text-[13px] text-danger-fg">{{ tokensQ.error.value.message }}</p>
+        <button
+          type="button"
+          class="mt-3 rounded-md border border-border px-3 py-1.5 text-[12.5px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+          @click="tokensQ.refetch()"
+        >
+          {{ t('common.retry') }}
+        </button>
+      </div>
+
+      <!-- 空 -->
+      <div
+        v-else-if="!rows.length"
+        class="shrink-0 rounded-xl border border-border bg-bg-elevated px-4 py-14 text-center"
+      >
+        <KeyRound class="mx-auto size-7 text-fg-subtle" />
+        <p class="mt-3 text-[13.5px] font-medium">{{ t('keys.emptyTitle') }}</p>
+        <p class="mx-auto mt-1 max-w-[320px] text-[12.5px] text-fg-subtle">
+          {{ t('keys.emptyDesc') }}
+        </p>
+        <AppButton variant="primary" size="sm" class="mt-4" @click="openCreate">
+          <Plus class="size-3.5" />
+          {{ t('keys.add') }}
+        </AppButton>
+      </div>
+
+      <!-- 数据卡片 -->
+      <template v-else>
+        <article
+          v-for="row in rows"
+          :key="row.id"
+          class="shrink-0 rounded-xl border border-border bg-bg-elevated px-4"
+        >
+          <dl class="divide-y divide-border">
+            <!-- 名称 -->
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="shrink-0 text-[12px] text-fg-subtle">{{ t('keys.colName') }}</dt>
+              <dd class="min-w-0 truncate text-right text-[13px] font-medium">{{ row.name }}</dd>
+            </div>
+
+            <!-- 状态 -->
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="shrink-0 text-[12px] text-fg-subtle">{{ t('keys.colStatus') }}</dt>
+              <dd>
+                <span
+                  class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                  :class="STATUS_META[row.status]?.cls ?? 'border-border bg-bg-muted text-fg-muted'"
+                >
+                  {{ t(STATUS_META[row.status]?.key ?? 'keys.statusUnknown') }}
+                </span>
+              </dd>
+            </div>
+
+            <!-- 密钥（同表格：只显示打码版，复制走接口拿真值） -->
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="shrink-0 text-[12px] text-fg-subtle">{{ t('keys.colKey') }}</dt>
+              <dd class="flex min-w-0 items-center gap-1">
+                <code class="min-w-0 truncate font-mono text-[12.5px]">
+                  {{ `sk-${row.key}` }}
+                </code>
+                <button
+                  type="button"
+                  class="flex size-7 shrink-0 items-center justify-center rounded text-fg-subtle transition-colors hover:bg-bg-muted hover:text-fg disabled:opacity-50"
+                  :title="t('common.copy')"
+                  :aria-label="t('common.copy')"
+                  :disabled="copying === row.id"
+                  @click="onCopy(row.id)"
+                >
+                  <Copy class="size-3.5" />
+                </button>
+              </dd>
+            </div>
+
+            <!-- 用量 / 额度 -->
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="shrink-0 text-[12px] text-fg-subtle">{{ t('keys.colUsage') }}</dt>
+              <dd class="min-w-0 text-right text-[12.5px]">
+                <p>{{ formatQuota(row.used_quota, quotaPerUnit) }}</p>
+                <p class="mt-0.5 text-[11px] text-fg-subtle">
+                  {{
+                    row.unlimited_quota
+                      ? t('keys.unlimited')
+                      : t('keys.remain', { v: formatQuota(row.remain_quota, quotaPerUnit) })
+                  }}
+                </p>
+              </dd>
+            </div>
+
+            <!-- 分组 + 倍率：点分组链就地打开编辑弹层（与表格共用 TokenGroupsPopover）。
+                 窄屏允许折行，右对齐贴着值列。 -->
+            <div class="flex items-start justify-between gap-3 py-2.5">
+              <dt class="shrink-0 pt-0.5 text-[12px] text-fg-subtle">{{ t('keys.colGroup') }}</dt>
+              <dd class="flex min-w-0 flex-col items-end gap-y-1">
+                <div
+                  role="button"
+                  tabindex="0"
+                  class="motion-press -mx-1 flex cursor-pointer flex-wrap items-center justify-end gap-x-1.5 gap-y-1 rounded px-1 py-0.5 transition-colors hover:bg-bg-muted focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+                  :aria-label="t('keys.editGroups')"
+                  :aria-expanded="groupPopRow?.id === row.id"
+                  :title="parseTokenGroups(row).join(' → ') || t('keys.editGroups')"
+                  @click="openGroupPop(row, $event)"
+                  @keydown.enter.prevent="openGroupPop(row, $event)"
+                  @keydown.space.prevent="openGroupPop(row, $event)"
+                >
+                  <template v-if="groupBadges(row).length">
+                    <template v-for="(g, i) in groupBadges(row)" :key="g.name">
+                      <span
+                        :title="`${g.name} ×${ratioLabel(g.ratio)}`"
+                        class="inline-flex items-center gap-1"
+                      >
+                        <span
+                          class="rounded bg-bg-muted px-1.5 py-0.5 text-[12.5px] font-medium leading-none"
+                          :class="toneOf(g.name)"
+                        >{{ g.name }}</span>
+                        <span class="text-[11.5px] leading-none text-fg-subtle">
+                          ×{{ ratioLabel(g.ratio) }}
+                        </span>
+                      </span>
+                      <ArrowRight
+                        v-if="i < groupBadges(row).length - 1"
+                        class="size-3 shrink-0 text-fg-subtle"
+                      />
+                    </template>
+                  </template>
+                  <span v-else class="text-[12.5px] leading-none text-fg-muted">{{ t('keys.fGroupPlaceholder') }}</span>
+                  <span v-if="groupOverflow(row)" class="text-[11px] leading-none text-fg-subtle">
+                    {{ t('keys.groupMore', { n: groupOverflow(row) }) }}
+                  </span>
+                  <ChevronDown
+                    class="size-3.5 shrink-0 text-fg-subtle transition-transform"
+                    :class="groupPopRow?.id === row.id ? 'rotate-180' : ''"
+                  />
+                </div>
+                <span
+                  v-if="row.cross_group_retry"
+                  class="inline-flex items-center rounded-full border border-info-border bg-info-bg px-1.5 py-0.5 text-[11px] leading-none text-info-fg"
+                >{{ t('keys.crossGroupRetry') }}</span>
+              </dd>
+            </div>
+
+            <!-- 可用模型：未开启就是分组下全部模型可用 -->
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="shrink-0 text-[12px] text-fg-subtle">{{ t('keys.colModelLimits') }}</dt>
+              <dd class="min-w-0 text-right text-[12.5px]">
+                <span
+                  v-if="modelLimitList(row).length"
+                  class="cursor-default text-fg-secondary"
+                  :title="modelLimitList(row).join(', ')"
+                >{{ t('keys.modelLimited', { n: modelLimitList(row).length }) }}</span>
+                <span v-else class="text-fg-subtle">{{ t('keys.noLimit') }}</span>
+              </dd>
+            </div>
+
+            <!-- IP 限制：allow_ips 空串/ null 都表示不限 -->
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="shrink-0 text-[12px] text-fg-subtle">{{ t('keys.colAllowIps') }}</dt>
+              <dd class="min-w-0 text-right text-[12.5px]">
+                <span
+                  v-if="allowIpList(row).length"
+                  class="cursor-default text-fg-secondary"
+                  :title="allowIpList(row).join(', ')"
+                >{{ t('keys.ipCount', { n: allowIpList(row).length }) }}</span>
+                <span v-else class="text-fg-subtle">{{ t('keys.noLimit') }}</span>
+              </dd>
+            </div>
+
+            <!-- 创建时间 -->
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="shrink-0 text-[12px] text-fg-subtle">{{ t('keys.colCreated') }}</dt>
+              <dd class="min-w-0 truncate text-right text-[12.5px]">{{ formatDateTime(row.created_time) }}</dd>
+            </div>
+
+            <!-- 最后使用：与创建时间相同说明从未用过 -->
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="shrink-0 text-[12px] text-fg-subtle">{{ t('keys.colLastUsed') }}</dt>
+              <dd
+                class="min-w-0 truncate text-right text-[12.5px]"
+                :class="row.accessed_time <= row.created_time ? 'text-fg-subtle' : ''"
+              >
+                {{
+                  row.accessed_time <= row.created_time
+                    ? t('keys.neverUsed')
+                    : formatRelative(row.accessed_time)
+                }}
+              </dd>
+            </div>
+
+            <!-- 过期时间 -->
+            <div class="flex items-center justify-between gap-3 py-2.5">
+              <dt class="shrink-0 text-[12px] text-fg-subtle">{{ t('keys.colExpired') }}</dt>
+              <dd
+                class="min-w-0 truncate text-right text-[12.5px]"
+                :class="row.expired_time === -1 ? 'text-fg-subtle' : ''"
+              >
+                {{
+                  row.expired_time === -1
+                    ? t('keys.never')
+                    : formatDateTime(row.expired_time)
+                }}
+              </dd>
+            </div>
+          </dl>
+
+          <!-- 操作：与表格同一组按钮，略加高保证触控目标 -->
+          <div class="flex flex-wrap items-center justify-end gap-1.5 border-t border-border py-3">
+            <button
+              type="button"
+              class="motion-press whitespace-nowrap rounded-full border border-border px-2.5 py-1 text-[12px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+              @click="
+                statusMut.mutate({
+                  id: row.id,
+                  status:
+                    row.status === TOKEN_STATUS.ENABLED
+                      ? TOKEN_STATUS.DISABLED
+                      : TOKEN_STATUS.ENABLED,
+                })
+              "
+            >
+              {{ row.status === TOKEN_STATUS.ENABLED ? t('keys.disable') : t('keys.enable') }}
+            </button>
+            <button
+              type="button"
+              class="motion-press whitespace-nowrap rounded-full border border-border px-2.5 py-1 text-[12px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg disabled:opacity-50"
+              :title="t('ccswitch.action')"
+              :disabled="ccLoading === row.id"
+              @click="openCcSwitch(row)"
+            >
+              {{ t('ccswitch.actionShort') }}
+            </button>
+            <button
+              type="button"
+              class="motion-press whitespace-nowrap rounded-full border border-border px-2.5 py-1 text-[12px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg"
+              @click="openEdit(row)"
+            >
+              {{ t('common.edit') }}
+            </button>
+            <button
+              type="button"
+              class="motion-press whitespace-nowrap rounded-full border border-border px-2.5 py-1 text-[12px] text-fg-muted transition-colors hover:border-danger-border hover:bg-danger-bg hover:text-danger-fg"
+              @click="delTarget = row"
+            >
+              {{ t('common.delete') }}
+            </button>
+          </div>
+        </article>
+      </template>
+    </div>
 
     <Pagination
       v-model:page="page"
