@@ -19,7 +19,9 @@ export default defineConfig(({ mode }) => {
       // 跨端口直连必定失败 —— 开发期一律走 proxy。
       // changeOrigin 保持 false：保留原始 Host，避免 cookie domain 校验问题。
       proxy: {
-        '/api': { target: backend, changeOrigin: false },
+        // ws: true —— /api/support/.../ws 是 WebSocket 升级请求，不加这个开关
+        // http-proxy 不会转发 Upgrade 头，握手会退化成 200 而非 101。
+        '/api': { target: backend, changeOrigin: false, ws: true },
         '/v1': { target: backend, changeOrigin: false },
         '/pg': { target: backend, changeOrigin: false },
       },

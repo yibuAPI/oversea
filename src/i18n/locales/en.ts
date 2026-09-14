@@ -1217,6 +1217,28 @@ export default {
         'For help or business inquiries, reach us via the contact details in the footer.',
     },
   },
+  support: {
+    launcher: 'Live support',
+    title: 'Live support',
+    welcome:
+      'Hi! Tell us what you need right here and we will reply as soon as we can. Including your request ID or order number helps us pinpoint it faster.',
+    placeholder: 'Type a message…',
+    typing: 'The other side is typing…',
+    you: 'Me',
+    agent: 'Support',
+    system: 'System',
+    closed: 'This conversation has ended',
+    closedHint:
+      'An agent closed this conversation. Sending another message starts a new one.',
+    reopen: 'Start a new conversation',
+    close: 'End conversation',
+    closeConfirm: 'You will need to start a new conversation. Continue?',
+    sendFailed: 'Failed to send',
+    loadFailed: 'Could not load the support window',
+    connecting: 'Connecting…',
+    reconnecting: 'Disconnected — reconnecting…',
+    unread: '{n} new replies',
+  },
   error: {
     network: 'Network error — check that the backend is running',
     unauthorized: 'Session expired, please sign in again',

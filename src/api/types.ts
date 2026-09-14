@@ -87,6 +87,12 @@ export interface SiteStatus {
   header_nav_modules?: string
   /** 系统公告列表（console_setting.Announcements，AnnouncementsEnabled 开启时下发） */
   announcements?: AnnouncementItem[]
+  /** 在线客服开关（console_setting.live_support_enabled）。默认 false */
+  live_support_enabled?: boolean
+  /** 客服窗标题，空则用默认「在线客服」 */
+  live_support_title?: string
+  /** 打开客服窗时的欢迎语，空则用默认文案 */
+  live_support_welcome?: string
   [k: string]: unknown
 }
 
