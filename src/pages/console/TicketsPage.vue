@@ -296,7 +296,11 @@ function submitCreate() {
         </template>
 
         <template v-else-if="column.key === 'title'">
-          <div class="flex w-full items-center gap-1.5 text-left">
+          <button
+            type="button"
+            class="flex w-full items-center gap-1.5 text-left transition-colors hover:text-accent"
+            @click="openDetail(row.id)"
+          >
             <span class="truncate font-medium">{{ row.title }}</span>
             <!-- 未读红点：unread_for_user 由后端在客服回复时累加 -->
             <span
@@ -306,7 +310,7 @@ function submitCreate() {
             >
               {{ row.unread_for_user }}
             </span>
-          </div>
+          </button>
           <p v-if="row.last_message" class="mt-0.5 truncate text-[11.5px] text-fg-subtle">
             {{ row.last_message }}
           </p>
