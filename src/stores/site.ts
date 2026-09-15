@@ -151,6 +151,11 @@ export const useSiteStore = defineStore('site', () => {
   const liveSupportWelcome = computed(
     () => (status.value?.live_support_welcome || '').trim(),
   )
+  // 后端 defaultConsoleSetting 里是 false，所以这里要显式 true 才算开启，
+  // 不能照 registerEnabled 的 !== false 写法（status 还没加载完会误判为开）。
+  const ticketSystemEnabled = computed(
+    () => status.value?.ticket_system_enabled === true,
+  )
 
   async function load() {
     loading.value = true
@@ -266,6 +271,7 @@ export const useSiteStore = defineStore('site', () => {
     liveSupportEnabled,
     liveSupportTitle,
     liveSupportWelcome,
+    ticketSystemEnabled,
     load,
     loadNotice,
     hasNewNotice,
