@@ -30,9 +30,21 @@ const props = defineProps<{
   loading?: boolean
   error?: string | null
   skeletonRows?: number
+  /** 整行可点。开启后行会带手型光标，点空白处也触发 rowClick */
+  rowClickable?: boolean
 }>()
 
-defineEmits<{ retry: [] }>()
+const emit = defineEmits<{ retry: []; rowClick: [row: T] }>()
+
+/**
+ * 行点击。落在按钮/链接/表单控件上时跳过 —— 单元格里的操作自己有
+ * 处理逻辑，不该再被行点击重复触发一次。
+ */
+function onRowClick(row: T, e: MouseEvent) {
+  const el = e.target as HTMLElement | null
+  if (el?.closest(`button,a,input,select,textarea,label,[role="button"]`)) return
+  emit("rowClick", row)
+}
 
 defineSlots<{
   cell(props: { row: T; column: Column }): unknown
@@ -124,6 +136,8 @@ const STICKY =
             v-else
             :key="props.rowKey(row)"
             class="group border-b border-border transition-colors last:border-0 hover:bg-bg-subtle"
+            :class="props.rowClickable ? 'cursor-pointer' : ''"
+            @click="props.rowClickable && onRowClick(row, $event)"
           >
             <td
               v-for="col in props.columns"

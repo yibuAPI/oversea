@@ -276,7 +276,9 @@ function submitCreate() {
       :loading="listQ.isLoading.value"
       :error="listQ.error.value ? String(listQ.error.value.message) : null"
       :skeleton-rows="6"
+      row-clickable
       @retry="listQ.refetch()"
+      @row-click="openDetail($event.id)"
     >
       <template #empty>
         <TicketIcon class="mx-auto size-7 text-fg-subtle" />
@@ -290,21 +292,11 @@ function submitCreate() {
 
       <template #cell="{ row, column }">
         <template v-if="column.key === 'id'">
-          <button
-            type="button"
-            class="font-mono text-[12px] text-fg-muted transition-colors hover:text-accent"
-            @click="openDetail(row.id)"
-          >
-            #{{ row.id }}
-          </button>
+          <span class="font-mono text-[12px] text-fg-muted">#{{ row.id }}</span>
         </template>
 
         <template v-else-if="column.key === 'title'">
-          <button
-            type="button"
-            class="flex w-full items-center gap-1.5 text-left transition-colors hover:text-accent"
-            @click="openDetail(row.id)"
-          >
+          <div class="flex w-full items-center gap-1.5 text-left">
             <span class="truncate font-medium">{{ row.title }}</span>
             <!-- 未读红点：unread_for_user 由后端在客服回复时累加 -->
             <span
@@ -314,7 +306,7 @@ function submitCreate() {
             >
               {{ row.unread_for_user }}
             </span>
-          </button>
+          </div>
           <p v-if="row.last_message" class="mt-0.5 truncate text-[11.5px] text-fg-subtle">
             {{ row.last_message }}
           </p>
