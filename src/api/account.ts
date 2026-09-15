@@ -26,12 +26,6 @@ export const deleteSelf = () => api.delete<null>('/user/self')
 export const updateUserSetting = (payload: UserSettingPayload) =>
   api.put<null>('/user/setting', payload)
 
-/**
- * 重新生成系统访问令牌。注意会**覆盖旧的**，
- * 调用后旧 token 立即失效，UI 上要提示清楚。
- */
-export const regenerateAccessToken = () => api.get<string>('/user/token')
-
 /** 邀请码，首次调用时后端惰性生成 */
 export const getAffCode = () => api.get<string>('/user/aff')
 

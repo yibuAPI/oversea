@@ -138,6 +138,20 @@ export const useSiteStore = defineStore('site', () => {
     () => status.value?.display_in_currency !== false,
   )
 
+  // ---------- 在线客服 ----------
+  // 后端 console_setting.live_support_enabled 默认 false：没配就是没启用，
+  // 前端据此决定挂不挂悬浮窗 —— 不给访客弹一个没人值守的客服窗。
+  const liveSupportEnabled = computed(
+    () => status.value?.live_support_enabled === true,
+  )
+  /** 后台留空时用 i18n 里的默认文案，见 SupportWidget 的 t() 调用 */
+  const liveSupportTitle = computed(
+    () => (status.value?.live_support_title || '').trim(),
+  )
+  const liveSupportWelcome = computed(
+    () => (status.value?.live_support_welcome || '').trim(),
+  )
+
   async function load() {
     loading.value = true
     error.value = null
@@ -249,6 +263,9 @@ export const useSiteStore = defineStore('site', () => {
     serverAddress,
     quotaPerUnit,
     displayInCurrency,
+    liveSupportEnabled,
+    liveSupportTitle,
+    liveSupportWelcome,
     load,
     loadNotice,
     hasNewNotice,

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getSelf, login as loginApi, logout as logoutApi } from '@/api/auth'
-import { setCurrentUserId } from '@/api/client'
+import { setCurrentUserId, isAuthenticated } from '@/api/client'
 import { ROLE, type SelfUser } from '@/api/types'
 
 /**
@@ -41,9 +41,12 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  /** 确保登录态已确认过一次，供路由守卫调用 */
+  /** 确保登录态已确认过一次，供路由守卫与顶栏调用 */
   async function ensureResolved() {
-    if (!resolved.value) await fetchSelf()
+    // 纯匿名访客（从没登录过，uid 不在本地）不必探测：后端对匿名请求必回 401，
+    // 那条 401 会以红色错误出现在控制台里，看着像故障。直接判定为未确认+未登录。
+    // 有痕迹时仍走 fetchSelf —— session 可能已过期，由 401 拦截器清理。
+    if (!resolved.value && isAuthenticated()) await fetchSelf()
     return user.value
   }
 

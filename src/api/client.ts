@@ -65,6 +65,20 @@ export function getCurrentUserId() {
   return currentUserId
 }
 
+/**
+ * 本地是否有「登录过」的痕迹（uid 还在 localStorage 里）。
+ *
+ * 用途是给探测性请求分流：后端对匿名请求一律回 401（middleware/auth.go），
+ * 而 Chrome 会把每条 401 标红。纯匿名访客打开公开页时本就不该产生这个请求 ——
+ * 先用它判断，没有痕迹就跳过，控制台保持干净。
+ *
+ * ⚠️ 这不是登录态判定，只是「值不值得探测一次」的提示：uid 存在时仍须以
+ * /user/self 的返回为准（可能是过期 session 或换浏览器后残留）。
+ */
+export function isAuthenticated() {
+  return currentUserId != null
+}
+
 export const http: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || '/api',
   withCredentials: true,
