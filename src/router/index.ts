@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useSiteStore } from '@/stores/site'
 import { captureAffFromQuery } from '@/utils/aff-code'
 
 /**
@@ -161,6 +162,37 @@ const router = createRouter({
           meta: { titleKey: 'console.nav.integrations' },
         },
         {
+          path: 'tickets',
+          name: 'console-tickets',
+          component: () => import('@/pages/console/TicketsPage.vue'),
+          meta: { titleKey: 'console.nav.tickets' },
+        },
+        {
+          /** 详情页不进侧栏，面包屑沿用工单标题 —— 故 titleKey 仍指向列表 */
+          path: 'tickets/:id',
+          name: 'console-ticket-detail',
+          component: () => import('@/pages/console/TicketDetailPage.vue'),
+          meta: { titleKey: 'console.nav.tickets' },
+        },
+        {
+          path: 'tickets',
+          name: 'console-tickets',
+          component: () => import('@/pages/console/TicketsPage.vue'),
+          meta: {
+            titleKey: 'console.nav.tickets',
+            requiresTicketSystem: true,
+          },
+        },
+        {
+          path: 'tickets/:id',
+          name: 'console-ticket-detail',
+          component: () => import('@/pages/console/TicketDetailPage.vue'),
+          meta: {
+            titleKey: 'console.nav.tickets',
+            requiresTicketSystem: true,
+          },
+        },
+        {
           path: 'settings',
           name: 'console-settings',
           component: () => import('@/pages/console/SettingsPage.vue'),
@@ -196,6 +228,16 @@ router.beforeEach(async (to) => {
   }
   if (to.meta.guestOnly && user.isLoggedIn) {
     return { name: 'console' }
+  }
+  // 工单系统被后台关掉时，后端 /api/tickets/** 一律拒绝（TicketSystemEnabled
+  // 中间件），页面进去只会看到一片报错 —— 所以这里直接送回控制台首页。
+  // site.load() 在 app.mount 之前已完成，status 此刻可读；后端不可用导致
+  // status 为空时同样按「关闭」处理，与接口的实际行为一致。
+  if (to.meta.requiresTicketSystem) {
+    const site = useSiteStore()
+    if (!site.ticketSystemEnabled) {
+      return { name: 'console' }
+    }
   }
   return true
 })

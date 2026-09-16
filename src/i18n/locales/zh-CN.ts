@@ -244,6 +244,8 @@ export default {
       logs: '日志',
       groupGateway: 'AI 网关',
       integrations: '密钥集成',
+      groupSupport: '支持',
+      tickets: '我的工单',
       settings: '账号设置',
       payments: '充值记录',
       help: '帮助与支持',
@@ -1237,6 +1239,111 @@ export default {
     connecting: '连接中…',
     reconnecting: '连接已断开，正在重连…',
     unread: '有 {n} 条新回复',
+  },
+  tickets: {
+    title: '我的工单',
+    subtitle: '提交问题并跟踪处理进度。附上调用 ID 或订单号能更快定位。',
+    create: '新建工单',
+    detailTitle: '工单详情',
+    backToList: '返回列表',
+    close: '关闭工单',
+    notFound: '工单不存在或无权访问',
+
+    // 状态（与后端状态机一致：pending → processing → awaiting → resolved → closed）
+    status_pending: '待处理',
+    status_processing: '处理中',
+    status_awaiting: '待确认',
+    status_resolved: '已解决',
+    status_closed: '已关闭',
+    tabAll: '全部',
+
+    // 优先级
+    priority_urgent: '紧急',
+    priority_high: '高',
+    priority_normal: '普通',
+    priority_low: '低',
+
+    // 分类
+    category_api: 'API 调用',
+    category_model: '模型问题',
+    category_topup: '充值问题',
+    category_billing: '账单与计费',
+    category_account: '账号问题',
+    category_other: '其他',
+
+    // 筛选与排序
+    filterCategory: '按分类筛选',
+    filterPriority: '按优先级筛选',
+    allCategories: '全部分类',
+    allPriorities: '全部优先级',
+    orderBy: '排序方式',
+    orderLatest: '最近更新',
+    orderCreated: '创建时间',
+    orderPriority: '优先级',
+    searchPlaceholder: '搜索工单标题…',
+
+    // 列表
+    colId: '编号',
+    colTitle: '标题',
+    colCategory: '分类',
+    colPriority: '优先级',
+    colStatus: '状态',
+    colUpdated: '更新时间',
+    colAssignee: '处理人',
+    unassigned: '待分配',
+    unreadTip: '有 {n} 条未读回复',
+    emptyTitle: '还没有工单',
+    emptyDesc: '遇到问题可以新建工单，我们会尽快处理。',
+
+    // 新建表单
+    createTitle: '新建工单',
+    createDesc: '尽量描述清楚问题现象与复现步骤，能帮我们更快定位。',
+    formTitle: '标题',
+    formTitleHint: '一句话概括问题，最多 100 字',
+    formTitlePlaceholder: '例如：调用 gpt-4o 返回 429',
+    formCategory: '分类',
+    formPriority: '优先级',
+    formContent: '问题描述',
+    formContentHint: '附上调用 ID、报错信息与复现步骤，最多 5000 字',
+    formContentPlaceholder: '请描述问题现象、复现步骤与已尝试的排查…',
+    formAttachments: '附件',
+    formAttachmentsHint: '最多 6 个文件',
+    addFile: '添加文件',
+    removeFile: '移除文件',
+    errTitleRequired: '请填写标题',
+    errContentRequired: '请填写问题描述',
+    createdOk: '工单已创建',
+
+    // 状态提示条
+    pendingNotice: '工单已提交，正在等待客服接单。',
+    awaitingNotice: '客服已回复，等待你的确认或补充信息。',
+    resolvedNotice: '该工单已标记为已解决。若问题仍存在，回复即可重新开启。',
+    lockedNotice: '工单已关闭，无法继续回复。',
+
+    // 沟通记录与回复
+    conversation: '沟通记录',
+    replyPlaceholder: '输入回复内容…',
+    replyHint: 'Ctrl / ⌘ + Enter 发送',
+    send: '发送',
+    sentOk: '回复已发送',
+    errReplyEmpty: '回复内容不能为空',
+
+    // 信息卡
+    infoCard: '工单信息',
+    infoId: '工单编号',
+    infoCreated: '创建时间',
+    infoUpdated: '更新时间',
+    infoResolved: '解决时间',
+    infoClosed: '关闭时间',
+
+    // 操作记录
+    timeline: '操作记录',
+    timelineEmpty: '暂无操作记录',
+
+    // 关闭确认
+    closeConfirmTitle: '关闭工单',
+    closeConfirmDesc: '关闭后将无法继续回复。确定要关闭这个工单吗？',
+    closedOk: '工单已关闭',
   },
   error: {
     network: '网络连接失败，请检查后端服务是否运行',

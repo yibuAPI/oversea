@@ -93,6 +93,8 @@ export interface SiteStatus {
   live_support_title?: string
   /** 打开客服窗时的欢迎语，空则用默认文案 */
   live_support_welcome?: string
+  /** 工单系统开关（console_setting.ticket_system_enabled）。默认 false */
+  ticket_system_enabled?: boolean
   [k: string]: unknown
 }
 

@@ -245,6 +245,8 @@ export default {
       logs: 'Logs',
       groupGateway: 'AI Gateway',
       integrations: 'Keys Integrations',
+      groupSupport: 'Support',
+      tickets: 'My Tickets',
       settings: 'Settings',
       payments: 'Payments',
       help: 'Help & Support',
@@ -1242,6 +1244,111 @@ export default {
     connecting: 'Connecting…',
     reconnecting: 'Disconnected — reconnecting…',
     unread: '{n} new replies',
+  },
+  tickets: {
+    title: 'My Tickets',
+    subtitle: 'Submit an issue and track its progress. Including a call ID or order number helps us locate it faster.',
+    create: 'New Ticket',
+    detailTitle: 'Ticket Detail',
+    backToList: 'Back to list',
+    close: 'Close ticket',
+    notFound: 'Ticket not found or not accessible',
+
+    // Statuses (mirrors the backend state machine: pending → processing → awaiting → resolved → closed)
+    status_pending: 'Pending',
+    status_processing: 'In Progress',
+    status_awaiting: 'Awaiting You',
+    status_resolved: 'Resolved',
+    status_closed: 'Closed',
+    tabAll: 'All',
+
+    // Priorities
+    priority_urgent: 'Urgent',
+    priority_high: 'High',
+    priority_normal: 'Normal',
+    priority_low: 'Low',
+
+    // Categories
+    category_api: 'API Calls',
+    category_model: 'Model Issue',
+    category_topup: 'Top-up',
+    category_billing: 'Billing',
+    category_account: 'Account',
+    category_other: 'Other',
+
+    // Filters and sorting
+    filterCategory: 'Filter by category',
+    filterPriority: 'Filter by priority',
+    allCategories: 'All categories',
+    allPriorities: 'All priorities',
+    orderBy: 'Sort by',
+    orderLatest: 'Recently updated',
+    orderCreated: 'Created',
+    orderPriority: 'Priority',
+    searchPlaceholder: 'Search ticket titles…',
+
+    // List
+    colId: 'ID',
+    colTitle: 'Title',
+    colCategory: 'Category',
+    colPriority: 'Priority',
+    colStatus: 'Status',
+    colUpdated: 'Updated',
+    colAssignee: 'Assignee',
+    unassigned: 'Unassigned',
+    unreadTip: '{n} unread replies',
+    emptyTitle: 'No tickets yet',
+    emptyDesc: 'Run into a problem? Open a ticket and we will take a look.',
+
+    // Create form
+    createTitle: 'New Ticket',
+    createDesc: 'Describe the symptom and how to reproduce it — that helps us pin it down faster.',
+    formTitle: 'Title',
+    formTitleHint: 'One line summarizing the issue, up to 100 characters',
+    formTitlePlaceholder: 'e.g. gpt-4o returns 429',
+    formCategory: 'Category',
+    formPriority: 'Priority',
+    formContent: 'Description',
+    formContentHint: 'Include call IDs, error messages and repro steps, up to 5000 characters',
+    formContentPlaceholder: 'Describe the symptom, repro steps and what you have already tried…',
+    formAttachments: 'Attachments',
+    formAttachmentsHint: 'Up to 6 files',
+    addFile: 'Add file',
+    removeFile: 'Remove file',
+    errTitleRequired: 'Title is required',
+    errContentRequired: 'Description is required',
+    createdOk: 'Ticket created',
+
+    // Status notices
+    pendingNotice: 'Your ticket has been submitted and is waiting to be picked up.',
+    awaitingNotice: 'Support has replied — your confirmation or more details are needed.',
+    resolvedNotice: 'This ticket is marked resolved. Reply to reopen it if the issue persists.',
+    lockedNotice: 'This ticket is closed and can no longer receive replies.',
+
+    // Conversation and replies
+    conversation: 'Conversation',
+    replyPlaceholder: 'Write a reply…',
+    replyHint: 'Ctrl / ⌘ + Enter to send',
+    send: 'Send',
+    sentOk: 'Reply sent',
+    errReplyEmpty: 'Reply cannot be empty',
+
+    // Info card
+    infoCard: 'Ticket Info',
+    infoId: 'Ticket ID',
+    infoCreated: 'Created',
+    infoUpdated: 'Updated',
+    infoResolved: 'Resolved',
+    infoClosed: 'Closed',
+
+    // Activity
+    timeline: 'Activity',
+    timelineEmpty: 'No activity yet',
+
+    // Close confirmation
+    closeConfirmTitle: 'Close ticket',
+    closeConfirmDesc: 'You will not be able to reply after closing. Close this ticket?',
+    closedOk: 'Ticket closed',
   },
   error: {
     network: 'Network error — check that the backend is running',

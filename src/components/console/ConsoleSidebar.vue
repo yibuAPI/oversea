@@ -25,6 +25,7 @@ import {
   Activity,
   ScrollText,
   Plug,
+  Ticket,
   Settings,
   CreditCard,
   LifeBuoy,
@@ -43,7 +44,7 @@ const user = useUserStore()
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
-const { systemName, logo, quotaPerUnit } = storeToRefs(site)
+const { systemName, logo, quotaPerUnit, ticketSystemEnabled } = storeToRefs(site)
 
 const balance = computed(() => formatQuota(user.quota, quotaPerUnit.value))
 const displayName = computed(
@@ -92,6 +93,19 @@ const groups = computed(() => [
       { to: '/console/integrations', icon: Plug, label: t('console.nav.integrations') },
     ],
   },
+  // 工单系统关掉时整组都不出现：后端 /api/tickets/** 会直接拒绝请求，
+  // 留着入口只会让人点进一个报错页（路由守卫也会把人弹回控制台首页）。
+  // 必须整组展开／不展开，只把 items 置空会留下一个没有条目的组标题。
+  ...(ticketSystemEnabled.value
+    ? [
+        {
+          label: t('console.nav.groupSupport'),
+          items: [
+            { to: '/console/tickets', icon: Ticket, label: t('console.nav.tickets') },
+          ],
+        },
+      ]
+    : []),
 ])
 
 /** /console 是精确匹配，其余按前缀 —— 否则子路由会把首页也点亮 */
