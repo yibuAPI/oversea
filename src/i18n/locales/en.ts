@@ -1227,9 +1227,13 @@ export default {
     you: 'Me',
     agent: 'Support',
     system: 'System',
+    agentOnline: 'Agent joined',
+    systemOnline: 'Connected — waiting for an agent',
+    collapse: 'Collapse window',
     closed: 'This conversation has ended',
+    /** 见 zh-CN 里同一条的说明：发送是被拦下的，不能说成"继续发就开新会话" */
     closedHint:
-      'An agent closed this conversation. Sending another message starts a new one.',
+      'This conversation is closed and can no longer receive messages. Start a new one to keep chatting.',
     reopen: 'Start a new conversation',
     close: 'End conversation',
     closeConfirm: 'You will need to start a new conversation. Continue?',

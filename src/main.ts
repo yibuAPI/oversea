@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { VueQueryPlugin } from '@tanstack/vue-query'
+import BeautifulChat from 'vue3-beautiful-chat'
 
 import App from './App.vue'
 import router from './router'
@@ -18,6 +19,16 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(i18n)
+
+// 在线客服窗（访客端 SupportWidget）。这个包的 default 导出是**插件**而不是组件：
+//   const ft = { install(app) { app.config.globalProperties.$event = 事件总线
+//                               app.component('BeautifulChat', 真组件) } }
+// 所以必须 app.use 注册，模板里的 <BeautifulChat> 才解析得到东西。
+// 直接 import 完当组件用的话，Vue 拿到的是一个只有 install 的普通对象 ——
+// 没有 render/setup/template，最终渲染成一个空注释节点（<!--->），
+// 窗口里什么都没有。另外 $event 也只在 install 里挂到 globalProperties，
+// 而 UserInput 的 mounted() 要调 this.$event.$on(...)，不装插件会直接抛错。
+app.use(BeautifulChat)
 app.use(VueQueryPlugin, {
   queryClientConfig: {
     defaultOptions: {

@@ -173,8 +173,19 @@ export class SupportSocket {
     private readonly conversationId: number,
     private readonly handlers: {
       onEvent: (event: SupportSocketEvent) => void
+      /**
+       * 每次连上（含首次）触发。onReconnect 只在重连时响，
+       * 首次连接没有回调 —— 而窗口头部要显示"已连接/连接中"，
+       * 首次连上也得知道，所以单开一个。
+       */
+      onOpen?: () => void
       /** 每次（重）连成功后触发，调用方在这里用 after_id 补齐断线期间的消息 */
       onReconnect?: () => void
+      /**
+       * 连接断开（含首次连接失败）时触发。没有它调用方就不知道连接已经掉了 ——
+       * 只会一直以为自己还连着。主动 close() 不算断开，不回调。
+       */
+      onClose?: () => void
       onError?: (message: string) => void
     },
   ) {}
@@ -203,6 +214,7 @@ export class SupportSocket {
     ws.onopen = () => {
       const isResume = this.retries > 0
       this.retries = 0
+      this.handlers.onOpen?.()
       if (isResume) this.handlers.onReconnect?.()
     }
 
@@ -223,6 +235,8 @@ export class SupportSocket {
     // onerror 之后一定跟 onclose，重连统一在 onclose 里做，避免计两次
     ws.onclose = () => {
       this.ws = null
+      // 主动 close() 打断的这条也会走到这里，此时不该报"正在重连"
+      if (!this.closed) this.handlers.onClose?.()
       this.scheduleRetry()
     }
   }
