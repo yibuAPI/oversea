@@ -4,9 +4,10 @@
  * 只负责输入 + 切换可见性；id/autocomplete/placeholder/required 等透传给 <input>。
  *
  * 两种皮肤（variant）：
- *   - console：控制台 token 主题（亮/暗跟随全站），对应 Settings / Budgets 的 INPUT 常量
- *   - dark   ：登录/注册页硬编码深色（不消费全站 token），对应 Register 的 INPUT_CLASS
- * 眼睛按钮的配色与右内边距随皮肤走，其余行为完全一致。
+ *   - console：控制台密排布局（h-9），对应 Settings / Budgets 的 INPUT 常量
+ *   - auth   ：登录/注册页的宽松布局（h-10，更宽的右内边距）
+ * 两者都消费全站 token，亮暗主题各自跟随 —— 登录页早期是写死深色的，
+ * 那个「dark」皮肤已经删掉，别再加回来。
  */
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -17,7 +18,7 @@ defineOptions({ inheritAttrs: false })
 const props = withDefaults(
   defineProps<{
     modelValue: string
-    variant?: 'console' | 'dark'
+    variant?: 'console' | 'auth'
   }>(),
   { variant: 'console' },
 )
@@ -29,13 +30,13 @@ const show = ref(false)
 const INPUT = {
   console:
     'h-9 w-full rounded-lg border border-border bg-bg px-3 pr-9 text-[13px] outline-none transition-colors focus:border-border-selected',
-  dark:
-    'h-10 w-full rounded-[6px] border border-[#2e2e2e] bg-transparent px-3 pr-10 text-[14px] text-[#f2f2f2] outline-none transition-colors placeholder:text-[#6b6b6b] focus:border-[#5a5a5a]',
+  auth:
+    'h-10 w-full rounded-[6px] border border-border bg-transparent px-3 pr-10 text-[14px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-border-selected',
 }[props.variant]
 
 const BUTTON = {
   console: 'w-9 rounded-r-lg text-fg-subtle hover:bg-bg-muted hover:text-fg',
-  dark: 'w-10 rounded-r-[6px] text-[#6b6b6b] hover:bg-white/5 hover:text-[#f2f2f2]',
+  auth: 'w-10 rounded-r-[6px] text-fg-subtle hover:bg-bg-muted hover:text-fg',
 }[props.variant]
 
 function onInput(e: Event) {

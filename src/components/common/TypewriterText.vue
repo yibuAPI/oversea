@@ -22,6 +22,8 @@
  * prefers-reduced-motion 下全部直接显示、光标常亮不闪。
  */
 import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useThemeStore } from '@/stores/theme'
 
 const props = withDefaults(
   defineProps<{
@@ -36,6 +38,9 @@ const props = withDefaults(
   { speed: 65, delay: 250, cursor: true },
 )
 
+/** 字符色要跟着主题走（见 STOPS_LIGHT），故这里必须响应主题切换 */
+const { isDark } = storeToRefs(useThemeStore())
+
 /** 品牌渐变的三个锚点，与 tokens.css 的 --brand-gradient 同源 */
 const STOPS: [number, [number, number, number]][] = [
   [0, [72, 84, 255]], // #4854ff 蓝紫
@@ -43,27 +48,38 @@ const STOPS: [number, [number, number, number]][] = [
   [1, [134, 239, 215]], // #86efd7 薄荷
 ]
 
+/** 浅色主题下的锚点：整条压暗一档。
+    原色是照黑底挑的 —— 天蓝 #3bcaf5 在白底上只有 1.8:1，薄荷更低，
+    登录页改成跟随主题之后，亮色下标题会淡到看不清。压暗后每个锚点
+    都在白底 3.5:1 以上，渐变观感与暗色下一致（顺序、比例都不动）。 */
+const STOPS_LIGHT: [number, [number, number, number]][] = [
+  [0, [59, 62, 230]], // #3b3ee6
+  [0.55, [8, 122, 176]], // #087ab0
+  [1, [13, 132, 101]], // #0d8465
+]
+
 /** 在 STOPS 上线性插值，t ∈ [0,1] */
-function sample(t: number): string {
-  for (let i = 1; i < STOPS.length; i++) {
-    const [p1, c1] = STOPS[i - 1]!
-    const [p2, c2] = STOPS[i]!
-    if (t > p2 && i < STOPS.length - 1) continue
+function sample(stops: [number, [number, number, number]][], t: number): string {
+  for (let i = 1; i < stops.length; i++) {
+    const [p1, c1] = stops[i - 1]!
+    const [p2, c2] = stops[i]!
+    if (t > p2 && i < stops.length - 1) continue
     const k = p2 === p1 ? 0 : (t - p1) / (p2 - p1)
     const mix = c1.map((v, j) => Math.round(v + (c2[j]! - v) * k))
     return `rgb(${mix.join(',')})`
   }
-  return `rgb(${STOPS[0]![1].join(',')})`
+  return `rgb(${stops[0]![1].join(',')})`
 }
 
 /** 用展开而不是 split('')，避免把非 BMP 字符劈成两半 */
-const chars = computed(() =>
-  [...props.text].map((c, i, arr) => ({
+const chars = computed(() => {
+  const stops = isDark.value ? STOPS : STOPS_LIGHT
+  return [...props.text].map((c, i, arr) => ({
     c,
     // 单字时避免除以 0，直接取渐变起点
-    color: sample(arr.length > 1 ? i / (arr.length - 1) : 0),
-  })),
-)
+    color: sample(stops, arr.length > 1 ? i / (arr.length - 1) : 0),
+  }))
+})
 const cursorDelay = computed(
   () => props.delay + chars.value.length * props.speed,
 )
@@ -87,6 +103,7 @@ const cursorDelay = computed(
       <span
         v-if="cursor"
         class="tw-caret"
+        :class="isDark ? 'tw-caret--dark' : 'tw-caret--light'"
         :style="{ animationDelay: `${cursorDelay}ms` }"
         >_</span
       >
@@ -111,10 +128,18 @@ const cursorDelay = computed(
 .tw-caret {
   display: inline-block;
   white-space: pre;
-  /* 光标取渐变末端色，接在最后一个字后面不突兀 */
-  color: #86efd7;
+  /* 光标取渐变末端色，接在最后一个字后面不突兀。
+     两端色值分别是两个主题下 STOPS 的末位，跟着主题类切换。 */
   opacity: 0;
   animation: tw-caret 1s step-end infinite;
+}
+
+.tw-caret--dark {
+  color: #86efd7;
+}
+
+.tw-caret--light {
+  color: #0d8465;
 }
 
 @keyframes tw-in {

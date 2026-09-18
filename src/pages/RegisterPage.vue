@@ -1,7 +1,10 @@
 <script setup lang="ts">
 /**
- * 注册页 —— 版式与登录页严格一致（同一个黑底、同一列宽 384、同样的控件尺寸），
+ * 注册页 —— 版式与登录页严格一致（同一个壳、同一列宽 384、同样的控件尺寸），
  * infron 的两页也是同一套壳，只换标题和字段。
+ *
+ * 主题：与登录页一样消费全站 token（原先两页都写死黑底，浅色主题下会掉进
+ * 黑屏）。色值一律走 token 类，别再写 #xxxxxx。
  *
  * 后端约束（router/api-router.go + controller/user.go）：
  *   - 注册总开关 register_enabled，关了直接不给表单
@@ -12,13 +15,14 @@
  *   - 注册成功后端**不自动登录**（只返回 success），故成功后跳登录页
  *   - aff_code 从 URL ?aff= 带入，用于邀请返利
  */
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-import { LoaderCircle, Languages } from 'lucide-vue-next'
+import { LoaderCircle, Languages, Sun, Moon } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
+import { useThemeStore } from '@/stores/theme'
 import { register } from '@/api/auth'
 import { sendEmailCode } from '@/api/account'
 import { ApiError } from '@/api/types'
@@ -28,6 +32,7 @@ import { setLocale } from '@/i18n'
 import { clearAffCode, readAffCode } from '@/utils/aff-code'
 
 const site = useSiteStore()
+const theme = useThemeStore()
 const router = useRouter()
 const route = useRoute()
 const { t, locale } = useI18n()
@@ -58,11 +63,7 @@ const affCode = computed(
   () => (typeof route.query.aff === 'string' ? route.query.aff : '') || readAffCode() || undefined,
 )
 
-onMounted(() => document.documentElement.classList.add('login-dark'))
-onUnmounted(() => document.documentElement.classList.remove('login-dark'))
-
 // ───────────────── 邮箱验证码 ─────────────────
-
 const sending = ref(false)
 /** 冷却秒数。后端对 /api/verification 有频率限制，前端先拦一道 */
 const cooldown = ref(0)
@@ -143,11 +144,11 @@ function oauthUrl(p: string) {
 }
 
 const INPUT_CLASS =
-  'h-10 w-full rounded-[6px] border border-[#2e2e2e] bg-transparent px-3 text-[14px] text-[#f2f2f2] outline-none transition-colors placeholder:text-[#6b6b6b] focus:border-[#5a5a5a]'
+  'h-10 w-full rounded-[6px] border border-border bg-transparent px-3 text-[14px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-border-selected'
 </script>
 
 <template>
-  <div class="relative min-h-dvh bg-black text-[#f2f2f2] antialiased">
+  <div class="relative min-h-dvh bg-bg text-fg antialiased">
     <RouterLink
       to="/"
       class="absolute left-6 top-6 z-10 flex items-center gap-2 transition-opacity hover:opacity-70 sm:left-10"
@@ -156,15 +157,26 @@ const INPUT_CLASS =
       <span class="text-[17px] font-semibold tracking-tight">{{ systemName }}</span>
     </RouterLink>
 
-    <!-- 右上角语言切换：海外站，每个页面都必须能切语言 -->
-    <button
-      type="button"
-      class="motion-press absolute right-6 top-6 z-10 rounded-full p-2 text-[#8a8a8a] hover:bg-white/10 hover:text-[#f2f2f2] sm:right-10"
-      aria-label="Switch language"
-      @click="toggleLocale"
-    >
-      <Languages class="size-5" />
-    </button>
+    <!-- 右上角：主题 + 语言。与登录页同一套，两页都没有站点顶栏 -->
+    <div class="absolute right-6 top-6 z-10 flex items-center gap-1 sm:right-10">
+      <button
+        type="button"
+        class="motion-press rounded-full p-2 text-fg-muted hover:bg-bg-muted hover:text-fg"
+        :aria-label="t('theme.toggle')"
+        @click="theme.toggle()"
+      >
+        <Sun v-if="theme.isDark" class="size-5" />
+        <Moon v-else class="size-5" />
+      </button>
+      <button
+        type="button"
+        class="motion-press rounded-full p-2 text-fg-muted hover:bg-bg-muted hover:text-fg"
+        aria-label="Switch language"
+        @click="toggleLocale"
+      >
+        <Languages class="size-5" />
+      </button>
+    </div>
 
     <div class="flex min-h-dvh flex-col px-6 pb-10 pt-[112px] sm:pt-[128px]">
       <div class="mx-auto w-full max-w-[384px]">
@@ -173,12 +185,12 @@ const INPUT_CLASS =
         >
           {{ t('auth.createAccount') }}
         </h1>
-        <p class="mt-3 text-[14px] text-[#8a8a8a]">{{ t('auth.registerSubtitle') }}</p>
+        <p class="mt-3 text-[14px] text-fg-muted">{{ t('auth.registerSubtitle') }}</p>
 
         <!-- 注册被后端关闭：不画表单，画说明 -->
         <div
           v-if="!registerEnabled"
-          class="mt-10 rounded-[6px] border border-[#2e2e2e] p-4 text-[13.5px] text-[#8a8a8a]"
+          class="mt-10 rounded-[6px] border border-border p-4 text-[13.5px] text-fg-muted"
         >
           {{ t('auth.registerDisabled') }}
         </div>
@@ -186,7 +198,7 @@ const INPUT_CLASS =
         <template v-else>
           <form class="mt-10 space-y-4" @submit.prevent="onSubmit">
             <div class="space-y-2">
-              <label for="reg-username" class="block text-[13px] text-[#8a8a8a]">
+              <label for="reg-username" class="block text-[13px] text-fg-muted">
                 {{ t('auth.username') }}
               </label>
               <input
@@ -203,7 +215,7 @@ const INPUT_CLASS =
             <!-- 邮箱验证码：后端开了 email_verification 才是必填流程 -->
             <template v-if="emailVerification">
               <div class="space-y-2">
-                <label for="reg-email" class="block text-[13px] text-[#8a8a8a]">
+                <label for="reg-email" class="block text-[13px] text-fg-muted">
                   {{ t('auth.email') }}
                 </label>
                 <input
@@ -218,7 +230,7 @@ const INPUT_CLASS =
               </div>
 
               <div class="space-y-2">
-                <label for="reg-code" class="block text-[13px] text-[#8a8a8a]">
+                <label for="reg-code" class="block text-[13px] text-fg-muted">
                   {{ t('auth.verificationCode') }}
                 </label>
                 <div class="flex gap-2">
@@ -236,7 +248,7 @@ const INPUT_CLASS =
                   <button
                     type="button"
                     :disabled="sending || cooldown > 0"
-                    class="motion-press h-10 shrink-0 rounded-[6px] border border-[#2e2e2e] px-3 text-[13px] font-medium hover:border-[#5a5a5a] hover:bg-[#141414] disabled:cursor-not-allowed disabled:opacity-50"
+                    class="motion-press h-10 shrink-0 rounded-[6px] border border-border px-3 text-[13px] font-medium text-fg hover:border-border-strong hover:bg-bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                     @click="onSendCode"
                   >
                     {{ cooldown > 0 ? `${cooldown}s` : t('auth.sendCode') }}
@@ -246,13 +258,13 @@ const INPUT_CLASS =
             </template>
 
             <div class="space-y-2">
-              <label for="reg-password" class="block text-[13px] text-[#8a8a8a]">
+              <label for="reg-password" class="block text-[13px] text-fg-muted">
                 {{ t('auth.password') }}
               </label>
               <PasswordInput
                 id="reg-password"
                 v-model="password"
-                variant="dark"
+                variant="auth"
                 autocomplete="new-password"
                 required
                 :placeholder="t('auth.passwordPlaceholder')"
@@ -260,19 +272,19 @@ const INPUT_CLASS =
             </div>
 
             <div class="space-y-2">
-              <label for="reg-password2" class="block text-[13px] text-[#8a8a8a]">
+              <label for="reg-password2" class="block text-[13px] text-fg-muted">
                 {{ t('auth.confirmPassword') }}
               </label>
               <PasswordInput
                 id="reg-password2"
                 v-model="password2"
-                variant="dark"
+                variant="auth"
                 autocomplete="new-password"
                 required
                 :placeholder="t('auth.passwordPlaceholder')"
                 :aria-invalid="mismatch"
               />
-              <p v-if="mismatch" class="text-[12.5px] text-[#f87171]">
+              <p v-if="mismatch" class="text-[12.5px] text-danger-fg">
                 {{ t('auth.passwordMismatch') }}
               </p>
             </div>
@@ -280,7 +292,7 @@ const INPUT_CLASS =
             <!-- 人机验证开着但前端没接组件，如实说明，别让用户填完才失败 -->
             <p
               v-if="turnstileEnabled"
-              class="rounded-[6px] border border-[#2e2e2e] p-3 text-[12.5px] text-[#8a8a8a]"
+              class="rounded-[6px] border border-border p-3 text-[12.5px] text-fg-muted"
             >
               {{ t('auth.turnstileNotice') }}
             </p>
@@ -288,28 +300,25 @@ const INPUT_CLASS =
             <button
               type="submit"
               :disabled="!canSubmit"
-              class="motion-press inline-flex h-10 w-full items-center justify-center gap-2 rounded-[6px] bg-[#111a2e] text-[14px] font-semibold text-white hover:-translate-y-px hover:bg-[#182541] disabled:cursor-not-allowed disabled:opacity-50"
+              class="motion-press inline-flex h-10 w-full items-center justify-center gap-2 rounded-[6px] bg-btn-primary-bg text-[14px] font-semibold text-btn-primary-fg hover:-translate-y-px hover:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               <LoaderCircle v-if="submitting" class="size-4 animate-spin" />
               {{ t('auth.signUp') }}
             </button>
           </form>
 
-          <p class="mt-4 text-center text-[14px] text-[#8a8a8a]">
+          <p class="mt-4 text-center text-[14px] text-fg-muted">
             {{ t('auth.hasAccount') }}
-            <RouterLink
-              to="/login"
-              class="text-[#f2f2f2] transition-opacity hover:opacity-70"
-            >
+            <RouterLink to="/login" class="text-fg transition-opacity hover:opacity-70">
               {{ t('auth.signIn') }}
             </RouterLink>
           </p>
 
           <template v-if="oauthProviders.length">
             <div class="my-8 flex items-center gap-4">
-              <span class="h-px flex-1 bg-[#2e2e2e]" />
-              <span class="text-[14px] text-[#8a8a8a]">{{ t('auth.or') }}</span>
-              <span class="h-px flex-1 bg-[#2e2e2e]" />
+              <span class="h-px flex-1 bg-border" />
+              <span class="text-[14px] text-fg-muted">{{ t('auth.or') }}</span>
+              <span class="h-px flex-1 bg-border" />
             </div>
 
             <div class="space-y-3">
@@ -317,7 +326,7 @@ const INPUT_CLASS =
                 v-for="p in oauthProviders"
                 :key="p"
                 :href="oauthUrl(p)"
-                class="motion-press flex h-10 w-full items-center justify-center gap-2.5 rounded-[6px] border border-[#2e2e2e] px-3 text-[14px] font-medium text-[#f2f2f2] hover:border-[#5a5a5a] hover:bg-[#141414]"
+                class="motion-press flex h-10 w-full items-center justify-center gap-2.5 rounded-[6px] border border-border bg-bg-muted px-3 text-[14px] font-medium text-fg hover:border-border-strong"
               >
                 <ProviderIcon :name="p" />
                 {{ t('auth.signInWith', { provider: t(`auth.provider.${p}`) }) }}
@@ -329,10 +338,3 @@ const INPUT_CLASS =
     </div>
   </div>
 </template>
-
-<style>
-html.login-dark,
-html.login-dark body {
-  background-color: #000;
-}
-</style>
