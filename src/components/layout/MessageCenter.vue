@@ -39,7 +39,7 @@ type Tab = 'system' | 'notifications'
 /** 默认停在「系统公告」—— 面板上方标签，对应 /api/notice */
 const active = ref<Tab>('system')
 
-/** 组件挂载时拉取系统公告（status 已在 main.ts 预热，notice 独立请求一次即可） */
+/** 组件挂载时拉一次系统公告（status 已在 main.ts 预热；之后两者都由 store 的轮询刷新） */
 onMounted(() => {
   site.loadNotice()
 })

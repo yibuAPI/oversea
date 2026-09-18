@@ -165,25 +165,13 @@ const router = createRouter({
           path: 'tickets',
           name: 'console-tickets',
           component: () => import('@/pages/console/TicketsPage.vue'),
-          meta: { titleKey: 'console.nav.tickets' },
-        },
-        {
-          /** 详情页不进侧栏，面包屑沿用工单标题 —— 故 titleKey 仍指向列表 */
-          path: 'tickets/:id',
-          name: 'console-ticket-detail',
-          component: () => import('@/pages/console/TicketDetailPage.vue'),
-          meta: { titleKey: 'console.nav.tickets' },
-        },
-        {
-          path: 'tickets',
-          name: 'console-tickets',
-          component: () => import('@/pages/console/TicketsPage.vue'),
           meta: {
             titleKey: 'console.nav.tickets',
             requiresTicketSystem: true,
           },
         },
         {
+          /** 详情页不进侧栏，面包屑沿用工单标题 —— 故 titleKey 仍指向列表 */
           path: 'tickets/:id',
           name: 'console-ticket-detail',
           component: () => import('@/pages/console/TicketDetailPage.vue'),

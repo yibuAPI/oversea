@@ -14,7 +14,12 @@
  * 尺寸 494×494 与 infron 实测一致；内容必须撑满，
  * 上下留一大片空白正是「廉价感」的来源。
  */
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 defineProps<{ kind: 'code' | 'failover' | 'price' | 'support' }>()
+
+const { t } = useI18n()
 
 /** 用量占比：相对比例示意，不标绝对金额，避免被当成报价 */
 const usage = [
@@ -25,25 +30,36 @@ const usage = [
   { label: 'glm-4.6', pct: 17 },
 ]
 
-const channels = [
-  { name: '主渠道 · cn-east-1', state: 'down', note: '超时 · 已摘除' },
-  { name: '备用渠道 A · cn-north-2', state: 'up', note: '已接管' },
-  { name: '备用渠道 B · sg-1', state: 'idle', note: '待命' },
-]
+/**
+ * 渠道状态、探测时间戳、时间线刻度都是示意数据，不随语言变；文案走 i18n。
+ * 三个列表必须是 computed —— 顶层 const 只求值一次，切语言不会重新取文案。
+ */
+const CHANNEL_STATES = ['down', 'up', 'idle'] as const
+const channels = computed(() =>
+  CHANNEL_STATES.map((state, i) => ({
+    state,
+    name: t(`home.features.visual.failover.channels.${i}.name`),
+    note: t(`home.features.visual.failover.channels.${i}.note`),
+  })),
+)
 
 /** 健康探测日志：与上面的渠道状态一一对应，读起来是同一件事 */
-const probes = [
-  { t: '12:04:31', s: 'cn-east-1 探测超时 (5000ms)' },
-  { t: '12:04:31', s: '权重降为 0，移出轮询' },
-  { t: '12:04:31', s: '流量切至 cn-north-2' },
-]
+const PROBE_TIMES = ['12:04:31', '12:04:31', '12:04:31']
+const probes = computed(() =>
+  PROBE_TIMES.map((time, i) => ({
+    t: time,
+    s: t(`home.features.visual.failover.probes.${i}`),
+  })),
+)
 
-const timeline = [
-  { t: '00:00', title: '工单提交', s: '控制台附带调用 ID，无需复述现象' },
-  { t: '00:04', title: '定位上游', s: '按调用 ID 查到具体渠道与原始返回' },
-  { t: '00:09', title: '渠道切换', s: '摘除异常上游，流量转入备用渠道' },
-  { t: '00:12', title: '恢复正常', s: '复测通过，工单关闭并同步原因' },
-]
+const TIMELINE_TIMES = ['00:00', '00:04', '00:09', '00:12']
+const timeline = computed(() =>
+  TIMELINE_TIMES.map((time, i) => ({
+    t: time,
+    title: t(`home.features.visual.support.timeline.${i}.title`),
+    s: t(`home.features.visual.support.timeline.${i}.s`),
+  })),
+)
 </script>
 
 <template>
@@ -60,7 +76,7 @@ const timeline = [
       </div>
       <pre
         class="flex-1 overflow-hidden px-5 py-6 font-mono text-[12.5px] leading-[1.85] text-fg-muted"
-      ><code><span class="text-fg-subtle"># 只改 base_url 和 api_key，其余代码不动</span>
+      ><code><span class="text-fg-subtle">{{ t('home.features.visual.code.comment') }}</span>
 <span class="text-brand">from</span> openai <span class="text-brand">import</span> OpenAI
 
 client = OpenAI(
@@ -71,7 +87,7 @@ client = OpenAI(
 resp = client.chat.completions.create(
     model=<span class="text-success-fg">"gpt-5-chat-latest"</span>,
     messages=[{<span class="text-success-fg">"role"</span>: <span class="text-success-fg">"user"</span>,
-                <span class="text-success-fg">"content"</span>: <span class="text-success-fg">"你好"</span>}],
+                <span class="text-success-fg">"content"</span>: <span class="text-success-fg">"{{ t('home.features.visual.code.hello') }}"</span>}],
 )
 print(resp.choices[<span class="text-warning-fg">0</span>].message.content)</code></pre>
       <div
@@ -87,16 +103,16 @@ print(resp.choices[<span class="text-warning-fg">0</span>].message.content)</cod
       <div
         class="flex shrink-0 items-center justify-between border-b border-border px-5 py-3.5"
       >
-        <span class="text-[13px] font-medium">渠道健康状态</span>
+        <span class="text-[13px] font-medium">{{ t('home.features.visual.failover.title') }}</span>
         <span class="flex items-center gap-1.5 text-[12px] text-success-fg">
           <span class="size-1.5 rounded-full bg-success-fg" />
-          自动容灾已启用
+          {{ t('home.features.visual.failover.enabled') }}
         </span>
       </div>
 
       <div class="flex flex-1 flex-col justify-center gap-3 px-5 py-5">
         <div class="rounded-xl border border-border bg-bg-subtle px-4 py-3 text-center">
-          <p class="text-[14px] font-medium">你的请求</p>
+          <p class="text-[14px] font-medium">{{ t('home.features.visual.failover.request') }}</p>
         </div>
 
         <div class="flex justify-center text-border-strong">
@@ -157,7 +173,7 @@ print(resp.choices[<span class="text-warning-fg">0</span>].message.content)</cod
       <div
         class="flex shrink-0 items-center justify-between border-b border-border px-5 py-3.5"
       >
-        <span class="text-[13px] font-medium">本月用量</span>
+        <span class="text-[13px] font-medium">{{ t('home.features.visual.price.title') }}</span>
         <span class="font-mono text-[12px] text-fg-subtle">2026-07</span>
       </div>
 
@@ -178,8 +194,8 @@ print(resp.choices[<span class="text-warning-fg">0</span>].message.content)</cod
 
       <div class="shrink-0 border-t border-border px-5 py-4">
         <div class="flex items-baseline justify-between">
-          <span class="text-[13px] text-fg-muted">按 token 实时结算</span>
-          <span class="text-[13px] font-medium">无月费 · 无最低消费</span>
+          <span class="text-[13px] text-fg-muted">{{ t('home.features.visual.price.settlement') }}</span>
+          <span class="text-[13px] font-medium">{{ t('home.features.visual.price.noFee') }}</span>
         </div>
       </div>
     </template>
@@ -189,11 +205,11 @@ print(resp.choices[<span class="text-warning-fg">0</span>].message.content)</cod
       <div
         class="flex shrink-0 items-center justify-between border-b border-border px-5 py-3.5"
       >
-        <span class="text-[13px] font-medium">工单 #2418</span>
+        <span class="text-[13px] font-medium">{{ t('home.features.visual.support.ticket') }}</span>
         <span
           class="rounded-full bg-success-bg px-2.5 py-1 text-[11.5px] text-success-fg"
         >
-          已解决
+          {{ t('home.features.visual.support.resolved') }}
         </span>
       </div>
 
@@ -227,8 +243,8 @@ print(resp.choices[<span class="text-warning-fg">0</span>].message.content)</cod
 
       <div class="shrink-0 border-t border-border px-5 py-4">
         <div class="flex items-baseline justify-between">
-          <span class="text-[13px] text-fg-muted">首次响应</span>
-          <span class="text-[13px] font-medium tabular-nums">4 分钟</span>
+          <span class="text-[13px] text-fg-muted">{{ t('home.features.visual.support.firstResponse') }}</span>
+          <span class="text-[13px] font-medium tabular-nums">{{ t('home.features.visual.support.firstResponseValue') }}</span>
         </div>
       </div>
     </template>

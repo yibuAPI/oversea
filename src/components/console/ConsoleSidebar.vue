@@ -9,7 +9,7 @@
  * 导航项按后端能力过滤：签到未开、订阅无套餐时不显示对应入口 ——
  * 宁可少一项，也不要点进去看到空页面。
  */
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, type Component } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
@@ -35,6 +35,7 @@ import {
 } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
+import { useTicketUnread } from '@/composables/useTicketUnread'
 import { formatQuota } from '@/lib/format'
 
 const emit = defineEmits<{ navigate: [] }>()
@@ -46,14 +47,26 @@ const router = useRouter()
 const { t } = useI18n()
 const { systemName, logo, quotaPerUnit, ticketSystemEnabled } = storeToRefs(site)
 
+// 工单未读数。侧栏是控制台唯一常驻的组件，红点挂在这里才能让用户在任何页面
+// 都看到客服的新回复 —— 工单的 WebSocket 只按工单 id 分房间，不在详情页收不到。
+const { unread: ticketUnread } = useTicketUnread()
+
 const balance = computed(() => formatQuota(user.quota, quotaPerUnit.value))
 const displayName = computed(
   () => user.user?.display_name || user.user?.username || '',
 )
 const initial = computed(() => (displayName.value[0] || '?').toUpperCase())
 
+interface NavItem {
+  to: string
+  icon: Component
+  label: string
+  /** 未读徽标数。0 或 undefined 不渲染 */
+  badge?: number
+}
+
 /** 分组导航。与 infron 的三组分法一致 */
-const groups = computed(() => [
+const groups = computed<{ label: string; items: NavItem[] }[]>(() => [
   {
     label: t('console.nav.groupChat'),
     items: [
@@ -101,7 +114,12 @@ const groups = computed(() => [
         {
           label: t('console.nav.groupSupport'),
           items: [
-            { to: '/console/tickets', icon: Ticket, label: t('console.nav.tickets') },
+            {
+              to: '/console/tickets',
+              icon: Ticket,
+              label: t('console.nav.tickets'),
+              badge: ticketUnread.value,
+            },
           ],
         },
       ]
@@ -197,6 +215,14 @@ async function onSignOut() {
             >
               <component :is="item.icon" class="size-4 shrink-0" />
               <span class="truncate">{{ item.label }}</span>
+              <!-- 未读徽标（目前只有工单用）。样式对齐工单列表页行内的红点 -->
+              <span
+                v-if="item.badge"
+                class="ml-auto shrink-0 rounded-full bg-danger-bg px-1.5 text-[10.5px] font-medium tabular-nums text-danger-fg"
+                :title="t('tickets.unreadTip', { n: item.badge })"
+              >
+                {{ item.badge }}
+              </span>
             </RouterLink>
           </li>
         </ul>

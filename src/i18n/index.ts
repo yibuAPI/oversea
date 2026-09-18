@@ -13,16 +13,17 @@ function detect(): Locale {
       return saved as Locale
     }
   } catch {
-    /* localStorage 不可用时回落浏览器语言 */
+    /* localStorage 不可用时用默认语言 */
   }
-  const nav = typeof navigator !== 'undefined' ? navigator.language : 'zh-CN'
-  return nav.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en'
+  // 海外站默认英文：不跟随 navigator.language，中文浏览器打开也先给英文，
+  // 手动切过中文的用户由上面的 localStorage 分支保留偏好。
+  return 'en'
 }
 
 export const i18n = createI18n({
   legacy: false,
   locale: detect(),
-  fallbackLocale: 'zh-CN',
+  fallbackLocale: 'en',
   messages: { 'zh-CN': zhCN, en },
 })
 

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, onScopeDispose } from 'vue'
 import { getStatus, getNotice } from '@/api/auth'
 import type { SiteStatus } from '@/api/types'
 
@@ -8,9 +8,10 @@ export const DEFAULT_SYSTEM_NAME = 'llmuni'
 export const DEFAULT_LOGO = '/logo.png'
 
 /**
- * 站点配置。app 挂载前拉取一次，驱动：
+ * 站点配置。app 挂载前拉取一次，之后由 startNoticePolling 定时刷新，驱动：
  *   - 站名 / logo（管理员后台可改，前端无需重新构建）
  *   - 导航模块显隐、登录方式显隐、注册开关
+ *   - 公告未读红点（见下方「公告自动刷新」）
  */
 export const useSiteStore = defineStore('site', () => {
   const status = ref<SiteStatus | null>(null)
@@ -157,33 +158,50 @@ export const useSiteStore = defineStore('site', () => {
     () => status.value?.ticket_system_enabled === true,
   )
 
-  async function load() {
-    loading.value = true
-    error.value = null
+  /**
+   * 拉取站点配置。silent 供定时轮询用：不动 loading/error，
+   * 免得每次后台刷新都把依赖 loading 的骨架屏闪一遍。
+   */
+  async function load(options?: { silent?: boolean }) {
+    const silent = options?.silent === true
+    if (!silent) {
+      loading.value = true
+      error.value = null
+    }
     try {
-      status.value = await getStatus()
+      status.value = await getStatus(silent ? { skipAuthHandler: true } : undefined)
       // 站名拉到后同步到文档标题
       if (typeof document !== 'undefined') {
         document.title = systemName.value
       }
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e)
+      // 轮询失败不写 error：页面上还挂着上一次的正常数据，弹错误反而把它顶掉
+      if (!silent) error.value = e instanceof Error ? e.message : String(e)
     } finally {
-      loading.value = false
+      if (!silent) loading.value = false
     }
   }
 
-  /** 拉取系统公告（/api/notice）。与 status 相互独立：失败不影响站名/导航等 */
-  async function loadNotice() {
-    noticeLoading.value = true
-    noticeError.value = null
+  /**
+   * 拉取系统公告（/api/notice）。与 status 相互独立：失败不影响站名/导航等。
+   * silent 同 load()，供定时轮询用。
+   */
+  async function loadNotice(options?: { silent?: boolean }) {
+    const silent = options?.silent === true
+    if (!silent) {
+      noticeLoading.value = true
+      noticeError.value = null
+    }
     try {
-      notice.value = await getNotice()
+      notice.value = await getNotice(silent ? { skipAuthHandler: true } : undefined)
     } catch (e) {
-      notice.value = null
-      noticeError.value = e instanceof Error ? e.message : String(e)
+      // 静默轮询失败就保留上一次的公告：清空会让面板里已经在看的公告凭空消失
+      if (!silent) {
+        notice.value = null
+        noticeError.value = e instanceof Error ? e.message : String(e)
+      }
     } finally {
-      noticeLoading.value = false
+      if (!silent) noticeLoading.value = false
     }
   }
 
@@ -237,10 +255,12 @@ export const useSiteStore = defineStore('site', () => {
     return freshNotice || freshAnnounce
   })
 
-  /** 打开消息中心即视为已读：记录当前时间与公告内容，清除铃铛红点 */
+  /** 打开消息中心即视为已读：记录当前最新公告的时间与内容，清除铃铛红点 */
   function markNoticeSeen() {
     unreadState.value = {
-      seenAt: Math.max(Date.now(), latestAnnounceAt.value),
+      // 水位只取 latestAnnounceAt，别掺 Date.now()：后台发通知时 publishDate
+      // 常填当天零点甚至更早，掺了当前时间水位就高过新通知，红点再也不亮。
+      seenAt: latestAnnounceAt.value,
       seenNotice: notice.value ?? '',
     }
     try {
@@ -249,6 +269,59 @@ export const useSiteStore = defineStore('site', () => {
       /* 隐私模式下 localStorage 不可用，忽略 */
     }
   }
+
+  // ---------- 公告自动刷新 ----------
+  // 公告只在 main.ts 启动时拉一次，之后没人再动它 —— 不刷新页面就永远等不到
+  // 红点。后端没有推送端点（只有 /api/notice 与 /api/status 两个拉取接口），
+  // 所以这里用定时轮询补上。
+  const POLL_INTERVAL_MS = 90_000
+  let pollTimer: ReturnType<typeof setInterval> | null = null
+
+  /** 静默拉一遍两个公告源（status.announcements + notice） */
+  function refreshNotices() {
+    void load({ silent: true })
+    void loadNotice({ silent: true })
+  }
+
+  function schedulePollTimer() {
+    if (pollTimer !== null) return
+    pollTimer = setInterval(refreshNotices, POLL_INTERVAL_MS)
+  }
+
+  function clearPollTimer() {
+    if (pollTimer === null) return
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+
+  // 标签页切到后台就停表：浏览器会把不可见页面的定时器降频，攒下的请求还会在
+  // 切回来的瞬间一起发出去。切回前台时立刻补一次，填上后台期间漏掉的更新。
+  function handleVisibilityChange() {
+    if (document.visibilityState === 'hidden') {
+      clearPollTimer()
+      return
+    }
+    refreshNotices()
+    schedulePollTimer()
+  }
+
+  /** 启动公告轮询。幂等 —— 重复调用不会叠加定时器 */
+  function startNoticePolling() {
+    if (typeof document === 'undefined') return
+    schedulePollTimer()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+  }
+
+  /** 停止轮询并摘掉监听器 */
+  function stopNoticePolling() {
+    clearPollTimer()
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }
+
+  // store 所在 scope 销毁时收尾（HMR、测试里重建 pinia 都会走到）
+  onScopeDispose(stopNoticePolling)
 
   return {
     status,
@@ -276,5 +349,7 @@ export const useSiteStore = defineStore('site', () => {
     loadNotice,
     hasNewNotice,
     markNoticeSeen,
+    startNoticePolling,
+    stopNoticePolling,
   }
 })

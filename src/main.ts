@@ -65,4 +65,6 @@ app.use(router)
 const site = useSiteStore(pinia)
 site.load().finally(() => {
   app.mount('#app')
+  // 挂载后开始轮询公告：后端没有推送端点，不轮询用户就得刷新页面才看到新消息
+  site.startNoticePolling()
 })

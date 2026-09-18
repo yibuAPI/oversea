@@ -6,6 +6,17 @@ import axios, {
 import { ApiError, type ApiEnvelope } from './types'
 import { i18n } from '@/i18n'
 
+declare module 'axios' {
+  export interface AxiosRequestConfig<D = any> {
+    /**
+     * 后台轮询请求：401 时不清登录态、也不跳登录页。
+     * 轮询撞上 401 可能只是后端短暂抖动，把正在填表的用户踢走代价太大；
+     * 真的掉登录态时，下一次用户主动操作会自然触发跳转。
+     */
+    skipAuthHandler?: boolean
+  }
+}
+
 /**
  * 全站唯一的 HTTP 客户端。
  *
@@ -104,7 +115,7 @@ http.interceptors.response.use(
       (status === 0 ? i18n.global.t('api.networkError') : error?.message) ||
       i18n.global.t('api.requestFailed')
 
-    if (status === 401) onUnauthorized?.()
+    if (status === 401 && !error?.config?.skipAuthHandler) onUnauthorized?.()
 
     const retryAfterRaw = error?.response?.headers?.['retry-after']
     const retryAfter = retryAfterRaw ? Number(retryAfterRaw) : undefined
@@ -131,7 +142,7 @@ async function unwrap<T>(p: Promise<AxiosResponse<ApiEnvelope<T>>>): Promise<T> 
     return body as unknown as T
   }
   if (!body.success) {
-    if (res.status === 401) onUnauthorized?.()
+    if (res.status === 401 && !res.config?.skipAuthHandler) onUnauthorized?.()
     throw new ApiError(body.message || i18n.global.t('api.requestFailed'), {
       status: res.status,
       raw: body,

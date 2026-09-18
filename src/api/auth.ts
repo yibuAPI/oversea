@@ -1,13 +1,16 @@
 import { api } from './client'
 import type { SiteStatus, SelfUser } from './types'
+import type { AxiosRequestConfig } from 'axios'
 
 /** 站点配置 —— 站名、logo、登录方式、模块开关等全部来自此接口 */
-export const getStatus = () => api.get<SiteStatus>('/status')
+export const getStatus = (config?: AxiosRequestConfig) =>
+  api.get<SiteStatus>('/status', config)
 
 /** 首次部署引导状态 */
 export const getSetup = () => api.get<{ status: boolean; root_init: boolean }>('/setup')
 
-export const getNotice = () => api.get<string>('/notice')
+export const getNotice = (config?: AxiosRequestConfig) =>
+  api.get<string>('/notice', config)
 export const getAbout = () => api.get<string>('/about')
 export const getHomePageContent = () => api.get<string>('/home_page_content')
 

@@ -15,7 +15,7 @@ import { useI18n } from 'vue-i18n'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-import { Search, TicketIcon, Plus, Paperclip, X } from 'lucide-vue-next'
+import { Search, TicketIcon, Plus } from 'lucide-vue-next'
 import {
   listMyTickets,
   createTicket,
@@ -35,6 +35,7 @@ import Pagination from '@/components/ui/Pagination.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import FormField from '@/components/ui/FormField.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import TicketStatusPill from '@/components/console/TicketStatusPill.vue'
 import TicketPriorityTag from '@/components/console/TicketPriorityTag.vue'
 import { formatDateTime, formatRelative } from '@/lib/format'
@@ -51,6 +52,21 @@ const tab = ref<TicketStatus | 'all'>('all')
 const category = ref('')
 const priority = ref('')
 const orderBy = ref('')
+
+/** 筛选下拉的选项。空串一项表示「不限」，对应不传该参数 */
+const categoryOptions = computed(() => [
+  { value: '', label: t('tickets.allCategories') },
+  ...TICKET_CATEGORIES.map((c) => ({ value: c, label: t(`tickets.category_${c}`) })),
+])
+const priorityOptions = computed(() => [
+  { value: '', label: t('tickets.allPriorities') },
+  ...TICKET_PRIORITIES.map((p) => ({ value: p, label: t(`tickets.priority_${p}`) })),
+])
+const orderOptions = computed(() => [
+  { value: '', label: t('tickets.orderLatest') },
+  { value: 'created', label: t('tickets.orderCreated') },
+  { value: 'priority', label: t('tickets.orderPriority') },
+])
 
 /** 搜索：回车才发请求，避免每输一个字打一次接口 */
 const searchInput = ref('')
@@ -83,6 +99,9 @@ const listQ = useQuery({
       ...(orderBy.value ? { order_by: orderBy.value } : {}),
       ...(keyword.value ? { keyword: keyword.value } : {}),
     }),
+  // 列表只要「有没有新回复」的概览，45 秒够；不可见时自动停表
+  refetchInterval: 45_000,
+  refetchOnWindowFocus: true,
 })
 
 const data = computed(() => listQ.data.value ?? emptyTicketList())
@@ -126,10 +145,16 @@ const form = ref({
   category: 'api' as TicketCategory,
   priority: TICKET_PRIORITY.NORMAL as TicketPriority,
   content: '',
-  attachments: [] as string[],
 })
 const errors = ref<{ title?: string; content?: string }>({})
-const fileInput = ref<HTMLInputElement | null>(null)
+
+/** 新建表单的下拉选项：必选，没有「不限」那一项 */
+const formCategoryOptions = computed(() =>
+  TICKET_CATEGORIES.map((c) => ({ value: c, label: t(`tickets.category_${c}`) })),
+)
+const formPriorityOptions = computed(() =>
+  TICKET_PRIORITIES.map((p) => ({ value: p, label: t(`tickets.priority_${p}`) })),
+)
 
 function resetForm() {
   form.value = {
@@ -137,21 +162,8 @@ function resetForm() {
     category: 'api',
     priority: TICKET_PRIORITY.NORMAL,
     content: '',
-    attachments: [],
   }
   errors.value = {}
-}
-
-/**
- * 附件当前只收文件名 —— 后端尚未接真实存储，附件是元数据。
- * 交互上仍限制 6 个并允许移除，等真实上传落地时这里只需换掉取值来源。
- */
-function onPickFiles(e: Event) {
-  const input = e.target as HTMLInputElement
-  const picked = Array.from(input.files ?? []).map((f) => f.name)
-  const room = 6 - form.value.attachments.length
-  if (room > 0) form.value.attachments.push(...picked.slice(0, room))
-  input.value = '' // 清空才能再次选同一个文件
 }
 
 const createM = useMutation({
@@ -162,7 +174,6 @@ const createM = useMutation({
       category: form.value.category,
       priority: form.value.priority,
       content: form.value.content.trim(),
-      attachments: form.value.attachments,
     }),
   onSuccess: (res) => {
     toast.success(t('tickets.createdOk'))
@@ -223,37 +234,30 @@ function submitCreate() {
 
     <!-- 筛选 -->
     <div class="mb-4 flex flex-wrap items-center gap-2">
-      <select
+      <!-- 宽度写死：选中项文案长短不一，靠内容撑会让三个框互相挤动 -->
+      <AppSelect
         v-model="category"
+        size="sm"
+        class="w-[132px]"
+        :options="categoryOptions"
         :aria-label="t('tickets.filterCategory')"
-        class="h-8 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-border-selected"
-      >
-        <option value="">{{ t('tickets.allCategories') }}</option>
-        <option v-for="c in TICKET_CATEGORIES" :key="c" :value="c">
-          {{ t(`tickets.category_${c}`) }}
-        </option>
-      </select>
+      />
 
-      <select
+      <AppSelect
         v-model="priority"
+        size="sm"
+        class="w-[118px]"
+        :options="priorityOptions"
         :aria-label="t('tickets.filterPriority')"
-        class="h-8 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-border-selected"
-      >
-        <option value="">{{ t('tickets.allPriorities') }}</option>
-        <option v-for="p in TICKET_PRIORITIES" :key="p" :value="p">
-          {{ t(`tickets.priority_${p}`) }}
-        </option>
-      </select>
+      />
 
-      <select
+      <AppSelect
         v-model="orderBy"
+        size="sm"
+        class="w-[132px]"
+        :options="orderOptions"
         :aria-label="t('tickets.orderBy')"
-        class="h-8 rounded-lg border border-border bg-bg px-2 text-[12.5px] outline-none focus:border-border-selected"
-      >
-        <option value="">{{ t('tickets.orderLatest') }}</option>
-        <option value="created">{{ t('tickets.orderCreated') }}</option>
-        <option value="priority">{{ t('tickets.orderPriority') }}</option>
-      </select>
+      />
 
       <div class="relative">
         <Search
@@ -376,27 +380,21 @@ function submitCreate() {
 
         <div class="grid gap-4 sm:grid-cols-2">
           <FormField id="tk-category" :label="t('tickets.formCategory')">
-            <select
+            <AppSelect
               id="tk-category"
               v-model="form.category"
-              class="h-9 w-full rounded-lg border border-border bg-bg px-2 text-[13px] outline-none focus:border-border-selected"
-            >
-              <option v-for="c in TICKET_CATEGORIES" :key="c" :value="c">
-                {{ t(`tickets.category_${c}`) }}
-              </option>
-            </select>
+              :options="formCategoryOptions"
+              :aria-label="t('tickets.formCategory')"
+            />
           </FormField>
 
           <FormField id="tk-priority" :label="t('tickets.formPriority')">
-            <select
+            <AppSelect
               id="tk-priority"
               v-model="form.priority"
-              class="h-9 w-full rounded-lg border border-border bg-bg px-2 text-[13px] outline-none focus:border-border-selected"
-            >
-              <option v-for="p in TICKET_PRIORITIES" :key="p" :value="p">
-                {{ t(`tickets.priority_${p}`) }}
-              </option>
-            </select>
+              :options="formPriorityOptions"
+              :aria-label="t('tickets.formPriority')"
+            />
           </FormField>
         </div>
 
@@ -415,47 +413,6 @@ function submitCreate() {
             :placeholder="t('tickets.formContentPlaceholder')"
             class="w-full resize-y rounded-lg border border-border bg-bg px-2.5 py-2 text-[13px] outline-none focus:border-border-selected"
           />
-        </FormField>
-
-        <FormField
-          id="tk-files"
-          :label="t('tickets.formAttachments')"
-          :hint="t('tickets.formAttachmentsHint')"
-        >
-          <input
-            id="tk-files"
-            ref="fileInput"
-            type="file"
-            multiple
-            class="hidden"
-            @change="onPickFiles"
-          />
-          <div class="flex flex-wrap items-center gap-1.5">
-            <span
-              v-for="(name, i) in form.attachments"
-              :key="`${name}-${i}`"
-              class="inline-flex max-w-[200px] items-center gap-1 rounded-lg border border-border bg-bg-subtle px-2 py-1 text-[11.5px]"
-            >
-              <Paperclip class="size-3 shrink-0 text-fg-subtle" />
-              <span class="truncate">{{ name }}</span>
-              <button
-                type="button"
-                class="shrink-0 text-fg-subtle transition-colors hover:text-danger-fg"
-                :aria-label="t('tickets.removeFile')"
-                @click="form.attachments.splice(i, 1)"
-              >
-                <X class="size-3" />
-              </button>
-            </span>
-            <AppButton
-              v-if="form.attachments.length < 6"
-              size="sm"
-              @click="fileInput?.click()"
-            >
-              <Paperclip class="size-3.5" />
-              {{ t('tickets.addFile') }}
-            </AppButton>
-          </div>
         </FormField>
       </form>
 

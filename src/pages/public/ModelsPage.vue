@@ -11,8 +11,6 @@
  *             右侧 grid-rows-[28px_28px]：名 14px/600 + 能力徽章
  *             h-[22px] rounded-[6px] bg#E5F3FF #1687E8；второй行 12px #737373
  *             轮播每页 6 张（3 列 2 行），左右圆形切页按钮
- *   分类 tab  segmented：bg#F5F5F5 rounded-[8px] p-1，激活白底
- *             shadow 0 1px 4px rgba(0,0,0,.12)
  *   正文      白底；左侧 w-64 border-r pr-8 sticky 筛选栏
  *             （Filter 16px bold；分节 border-t，可折叠；行=复选框+名+计数）
  *   网格头    「N Models」20px/600 + All Providers 按钮 + Sort : 按钮
@@ -76,7 +74,6 @@ const billSel = ref<Set<BillKind>>(new Set())
 const groupSel = ref<Set<string>>(new Set())
 type SortKey = 'name' | 'priceAsc' | 'priceDesc'
 const sortKey = ref<SortKey>('name')
-const category = ref<string>('all')
 
 /** 分页：默认每页 20 条，可选 10/20/50/100。筛选在前端做，切片也放前端 */
 const page = ref(1)
@@ -127,24 +124,11 @@ const groupRatio = computed(() => {
 const vendorName = (m: PricingModel) => vendorOf(m).name
 const iconOf = (m: PricingModel) => vendorOf(m).icon
 
-const tagsOf = (m: PricingModel) =>
-  (m.tags ?? '').split(',').map((s) => s.trim()).filter(Boolean)
-
 function comparablePrice(m: PricingModel): number {
   if (billingKind(m) === 'call') return m.model_price
   if (billingKind(m) === 'tiered') return Number.POSITIVE_INFINITY // 阶梯计费没有固定单价，价格排序放最后
   return inputPrice(m.model_ratio, groupRatio.value)
 }
-
-const categories = computed(() => {
-  const freq = new Map<string, number>()
-  for (const m of models.value)
-    for (const tag of tagsOf(m)) freq.set(tag, (freq.get(tag) ?? 0) + 1)
-  return [...freq.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([tag]) => tag)
-})
 
 /** 可用分组列表：以 group_ratio 的键（即后台「定价分组」配置）为准，保证与后台一致。
  *  分组即便目前没有模型（count 为 0）也列出，避免前端筛选面板和后台表格对不上。
@@ -174,7 +158,6 @@ const filtered = computed(() => {
       const gs = m.enable_groups ?? []
       if (!gs.some((g) => groupSel.value.has(g))) return false
     }
-    if (category.value !== 'all' && !tagsOf(m).includes(category.value)) return false
     if (!q) return true
     return (
       m.model_name.toLowerCase().includes(q) ||
@@ -200,7 +183,7 @@ const paged = computed(() => {
 })
 
 // 任一筛选条件或每页条数变了就回到第 1 页
-watch([search, vendorSel, billSel, groupSel, category, sortKey, pageSize], () => {
+watch([search, vendorSel, billSel, groupSel, sortKey, pageSize], () => {
   page.value = 1
 })
 
@@ -375,44 +358,6 @@ const autoGroups = computed(() => pricingQ.data.value?.auto_groups ?? [])
         class="mx-auto flex w-full max-w-[1920px] flex-col gap-10 px-8 min-[1280px]:px-[77px]"
       >
         <section class="flex flex-col gap-6">
-          <!-- 分类 segmented tab -->
-          <div class="border-b border-[#E5E5E5] pb-6 dark:border-neutral-800">
-            <div
-              role="tablist"
-              :aria-label="t('public.models.catAll')"
-              class="inline-flex max-w-full gap-1 overflow-x-auto rounded-[8px] bg-[#F5F5F5] p-1 dark:bg-neutral-900"
-            >
-              <button
-                role="tab"
-                :aria-selected="category === 'all'"
-                class="motion-press h-9 shrink-0 rounded-[6px] px-3 text-sm font-medium leading-5"
-                :class="
-                  category === 'all'
-                    ? 'bg-white text-[#0A0A0A] shadow-[0px_1px_4px_rgba(0,0,0,0.12)] dark:bg-neutral-800 dark:text-neutral-50'
-                    : 'text-[#525252] hover:text-[#0A0A0A] dark:text-neutral-400 dark:hover:text-neutral-100'
-                "
-                @click="category = 'all'"
-              >
-                {{ t('public.models.catAll') }}
-              </button>
-              <button
-                v-for="c in categories"
-                :key="c"
-                role="tab"
-                :aria-selected="category === c"
-                class="motion-press h-9 shrink-0 rounded-[6px] px-3 text-sm font-medium leading-5"
-                :class="
-                  category === c
-                    ? 'bg-white text-[#0A0A0A] shadow-[0px_1px_4px_rgba(0,0,0,0.12)] dark:bg-neutral-800 dark:text-neutral-50'
-                    : 'text-[#525252] hover:text-[#0A0A0A] dark:text-neutral-400 dark:hover:text-neutral-100'
-                "
-                @click="category = c"
-              >
-                {{ c }}
-              </button>
-            </div>
-          </div>
-
           <div class="flex gap-0">
             <!-- ============ 筛选侧栏 ============ -->
             <aside

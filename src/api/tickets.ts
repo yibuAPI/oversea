@@ -140,8 +140,6 @@ export interface TicketMessage {
   /** 展示用角色，如「提交人」「技术支持」「内部备注」 */
   author_role: string
   content: string
-  /** JSON 编码的 string[]（仅文件名），空则为 ""，用 parseAttachments 取 */
-  attachments: string
   created_at: number
 }
 
@@ -196,21 +194,6 @@ export function emptyTicketList(): TicketListResult {
   }
 }
 
-/**
- * 解析 attachments 字段。
- * 后端存的是 JSON 数组字符串，但历史数据或异常写入可能是空串甚至非数组，
- * 故这里全程兜底 —— 附件展示不该让整个详情页白屏。
- */
-export function parseAttachments(raw: string | null | undefined): string[] {
-  if (!raw) return []
-  try {
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : []
-  } catch {
-    return []
-  }
-}
-
 // ───────────────────────── 用户侧 ─────────────────────────
 
 export interface TicketListParams {
@@ -226,10 +209,10 @@ export interface TicketListParams {
 }
 
 export const listMyTickets = (params: TicketListParams = {}) =>
-  api.get<TicketListResult>('/tickets', { params })
+  api.get<TicketListResult>('/tickets', { params, skipAuthHandler: true })
 
 export const getMyTicket = (id: number) =>
-  api.get<TicketDetailResult>(`/tickets/${id}`)
+  api.get<TicketDetailResult>(`/tickets/${id}`, { skipAuthHandler: true })
 
 export interface TicketCreatePayload {
   title: string
@@ -237,8 +220,6 @@ export interface TicketCreatePayload {
   category?: string
   priority?: TicketPriority
   content: string
-  /** 仅文件名，后端会剥掉路径成分并截断到 6 个 */
-  attachments?: string[]
 }
 
 /** 后端挂了 CriticalRateLimit，不要重试轰炸 */
@@ -247,7 +228,7 @@ export const createTicket = (payload: TicketCreatePayload) =>
 
 export const replyMyTicket = (
   id: number,
-  payload: { content: string; attachments?: string[] },
+  payload: { content: string },
 ) => api.post<TicketReplyResult>(`/tickets/${id}/messages`, payload)
 
 /** 用户唯一能改状态的动作，且只能改成 closed。已关闭时幂等返回 */
@@ -256,7 +237,7 @@ export const closeMyTicket = (id: number) =>
 
 /** 侧栏红点用。返回有未读回复的工单**条数**，不是消息数 */
 export const getMyTicketUnread = () =>
-  api.get<{ unread: number }>('/tickets/unread')
+  api.get<{ unread: number }>('/tickets/unread', { skipAuthHandler: true })
 
 // ───────────────────────── 管理侧 ─────────────────────────
 
@@ -278,7 +259,7 @@ export const getTicketForAgent = (id: number) =>
 /** internal=true 写内部备注：不动状态、不动未读、用户看不到 */
 export const replyTicketForAgent = (
   id: number,
-  payload: { content: string; attachments?: string[]; internal?: boolean },
+  payload: { content: string; internal?: boolean },
 ) => api.post<TicketReplyResult>(`/tickets/admin/${id}/messages`, payload)
 
 export const setTicketStatus = (id: number, status: TicketStatus) =>

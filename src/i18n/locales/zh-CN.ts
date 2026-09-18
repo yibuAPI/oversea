@@ -76,6 +76,44 @@ export default {
     },
     features: {
       learnMore: '了解更多',
+      visual: {
+        code: {
+          comment: '# 只改 base_url 和 api_key，其余代码不动',
+          hello: '你好',
+        },
+        failover: {
+          title: '渠道健康状态',
+          enabled: '自动容灾已启用',
+          request: '你的请求',
+          channels: [
+            { name: '主渠道 · cn-east-1', note: '超时 · 已摘除' },
+            { name: '备用渠道 A · cn-north-2', note: '已接管' },
+            { name: '备用渠道 B · sg-1', note: '待命' },
+          ],
+          probes: [
+            'cn-east-1 探测超时 (5000ms)',
+            '权重降为 0，移出轮询',
+            '流量切至 cn-north-2',
+          ],
+        },
+        price: {
+          title: '本月用量',
+          settlement: '按 token 实时结算',
+          noFee: '无月费 · 无最低消费',
+        },
+        support: {
+          ticket: '工单 #2418',
+          resolved: '已解决',
+          firstResponse: '首次响应',
+          firstResponseValue: '4 分钟',
+          timeline: [
+            { title: '工单提交', s: '控制台附带调用 ID，无需复述现象' },
+            { title: '定位上游', s: '按调用 ID 查到具体渠道与原始返回' },
+            { title: '渠道切换', s: '摘除异常上游，流量转入备用渠道' },
+            { title: '恢复正常', s: '复测通过，工单关闭并同步原因' },
+          ],
+        },
+      },
       unified: {
         title: '统一接口，一次接入',
         points: [
@@ -1306,10 +1344,6 @@ export default {
     formContent: '问题描述',
     formContentHint: '附上调用 ID、报错信息与复现步骤，最多 5000 字',
     formContentPlaceholder: '请描述问题现象、复现步骤与已尝试的排查…',
-    formAttachments: '附件',
-    formAttachmentsHint: '最多 6 个文件',
-    addFile: '添加文件',
-    removeFile: '移除文件',
     errTitleRequired: '请填写标题',
     errContentRequired: '请填写问题描述',
     createdOk: '工单已创建',
@@ -1323,7 +1357,7 @@ export default {
     // 沟通记录与回复
     conversation: '沟通记录',
     replyPlaceholder: '输入回复内容…',
-    replyHint: 'Ctrl / ⌘ + Enter 发送',
+    replyHint: 'Enter 发送 · Shift + Enter 换行',
     send: '发送',
     sentOk: '回复已发送',
     errReplyEmpty: '回复内容不能为空',
@@ -1335,10 +1369,6 @@ export default {
     infoUpdated: '更新时间',
     infoResolved: '解决时间',
     infoClosed: '关闭时间',
-
-    // 操作记录
-    timeline: '操作记录',
-    timelineEmpty: '暂无操作记录',
 
     // 关闭确认
     closeConfirmTitle: '关闭工单',

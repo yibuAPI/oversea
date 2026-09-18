@@ -76,6 +76,44 @@ export default {
     },
     features: {
       learnMore: 'Learn more',
+      visual: {
+        code: {
+          comment: '# Change base_url and api_key only — the rest stays put',
+          hello: 'Hello',
+        },
+        failover: {
+          title: 'Channel health',
+          enabled: 'Automatic failover on',
+          request: 'Your request',
+          channels: [
+            { name: 'Primary · cn-east-1', note: 'Timed out · removed' },
+            { name: 'Backup A · cn-north-2', note: 'Took over' },
+            { name: 'Backup B · sg-1', note: 'Standby' },
+          ],
+          probes: [
+            'cn-east-1 probe timed out (5000ms)',
+            'Weight dropped to 0, out of rotation',
+            'Traffic moved to cn-north-2',
+          ],
+        },
+        price: {
+          title: 'Usage this month',
+          settlement: 'Billed per token, in real time',
+          noFee: 'No monthly fee · no minimum',
+        },
+        support: {
+          ticket: 'Ticket #2418',
+          resolved: 'Resolved',
+          firstResponse: 'First response',
+          firstResponseValue: '4 minutes',
+          timeline: [
+            { title: 'Ticket filed', s: 'The console attaches the call ID — no need to restate the symptoms' },
+            { title: 'Upstream traced', s: 'The call ID leads to the exact channel and its raw response' },
+            { title: 'Channel switched', s: 'The failing upstream is pulled, traffic moves to the backup' },
+            { title: 'Back to normal', s: 'Retest passes, the ticket is closed with the cause shared' },
+          ],
+        },
+      },
       unified: {
         title: 'One interface, one integration',
         points: [
@@ -1311,10 +1349,6 @@ export default {
     formContent: 'Description',
     formContentHint: 'Include call IDs, error messages and repro steps, up to 5000 characters',
     formContentPlaceholder: 'Describe the symptom, repro steps and what you have already tried…',
-    formAttachments: 'Attachments',
-    formAttachmentsHint: 'Up to 6 files',
-    addFile: 'Add file',
-    removeFile: 'Remove file',
     errTitleRequired: 'Title is required',
     errContentRequired: 'Description is required',
     createdOk: 'Ticket created',
@@ -1328,7 +1362,7 @@ export default {
     // Conversation and replies
     conversation: 'Conversation',
     replyPlaceholder: 'Write a reply…',
-    replyHint: 'Ctrl / ⌘ + Enter to send',
+    replyHint: 'Enter to send · Shift + Enter for newline',
     send: 'Send',
     sentOk: 'Reply sent',
     errReplyEmpty: 'Reply cannot be empty',
@@ -1340,10 +1374,6 @@ export default {
     infoUpdated: 'Updated',
     infoResolved: 'Resolved',
     infoClosed: 'Closed',
-
-    // Activity
-    timeline: 'Activity',
-    timelineEmpty: 'No activity yet',
 
     // Close confirmation
     closeConfirmTitle: 'Close ticket',
