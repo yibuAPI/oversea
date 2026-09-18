@@ -13,7 +13,7 @@ import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useQuery } from '@tanstack/vue-query'
-import { Search, ScrollText, ChevronDown } from 'lucide-vue-next'
+import { Search, ScrollText, ChevronDown, RotateCw } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
 import { listLogs, listTasks, listMidjourney } from '@/api/usage'
 import { LOG_TYPE, type LogEntry } from '@/api/types'
@@ -276,6 +276,22 @@ const rowCache = (id: number) => cacheByRow.value.get(id) ?? EMPTY_CACHE
           @keydown.enter="applySearch"
         />
       </div>
+
+      <!-- 手动刷新：拉当前 tab 的那一条查询。
+           用 refetch 而不是 invalidate，是因为 tanstack 对「没有活跃 observer
+           的 key」会跳过失效重取，切回来的 tab 不一定真的重发请求；
+           refetch 则必定打一次接口，符合「点刷新就得看到新数据」的预期。
+           刷新中禁用：连点只会把同一个请求叠着发。 -->
+      <button
+        type="button"
+        :disabled="active.isFetching.value"
+        :aria-label="t('common.refresh')"
+        class="motion-press inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-bg px-2.5 text-[12.5px] text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg disabled:cursor-not-allowed disabled:opacity-60"
+        @click="active.refetch()"
+      >
+        <RotateCw class="size-3.5" :class="active.isFetching.value ? 'animate-spin' : ''" />
+        {{ t('common.refresh') }}
+      </button>
     </div>
 
     <!-- 日志 tab -->

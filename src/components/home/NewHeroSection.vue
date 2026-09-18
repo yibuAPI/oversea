@@ -228,12 +228,16 @@ function stopDotLoopAll() {
             {{ t('homeNew.hero.primaryCta') }}
           </RouterLink>
 
-          <RouterLink
-            to="/docs"
+          <!-- 文档站另开标签页：它是独立 chrome 的 GitBook 皮，
+               留在当前页会把首页整页状态顶掉，用户读完文档还得回退。 -->
+          <a
+            href="/docs"
+            target="_blank"
+            rel="noopener"
             class="motion-press inline-flex h-[56px] items-center rounded-full border border-border bg-bg-elevated px-8 text-[16px] font-semibold text-fg shadow-sm hover:bg-bg-muted"
           >
             {{ t('homeNew.hero.secondaryCta') }}
-          </RouterLink>
+          </a>
         </div>
 
         <!-- 「500+」+ logo 行：属于左栏，跟着上面的文字左对齐 -->

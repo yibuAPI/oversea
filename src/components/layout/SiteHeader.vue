@@ -69,15 +69,19 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 /**
  * exact：/ 必须精确匹配才算选中。RouterLink 默认的 active 是前缀匹配，
  * 而任何路径都以 / 开头 —— 不加这个开关，「首页」会在每一页都亮着。
+ *
+ * newTab：文档站是独立 chrome（见路由 /docs），另开标签页打开，别把
+ * 当前页顶掉。这类项在模板里渲染成 <a target="_blank"> 而不是 RouterLink
+ * —— 保持高亮逻辑只有一个来源，不给 RouterLink 做 custom 渲染。
  */
 const navItems = computed(() =>
   [
-    { key: 'home', to: '/', exact: true },
-    { key: 'models', to: '/models', exact: false },
-    { key: 'docs', to: '/docs', exact: false },
+    { key: 'home', to: '/', exact: true, newTab: false },
+    { key: 'models', to: '/models', exact: false, newTab: false },
+    { key: 'docs', to: '/docs', exact: false, newTab: true },
     // 价格页入口暂去，/pricing 路由保留
-    { key: 'rankings', to: '/rankings', exact: false },
-    { key: 'about', to: '/company', exact: false },
+    { key: 'rankings', to: '/rankings', exact: false, newTab: false },
+    { key: 'about', to: '/company', exact: false, newTab: false },
   ].filter((item) => site.hasNavModule(item.key)),
 )
 
@@ -118,16 +122,27 @@ const iconBtnCls =
 
         <!-- 中：导航。被两侧 1fr 挤在正中 -->
         <nav class="hidden items-center gap-14 lg:flex">
-          <RouterLink
-            v-for="item in navItems"
-            :key="item.key"
-            :to="item.to"
-            class="nav-link motion-press relative text-[16px] font-medium text-fg-secondary transition-colors hover:text-accent"
-            :active-class="item.exact ? '' : 'nav-link--active'"
-            exact-active-class="nav-link--active"
-          >
-            {{ t(`nav.${item.key}`) }}
-          </RouterLink>
+          <template v-for="item in navItems" :key="item.key">
+            <!-- 新窗口项：真实 <a>，浏览器原生支持 cmd/中键行为 -->
+            <a
+              v-if="item.newTab"
+              :href="item.to"
+              target="_blank"
+              rel="noopener"
+              class="nav-link motion-press relative text-[16px] font-medium text-fg-secondary transition-colors hover:text-accent"
+            >
+              {{ t(`nav.${item.key}`) }}
+            </a>
+            <RouterLink
+              v-else
+              :to="item.to"
+              class="nav-link motion-press relative text-[16px] font-medium text-fg-secondary transition-colors hover:text-accent"
+              :active-class="item.exact ? '' : 'nav-link--active'"
+              exact-active-class="nav-link--active"
+            >
+              {{ t(`nav.${item.key}`) }}
+            </RouterLink>
+          </template>
         </nav>
 
         <!-- 右：主题 / 语言 / 登录注册。
@@ -199,17 +214,28 @@ const iconBtnCls =
       v-if="mobileOpen"
       class="pointer-events-auto mx-4 mt-2 rounded-2xl border border-border bg-bg-elevated p-2 shadow-lg lg:hidden"
     >
-      <RouterLink
-        v-for="item in navItems"
-        :key="item.key"
-        :to="item.to"
-        class="motion-press block rounded-xl px-4 py-3 text-sm text-fg-muted hover:bg-bg-muted hover:text-fg"
-        :active-class="item.exact ? '' : 'text-accent'"
-        exact-active-class="text-accent"
-        @click="mobileOpen = false"
-      >
-        {{ t(`nav.${item.key}`) }}
-      </RouterLink>
+      <template v-for="item in navItems" :key="item.key">
+        <a
+          v-if="item.newTab"
+          :href="item.to"
+          target="_blank"
+          rel="noopener"
+          class="motion-press block rounded-xl px-4 py-3 text-sm text-fg-muted hover:bg-bg-muted hover:text-fg"
+          @click="mobileOpen = false"
+        >
+          {{ t(`nav.${item.key}`) }}
+        </a>
+        <RouterLink
+          v-else
+          :to="item.to"
+          class="motion-press block rounded-xl px-4 py-3 text-sm text-fg-muted hover:bg-bg-muted hover:text-fg"
+          :active-class="item.exact ? '' : 'text-accent'"
+          exact-active-class="text-accent"
+          @click="mobileOpen = false"
+        >
+          {{ t(`nav.${item.key}`) }}
+        </RouterLink>
+      </template>
     </div>
 
     <!-- 消息中心（公告）面板 -->
