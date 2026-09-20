@@ -36,8 +36,8 @@ const columns = [
 const hrefs: Record<string, string> = {
   models: '/models',
   rankings: '/rankings',
-  docs: '/docs',
-  quickstart: '/docs',
+  docs: 'https://llmuni.apifox.cn',
+  quickstart: 'https://llmuni.apifox.cn',
   console: '/console',
   contact: '/about',
 }
@@ -77,12 +77,16 @@ const hrefs: Record<string, string> = {
           </h3>
           <ul class="mt-4 space-y-4">
             <li v-for="l in col.links" :key="l">
-              <RouterLink
-                :to="hrefs[l] || '/'"
+              <component
+                :is="hrefs[l]?.startsWith('http') ? 'a' : RouterLink"
+                :href="hrefs[l]?.startsWith('http') ? hrefs[l] : undefined"
+                :to="hrefs[l]?.startsWith('http') ? undefined : (hrefs[l] || '/')"
+                :target="hrefs[l]?.startsWith('http') ? '_blank' : undefined"
+                :rel="hrefs[l]?.startsWith('http') ? 'noopener' : undefined"
                 class="text-[16px] font-normal leading-4 tracking-[-0.16px] text-fg-muted transition-colors hover:text-fg"
               >
                 {{ t(`home.footer.link.${l}`) }}
-              </RouterLink>
+              </component>
             </li>
           </ul>
         </div>

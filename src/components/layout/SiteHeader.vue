@@ -78,7 +78,7 @@ const navItems = computed(() =>
   [
     { key: 'home', to: '/', exact: true, newTab: false },
     { key: 'models', to: '/models', exact: false, newTab: false },
-    { key: 'docs', to: '/docs', exact: false, newTab: true },
+    { key: 'docs', to: 'https://llmuni.apifox.cn', exact: false, newTab: true },
     // 价格页入口暂去，/pricing 路由保留
     { key: 'rankings', to: '/rankings', exact: false, newTab: false },
     { key: 'about', to: '/company', exact: false, newTab: false },

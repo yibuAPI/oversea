@@ -125,12 +125,15 @@ watch(drawerOpen, (open) => {
           >
             {{ t('nav.models') }}
           </RouterLink>
-          <RouterLink
-            to="/docs"
+          <!-- 文档站是外部 Apifox 站点，用真实 <a> 另开标签页 -->
+          <a
+            href="https://llmuni.apifox.cn"
+            target="_blank"
+            rel="noopener"
             class="motion-press rounded-lg px-3 py-1.5 text-[15px] font-medium text-fg hover:bg-bg-muted"
           >
             {{ t('nav.docs') }}
-          </RouterLink>
+          </a>
         </nav>
 
         <button

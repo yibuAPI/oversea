@@ -20,7 +20,7 @@ import FeatureVisual from './FeatureVisual.vue'
 const { t, tm } = useI18n()
 
 const blocks = [
-  { key: 'unified', to: '/docs', visual: 'code' },
+  { key: 'unified', to: 'https://llmuni.apifox.cn', visual: 'code' },
   { key: 'reliability', to: '/company', visual: 'failover' },
 ] as const
 
@@ -66,13 +66,17 @@ function points(key: string): string[] {
             </li>
           </ul>
 
-          <RouterLink
-            :to="b.to"
+          <component
+            :is="b.to.startsWith('http') ? 'a' : RouterLink"
+            :href="b.to.startsWith('http') ? b.to : undefined"
+            :to="b.to.startsWith('http') ? undefined : b.to"
+            :target="b.to.startsWith('http') ? '_blank' : undefined"
+            :rel="b.to.startsWith('http') ? 'noopener' : undefined"
             class="group mt-9 inline-flex items-center gap-1.5 text-[16px] font-medium tracking-[-0.16px] transition-opacity hover:opacity-70"
           >
             {{ t('home.features.learnMore') }}
             <ArrowRight class="size-4 transition-transform group-hover:translate-x-0.5" />
-          </RouterLink>
+          </component>
         </div>
 
         <div

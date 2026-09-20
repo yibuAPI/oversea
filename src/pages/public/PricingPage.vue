@@ -71,14 +71,14 @@ const rows = computed<PlanRow[]>(() => [
   {
     key: 'routing',
     label: rk('routing'),
-    learnMore: '/docs',
+    learnMore: 'https://llmuni.apifox.cn',
     payg: { kind: 'check' },
     ent: { kind: 'check' },
   },
   {
     key: 'fallbacks',
     label: rk('fallbacks'),
-    learnMore: '/docs',
+    learnMore: 'https://llmuni.apifox.cn',
     payg: { kind: 'check' },
     ent: { kind: 'check' },
   },
@@ -86,7 +86,7 @@ const rows = computed<PlanRow[]>(() => [
   {
     key: 'caching',
     label: rk('caching'),
-    learnMore: '/docs',
+    learnMore: 'https://llmuni.apifox.cn',
     payg: { kind: 'check' },
     ent: { kind: 'check' },
   },
@@ -111,7 +111,7 @@ const rows = computed<PlanRow[]>(() => [
   {
     key: 'byok',
     label: rk('byok'),
-    learnMore: '/docs',
+    learnMore: 'https://llmuni.apifox.cn',
     payg: { kind: 'text', text: '', code: '0%', suffix: rk('byokFee') },
     ent: { kind: 'text', text: '', code: '0%', suffix: rk('byokFee') },
   },
@@ -269,9 +269,13 @@ onUnmounted(() => observer?.disconnect())
                   <!-- 行标签列 -->
                   <th scope="row" class="px-3 py-3 text-left align-top font-medium">
                     {{ r.label }}
-                    <RouterLink
+                    <component
                       v-if="r.learnMore"
-                      :to="r.learnMore"
+                      :is="r.learnMore.startsWith('http') ? 'a' : RouterLink"
+                      :href="r.learnMore.startsWith('http') ? r.learnMore : undefined"
+                      :to="r.learnMore.startsWith('http') ? undefined : r.learnMore"
+                      :target="r.learnMore.startsWith('http') ? '_blank' : undefined"
+                      :rel="r.learnMore.startsWith('http') ? 'noopener' : undefined"
                       class="mt-0.5 block text-[12.5px] font-normal text-accent hover:underline"
                     >
                       {{
@@ -279,7 +283,7 @@ onUnmounted(() => observer?.disconnect())
                           ? t('public.pricing.row.exploreModels')
                           : t('public.pricing.learnMore')
                       }}
-                    </RouterLink>
+                    </component>
                   </th>
 
                   <!-- 两个方案列 -->
