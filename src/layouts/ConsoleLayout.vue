@@ -11,6 +11,7 @@ import { useRoute } from 'vue-router'
 import { Menu, X, Sun, Moon, Languages, Bell } from 'lucide-vue-next'
 import ConsoleSidebar from '@/components/console/ConsoleSidebar.vue'
 import MessageCenter from '@/components/layout/MessageCenter.vue'
+import UserMenu from '@/components/layout/UserMenu.vue'
 import { useThemeStore } from '@/stores/theme'
 import { useSiteStore } from '@/stores/site'
 import { setLocale } from '@/i18n'
@@ -166,6 +167,11 @@ watch(drawerOpen, (open) => {
           <Sun v-if="theme.isDark" class="size-4.5" />
           <Moon v-else class="size-4.5" />
         </button>
+
+        <!-- 账号入口：头像 + 名称 + 用户 ID，点开是设置/充值/帮助/登出。
+             原先这块在左侧栏底部，收进抽屉后窄屏上要拉开抽屉才能看到账号，
+             而顶栏本来就有一排图标，放这里才够得着。 -->
+        <UserMenu />
 
         <!-- 消息中心（公告）面板 -->
         <MessageCenter :open="messageOpen" @close="messageOpen = false" />

@@ -289,6 +289,10 @@ export default {
       payments: 'Payments',
       help: 'Help & Support',
     },
+    account: {
+      idLabel: 'ID',
+      menu: 'Account menu',
+    },
     playground: {
       title: 'Playground',
       subtitle: 'Pick a model and chat with the AI, streaming enabled.',
@@ -855,6 +859,8 @@ export default {
     subtitle: 'Profile, security and sign-in methods',
     profileTitle: 'Profile',
     displayName: 'Display name',
+    userIdHint: 'Account ID, assigned by the system and not editable. Quote it in support requests',
+    copyUserId: 'Copy user ID',
     changePassword: 'Change password',
     currentPassword: 'Current password',
     newPassword: 'New password',

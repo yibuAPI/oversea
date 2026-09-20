@@ -274,7 +274,29 @@ async function copyText(text: string, id: string) {
 
         <div class="grid gap-4 sm:grid-cols-2">
           <FormField id="set-username" :label="t('auth.username')">
-            <input id="set-username" v-model="username" type="text" :class="INPUT" />
+            <!-- 用户名后面的用户 ID：只读，不可编辑 —— 它由后端分配，
+                 提工单、找客服对账时报的就是这个数。放在用户名同一行而不是
+                 单独一个字段，是为了让「账号 = 用户名 + ID」一眼看到一起。
+                 顺带做成一键复制：多数场景是把 ID 发给客服，手抄容易错。 -->
+            <div class="flex items-center gap-2">
+              <input id="set-username" v-model="username" type="text" :class="INPUT" />
+              <span
+                v-if="user?.id"
+                class="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-bg-subtle px-2 py-2 text-[12px] leading-none text-fg-subtle"
+                :title="t('settings.userIdHint')"
+              >
+                <span class="tabular">{{ t('console.account.idLabel') }} {{ user.id }}</span>
+                <button
+                  type="button"
+                  class="rounded p-0.5 text-fg-subtle transition-colors hover:bg-bg-muted hover:text-fg"
+                  :aria-label="t('settings.copyUserId')"
+                  @click="copyText(String(user.id), 'uid')"
+                >
+                  <Check v-if="copied === 'uid'" class="size-3" />
+                  <Copy v-else class="size-3" />
+                </button>
+              </span>
+            </div>
           </FormField>
           <FormField id="set-displayname" :label="t('settings.displayName')">
             <input id="set-displayname" v-model="displayName" type="text" :class="INPUT" />

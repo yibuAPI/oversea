@@ -18,6 +18,15 @@ server {
         try_files $uri =404;
     }
 
+    # favicon。线上外层反代（yibuapi-nginx）有一条 location = /logo-v3.png
+    # 的精确匹配，直接把请求定向到它自己的 static 目录，走不到这里；
+    # 保留这条是为了单容器部署（不带外层反代）时 favicon 仍能正常返回。
+    # 换 logo 时：改 index.html 的引用版本号 + 外层反代加同名 location 规则。
+    location = /logo-v3.png {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=2592000";
+    }
+
     # WebSocket：工单与在线客服的长连接。
     #
     # 正则 location 优先于前缀 location，所以只有 ws 路径走这里，

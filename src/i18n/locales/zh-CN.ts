@@ -288,6 +288,11 @@ export default {
       payments: '充值记录',
       help: '帮助与支持',
     },
+    /** 右上角用户菜单。idLabel 后面拼真实用户 ID，客服/工单对账时要用 */
+    account: {
+      idLabel: 'ID',
+      menu: '账号菜单',
+    },
     playground: {
       title: '操练场',
       subtitle: '选择一个模型，直接与 AI 对话，体验流式输出。',
@@ -854,6 +859,8 @@ export default {
     subtitle: '资料、安全与登录方式',
     profileTitle: '基本资料',
     displayName: '显示名称',
+    userIdHint: '账号 ID，由系统分配，不可修改。报障、对账时报这个号',
+    copyUserId: '复制用户 ID',
     changePassword: '修改密码',
     currentPassword: '当前密码',
     newPassword: '新密码',
