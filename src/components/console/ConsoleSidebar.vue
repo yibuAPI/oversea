@@ -3,16 +3,19 @@
  * 控制台左侧栏 —— 对齐 infron 的结构：
  *   顶部  品牌 + 余额药丸
  *   中部  分组导航（Cost Management / Analysis / AI Gateway）
- *   底部  用户条，点开是 popover（设置 / 充值 / 帮助 / 登出）
+ *
+ * 账号入口（账号设置 / 充值记录 / 帮助与支持 / 退出登录）在顶栏右上角，
+ * 见 components/layout/UserMenu.vue —— 放在这里的话，窄屏收成抽屉后
+ * 用户得先拉开抽屉才够得着账号。
  *
  * 宽度 256px，桌面常驻；lg 以下抽屉式（由父组件控制 open）。
  * 导航项按后端能力过滤：签到未开、订阅无套餐时不显示对应入口 ——
  * 宁可少一项，也不要点进去看到空页面。
  */
-import { computed, ref, onMounted, onUnmounted, type Component } from 'vue'
+import { computed, type Component } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import {
   LayoutDashboard,
   KeyRound,
@@ -26,11 +29,6 @@ import {
   ScrollText,
   Plug,
   Ticket,
-  Settings,
-  CreditCard,
-  LifeBuoy,
-  LogOut,
-  ChevronsUpDown,
   Plus,
 } from 'lucide-vue-next'
 import { useSiteStore } from '@/stores/site'
@@ -43,7 +41,6 @@ const emit = defineEmits<{ navigate: [] }>()
 const site = useSiteStore()
 const user = useUserStore()
 const route = useRoute()
-const router = useRouter()
 const { t } = useI18n()
 const { systemName, logo, quotaPerUnit, ticketSystemEnabled } = storeToRefs(site)
 
@@ -52,10 +49,6 @@ const { systemName, logo, quotaPerUnit, ticketSystemEnabled } = storeToRefs(site
 const { unread: ticketUnread } = useTicketUnread()
 
 const balance = computed(() => formatQuota(user.quota, quotaPerUnit.value))
-const displayName = computed(
-  () => user.user?.display_name || user.user?.username || '',
-)
-const initial = computed(() => (displayName.value[0] || '?').toUpperCase())
 
 interface NavItem {
   to: string
@@ -129,30 +122,6 @@ const groups = computed<{ label: string; items: NavItem[] }[]>(() => [
 /** /console 是精确匹配，其余按前缀 —— 否则子路由会把首页也点亮 */
 function isActive(to: string) {
   return to === '/console' ? route.path === to : route.path.startsWith(to)
-}
-
-const menuOpen = ref(false)
-const menuRef = ref<HTMLElement | null>(null)
-
-function onDocClick(e: MouseEvent) {
-  if (menuOpen.value && !menuRef.value?.contains(e.target as Node)) menuOpen.value = false
-}
-function onKey(e: KeyboardEvent) {
-  if (e.key === 'Escape') menuOpen.value = false
-}
-onMounted(() => {
-  document.addEventListener('click', onDocClick)
-  document.addEventListener('keydown', onKey)
-})
-onUnmounted(() => {
-  document.removeEventListener('click', onDocClick)
-  document.removeEventListener('keydown', onKey)
-})
-
-async function onSignOut() {
-  menuOpen.value = false
-  await user.logout()
-  await router.replace('/')
 }
 </script>
 
@@ -228,76 +197,5 @@ async function onSignOut() {
         </ul>
       </div>
     </nav>
-
-    <!-- 用户条 -->
-    <div ref="menuRef" class="relative shrink-0 border-t border-border p-3">
-      <button
-        type="button"
-        class="motion-press flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-bg-muted"
-        :aria-expanded="menuOpen"
-        aria-haspopup="menu"
-        @click="menuOpen = !menuOpen"
-      >
-        <span
-          class="flex size-7 shrink-0 items-center justify-center rounded-full bg-bg-inset text-[12px] font-semibold text-fg"
-          aria-hidden="true"
-        >
-          {{ initial }}
-        </span>
-        <span class="min-w-0 flex-1">
-          <span class="block truncate text-[13px] font-medium leading-tight">
-            {{ displayName }}
-          </span>
-          <span class="block truncate text-[11px] leading-tight text-fg-subtle">
-            {{ user.user?.email || user.user?.group || '' }}
-          </span>
-        </span>
-        <ChevronsUpDown class="size-3.5 shrink-0 text-fg-subtle" />
-      </button>
-
-      <div
-        v-if="menuOpen"
-        role="menu"
-        class="absolute bottom-full left-3 right-3 mb-1 overflow-hidden rounded-lg border border-border bg-bg-elevated py-1 shadow-lg"
-      >
-        <RouterLink
-          to="/console/settings"
-          role="menuitem"
-          class="motion-press flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
-          @click="menuOpen = false; emit('navigate')"
-        >
-          <Settings class="size-4" />
-          {{ t('console.nav.settings') }}
-        </RouterLink>
-        <RouterLink
-          to="/console/billing"
-          role="menuitem"
-          class="motion-press flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
-          @click="menuOpen = false; emit('navigate')"
-        >
-          <CreditCard class="size-4" />
-          {{ t('console.nav.payments') }}
-        </RouterLink>
-        <RouterLink
-          to="/console/docs"
-          role="menuitem"
-          class="motion-press flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
-          @click="menuOpen = false; emit('navigate')"
-        >
-          <LifeBuoy class="size-4" />
-          {{ t('console.nav.help') }}
-        </RouterLink>
-        <div class="my-1 h-px bg-border" />
-        <button
-          type="button"
-          role="menuitem"
-          class="motion-press flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
-          @click="onSignOut"
-        >
-          <LogOut class="size-4" />
-          {{ t('auth.signOut') }}
-        </button>
-      </div>
-    </div>
   </div>
 </template>
