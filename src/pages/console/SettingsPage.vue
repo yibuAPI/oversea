@@ -7,6 +7,7 @@
  *   顺序 sidebar_modules > language > 资料/密码，命中就 return。
  *   所以改资料、改语言、改密码必须**分开发请求**，混在一个 body 只有一类生效。
  *   改密码必须带 original_password，后端校验。
+ *   资料里只发 display_name —— 用户名不支持修改，页面按只读展示。
  *
  * 2FA / OAuth 绑定 / Passkey / 注销账号 都是真实后端能力，
  * 但每块都有站点开关（/api/status），关了就不画对应入口。
@@ -66,7 +67,6 @@ const SHOW_SECURITY_SECTIONS = false
 // ───────────────── 资料 ─────────────────
 
 const displayName = ref('')
-const username = ref('')
 const originalPassword = ref('')
 const newPassword = ref('')
 const newPassword2 = ref('')
@@ -74,10 +74,7 @@ const newPassword2 = ref('')
 watch(
   user,
   (u) => {
-    if (u) {
-      displayName.value = u.display_name ?? ''
-      username.value = u.username ?? ''
-    }
+    if (u) displayName.value = u.display_name ?? ''
   },
   { immediate: true },
 )
@@ -88,9 +85,7 @@ const passwordMismatch = computed(
 
 /** 资料变更和密码变更拆成两组 payload，分开发 */
 const profileDirty = computed(
-  () =>
-    displayName.value !== (user.value?.display_name ?? '') ||
-    username.value !== (user.value?.username ?? ''),
+  () => displayName.value !== (user.value?.display_name ?? ''),
 )
 const passwordDirty = computed(
   () =>
@@ -106,7 +101,6 @@ const profileMut = useMutation({
     if (profileDirty.value) {
       jobs.push(
         updateProfile({
-          username: username.value.trim(),
           display_name: displayName.value.trim(),
         }),
       )
@@ -273,13 +267,23 @@ async function copyText(text: string, id: string) {
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
-          <FormField id="set-username" :label="t('auth.username')">
-            <!-- 用户名后面的用户 ID：只读，不可编辑 —— 它由后端分配，
-                 提工单、找客服对账时报的就是这个数。放在用户名同一行而不是
-                 单独一个字段，是为了让「账号 = 用户名 + ID」一眼看到一起。
-                 顺带做成一键复制：多数场景是把 ID 发给客服，手抄容易错。 -->
+          <FormField
+            id="set-username"
+            :label="t('auth.username')"
+            :hint="t('settings.usernameHint')"
+          >
+            <!-- 用户名 + 用户 ID：两项都只读，不可编辑。
+                 用户名是登录凭据也是 OAuth 绑定的身份键，改掉会牵扯登录与绑定；
+                 用户 ID 由后端分配。提工单、找客服对账时报的就是这个数。
+                 两项放同一行、去掉输入框样式改成纯文本，是为了让「账号」整块
+                 读起来就是一段信息，不再给人「这里能改」的错觉。
+                 用户 ID 另外做成一键复制：多数场景是把 ID 发给客服，手抄容易错。 -->
             <div class="flex items-center gap-2">
-              <input id="set-username" v-model="username" type="text" :class="INPUT" />
+              <span
+                class="tabular flex h-9 min-w-0 flex-1 items-center truncate rounded-lg border border-border bg-bg-subtle px-3 text-[13px] text-fg-muted"
+              >
+                {{ user?.username }}
+              </span>
               <span
                 v-if="user?.id"
                 class="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-bg-subtle px-2 py-2 text-[12px] leading-none text-fg-subtle"

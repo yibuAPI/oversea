@@ -859,6 +859,7 @@ export default {
     subtitle: '资料、安全与登录方式',
     profileTitle: '基本资料',
     displayName: '显示名称',
+    usernameHint: '用户名是登录凭据，创建后不可修改',
     userIdHint: '账号 ID，由系统分配，不可修改。报障、对账时报这个号',
     copyUserId: '复制用户 ID',
     changePassword: '修改密码',
