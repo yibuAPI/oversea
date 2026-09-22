@@ -859,6 +859,7 @@ export default {
     subtitle: 'Profile, security and sign-in methods',
     profileTitle: 'Profile',
     displayName: 'Display name',
+    usernameHint: 'Username is your sign-in credential and cannot be changed',
     userIdHint: 'Account ID, assigned by the system and not editable. Quote it in support requests',
     copyUserId: 'Copy user ID',
     changePassword: 'Change password',
