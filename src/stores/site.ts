@@ -50,8 +50,20 @@ export const useSiteStore = defineStore('site', () => {
     () => status.value?.turnstile_check === true,
   )
 
+  /**
+   * 第三方登录整块暂不对外开放，前端强制隐藏。
+   *
+   * 登录页、注册页、设置页的 OAuth 区块都是靠 oauthProviders 判空来渲染的，
+   * 所以在这里返回空数组即可三处一起关掉，不用每个页面各加一个 v-if。
+   * 后端开关（/api/status 的 github_oauth / oidc_enabled 等）保持原样不动 ——
+   * 管理员在后台开了 OIDC，前端也不会跟着冒出按钮。
+   * 要恢复：把这个常量改成 true，下面的推导逻辑原封不动还在。
+   */
+  const SHOW_OAUTH = false
+
   /** 已启用的第三方登录方式 */
   const oauthProviders = computed(() => {
+    if (!SHOW_OAUTH) return [] as string[]
     const s = status.value
     if (!s) return [] as string[]
     return (

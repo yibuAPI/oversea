@@ -48,6 +48,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import FormField from '@/components/ui/FormField.vue'
 import PasswordInput from '@/components/ui/PasswordInput.vue'
+import { PASSWORD_MAX, isValidPassword } from '@/utils/password'
 
 const site = useSiteStore()
 const userStore = useUserStore()
@@ -57,6 +58,11 @@ const { t } = useI18n()
 
 const INPUT =
   'h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] outline-none transition-colors focus:border-border-selected'
+
+/** 对齐后端 model/user.go 的 DisplayName `validate:"max=20"`。
+ *  后端按码点数（rune）算，而 maxlength 按 UTF-16 码元算 ——
+ *  含表情时前端会略严（一个表情占 2），但只会早拦不会放过，可以接受。 */
+const DISPLAY_NAME_MAX = 20
 
 /**
  * 安全区（2FA / Passkey / 注销账号）暂不对外开放，整块隐藏。
@@ -83,13 +89,20 @@ const passwordMismatch = computed(
   () => newPassword2.value.length > 0 && newPassword.value !== newPassword2.value,
 )
 
+/** 新密码 8–20 位（见 utils/password）。后端 UpdateSelf 与注册走同一个
+ *  Validate.Struct，越界只回一句 'failed on the min tag'，必须前端先拦。
+ *  空值不报错：这一整块是「不填就是不改密码」的可选区。 */
+const newPasswordInvalid = computed(
+  () => newPassword.value.length > 0 && !isValidPassword(newPassword.value),
+)
+
 /** 资料变更和密码变更拆成两组 payload，分开发 */
 const profileDirty = computed(
   () => displayName.value !== (user.value?.display_name ?? ''),
 )
 const passwordDirty = computed(
   () =>
-    newPassword.value.length > 0 &&
+    isValidPassword(newPassword.value) &&
     !passwordMismatch.value &&
     originalPassword.value.length > 0,
 )
@@ -302,8 +315,22 @@ async function copyText(text: string, id: string) {
               </span>
             </div>
           </FormField>
-          <FormField id="set-displayname" :label="t('settings.displayName')">
-            <input id="set-displayname" v-model="displayName" type="text" :class="INPUT" />
+          <!-- 显示名称：后端 DisplayName 同样是 validate:"max=20"，
+               和密码共用同一次 Validate.Struct，超长会回同一句看不懂的 tag 报错。
+               这里用 maxlength 拦住即可 —— 与用户名不同，显示名称不限字符集，
+               中文/空格/表情都允许，所以不需要净化函数。 -->
+          <FormField
+            id="set-displayname"
+            :label="t('settings.displayName')"
+            :hint="t('settings.displayNameHint')"
+          >
+            <input
+              id="set-displayname"
+              v-model="displayName"
+              type="text"
+              :maxlength="DISPLAY_NAME_MAX"
+              :class="INPUT"
+            />
           </FormField>
         </div>
 
@@ -318,11 +345,18 @@ async function copyText(text: string, id: string) {
                 autocomplete="current-password"
               />
             </FormField>
-            <FormField id="set-newpwd" :label="t('settings.newPassword')">
+            <FormField
+              id="set-newpwd"
+              :label="t('settings.newPassword')"
+              :hint="t('auth.passwordRule')"
+              :error="newPasswordInvalid ? t('auth.passwordInvalid') : null"
+            >
               <PasswordInput
                 id="set-newpwd"
                 v-model="newPassword"
                 autocomplete="new-password"
+                :maxlength="PASSWORD_MAX"
+                :aria-invalid="newPasswordInvalid"
               />
             </FormField>
             <FormField

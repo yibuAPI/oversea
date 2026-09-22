@@ -31,6 +31,7 @@ import PasswordInput from '@/components/ui/PasswordInput.vue'
 import { setLocale } from '@/i18n'
 import { clearAffCode, readAffCode } from '@/utils/aff-code'
 import { USERNAME_MAX, isValidUsername, sanitizeUsername } from '@/utils/username'
+import { PASSWORD_MAX, isValidPassword } from '@/utils/password'
 
 const site = useSiteStore()
 const theme = useThemeStore()
@@ -65,7 +66,7 @@ const affCode = computed(
 )
 
 // ───────────────── 用户名 ─────────────────
-/** 用户名只收字母/数字/下划线，18 位以内（见 utils/username）。
+/** 用户名只收字母/数字/下划线，20 位以内（见 utils/username）。
  *  输入、粘贴、输入法上屏都过一遍净化，非法字符当场进不来 ——
  *  后端虽然也会拒，但那要等表单提交完才知道，白填一遍密码。
  *  净化后回写 el.value：maxlength 拦不住输入法组字与整段粘贴，这里补一道。 */
@@ -122,11 +123,18 @@ const mismatch = computed(
   () => password2.value.length > 0 && password.value !== password2.value,
 )
 
+/** 密码 8–20 位（见 utils/password）。与用户名不同，密码不做输入净化 ——
+ *  截断密码等于悄悄改掉用户的密码，只能提示、不能代改。
+ *  空值时不报错，避免一进页面就满屏红字。 */
+const passwordInvalid = computed(
+  () => password.value.length > 0 && !isValidPassword(password.value),
+)
+
 const canSubmit = computed(
   () =>
     !submitting.value &&
     usernameOk.value &&
-    password.value.length > 0 &&
+    isValidPassword(password.value) &&
     !mismatch.value &&
     (!emailVerification.value || (email.value.trim() && code.value.trim())),
 )
@@ -296,8 +304,14 @@ const INPUT_CLASS =
                 variant="auth"
                 autocomplete="new-password"
                 required
+                :maxlength="PASSWORD_MAX"
                 :placeholder="t('auth.passwordPlaceholder')"
+                :aria-invalid="passwordInvalid"
               />
+              <p v-if="passwordInvalid" class="text-[12.5px] text-danger-fg">
+                {{ t('auth.passwordInvalid') }}
+              </p>
+              <p v-else class="text-[12px] text-fg-subtle">{{ t('auth.passwordRule') }}</p>
             </div>
 
             <div class="space-y-2">
