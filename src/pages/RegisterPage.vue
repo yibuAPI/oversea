@@ -30,6 +30,7 @@ import ProviderIcon from '@/components/auth/ProviderIcon.vue'
 import PasswordInput from '@/components/ui/PasswordInput.vue'
 import { setLocale } from '@/i18n'
 import { clearAffCode, readAffCode } from '@/utils/aff-code'
+import { USERNAME_MAX, isValidUsername, sanitizeUsername } from '@/utils/username'
 
 const site = useSiteStore()
 const theme = useThemeStore()
@@ -61,6 +62,27 @@ const submitting = ref(false)
  *  或走了 OAuth 跳转，这两条路径都会把 query 冲掉。 */
 const affCode = computed(
   () => (typeof route.query.aff === 'string' ? route.query.aff : '') || readAffCode() || undefined,
+)
+
+// ───────────────── 用户名 ─────────────────
+/** 用户名只收字母/数字/下划线，18 位以内（见 utils/username）。
+ *  输入、粘贴、输入法上屏都过一遍净化，非法字符当场进不来 ——
+ *  后端虽然也会拒，但那要等表单提交完才知道，白填一遍密码。
+ *  净化后回写 el.value：maxlength 拦不住输入法组字与整段粘贴，这里补一道。 */
+function onUsernameInput(e: Event) {
+  const el = e.target as HTMLInputElement
+  const clean = sanitizeUsername(el.value)
+  if (clean !== el.value) el.value = clean
+  username.value = clean
+}
+
+/** 净化后长度必然合规，这里只剩「非空」和「至少一个合法字符」两件事，
+ *  所以不必再报一次错累加 onSubmit 的异常分支 */
+const usernameOk = computed(() => isValidUsername(username.value))
+
+/** 只在浏览器自动填充等绕过 @input 的路径下才可能为 true，留作兜底 */
+const usernameInvalid = computed(
+  () => username.value.length > 0 && !isValidUsername(username.value),
 )
 
 // ───────────────── 邮箱验证码 ─────────────────
@@ -103,7 +125,7 @@ const mismatch = computed(
 const canSubmit = computed(
   () =>
     !submitting.value &&
-    username.value.trim().length > 0 &&
+    usernameOk.value &&
     password.value.length > 0 &&
     !mismatch.value &&
     (!emailVerification.value || (email.value.trim() && code.value.trim())),
@@ -207,9 +229,16 @@ const INPUT_CLASS =
                 type="text"
                 autocomplete="username"
                 required
+                :maxlength="USERNAME_MAX"
                 :placeholder="t('auth.usernamePlaceholder')"
                 :class="INPUT_CLASS"
+                :aria-invalid="usernameInvalid"
+                @input="onUsernameInput"
               />
+              <p v-if="usernameInvalid" class="text-[12.5px] text-danger-fg">
+                {{ t('auth.usernameInvalid') }}
+              </p>
+              <p v-else class="text-[12px] text-fg-subtle">{{ t('auth.usernameRule') }}</p>
             </div>
 
             <!-- 邮箱验证码：后端开了 email_verification 才是必填流程 -->

@@ -939,6 +939,8 @@ export default {
     registerSuccess: 'Account created — please sign in',
     confirmPassword: 'Confirm password',
     passwordMismatch: 'Passwords do not match',
+    usernameRule: 'Letters, numbers and underscores only, up to 18 characters',
+    usernameInvalid: 'Username may only contain letters, numbers and underscores, up to 18 characters',
     verificationCode: 'Email code',
     codePlaceholder: '6-digit code',
     sendCode: 'Send code',

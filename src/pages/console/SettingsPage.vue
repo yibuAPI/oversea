@@ -47,6 +47,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import FormField from '@/components/ui/FormField.vue'
 import PasswordInput from '@/components/ui/PasswordInput.vue'
+import { USERNAME_MAX, isValidUsername, sanitizeUsername } from '@/utils/username'
 
 const site = useSiteStore()
 const userStore = useUserStore()
@@ -86,6 +87,18 @@ const passwordMismatch = computed(
   () => newPassword2.value.length > 0 && newPassword.value !== newPassword2.value,
 )
 
+/** 用户名只收字母/数字/下划线、18 位以内，与注册页同一套规则（utils/username）。
+ *  净化只做在输入路径上，不动 watch 带回的初值 —— 万一后端给的旧用户名不合新规，
+ *  直接净化会让输入框显示的和真实账号对不上，用户改了别处一保存就把名字一起改掉了。 */
+function onUsernameInput() {
+  const clean = sanitizeUsername(username.value)
+  if (clean !== username.value) username.value = clean
+}
+
+const usernameInvalid = computed(
+  () => username.value.length > 0 && !isValidUsername(username.value),
+)
+
 /** 资料变更和密码变更拆成两组 payload，分开发 */
 const profileDirty = computed(
   () =>
@@ -104,6 +117,9 @@ const profileMut = useMutation({
     // 三态接口：先资料，再密码，不能合并
     const jobs: Promise<unknown>[] = []
     if (profileDirty.value) {
+      // 净化只覆盖了打字路径，自动填充/改过 DOM 的浏览器扩展能绕过去，
+      // 提交前再判一次，省得拿一个注定被后端拒的请求换一条看不懂的报错
+      if (!isValidUsername(username.value)) throw new Error(t('auth.usernameInvalid'))
       jobs.push(
         updateProfile({
           username: username.value.trim(),
@@ -273,13 +289,25 @@ async function copyText(text: string, id: string) {
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
-          <FormField id="set-username" :label="t('auth.username')">
+          <FormField
+            id="set-username"
+            :label="t('auth.username')"
+            :hint="usernameInvalid ? undefined : t('auth.usernameRule')"
+            :error="usernameInvalid ? t('auth.usernameInvalid') : null"
+          >
             <!-- 用户名后面的用户 ID：只读，不可编辑 —— 它由后端分配，
                  提工单、找客服对账时报的就是这个数。放在用户名同一行而不是
                  单独一个字段，是为了让「账号 = 用户名 + ID」一眼看到一起。
                  顺带做成一键复制：多数场景是把 ID 发给客服，手抄容易错。 -->
             <div class="flex items-center gap-2">
-              <input id="set-username" v-model="username" type="text" :class="INPUT" />
+              <input
+                id="set-username"
+                v-model="username"
+                type="text"
+                :maxlength="USERNAME_MAX"
+                :class="INPUT"
+                @input="onUsernameInput"
+              />
               <span
                 v-if="user?.id"
                 class="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-bg-subtle px-2 py-2 text-[12px] leading-none text-fg-subtle"

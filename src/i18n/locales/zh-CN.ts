@@ -939,6 +939,8 @@ export default {
     registerSuccess: '注册成功，请登录',
     confirmPassword: '确认密码',
     passwordMismatch: '两次输入的密码不一致',
+    usernameRule: '仅支持字母、数字和下划线，最多 18 位',
+    usernameInvalid: '用户名只能使用字母、数字和下划线，且不超过 18 位',
     verificationCode: '邮箱验证码',
     codePlaceholder: '6 位验证码',
     sendCode: '发送验证码',
