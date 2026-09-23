@@ -6,12 +6,12 @@
  * 禁止：空格、连字符、点号等一切特殊符号，以及中文、表情等非 ASCII 字符。
  *       表情是代理对（surrogate pair），用 u 标志的字符类天然拦掉，
  *       不会像 `[\w]` 那样按半个代理位放行。
- * 上限：20 位，按字符数算（此处所有允许字符都是单码点，等价于 string.length）。
- *       这个数字对齐后端 model/user.go 的 `validate:"max=20"`，不要单方面调小 ——
+ * 上限：30 位，按字符数算（此处所有允许字符都是单码点，等价于 string.length）。
+ *       这个数字对齐后端 model/user.go 的 `validate:"max=30"`，不要单方面调小 ——
  *       前端比后端更严只会让合法用户名被无理由拒掉，且报错说不清原因。
  */
 
-export const USERNAME_MAX = 20
+export const USERNAME_MAX = 30
 
 /** 整体校验用。只做判定，不做截断 */
 export const USERNAME_RE = /^[A-Za-z0-9_]+$/
