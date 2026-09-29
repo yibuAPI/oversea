@@ -13,8 +13,11 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 import {
+  Check,
   ChevronsUpDown,
+  Copy,
   CreditCard,
   LifeBuoy,
   LogOut,
@@ -32,6 +35,24 @@ const displayName = computed(
 const initial = computed(() => (displayName.value[0] || '?').toUpperCase())
 /** 头像旁边那行小字。邮箱比分组更能说明「这是谁」，缺了再退回分组 */
 const subline = computed(() => user.user?.email || user.user?.group || '')
+
+/** 用户 ID 做成可复制：报障、对账时要把这个号发给客服，手抄容易错。
+    这里不额外显示 ID —— 菜单里那行小字已经够挤，复制按钮挂在它右侧。 */
+const copied = ref(false)
+let copiedTimer: ReturnType<typeof setTimeout> | undefined
+
+async function copyUserId() {
+  const id = user.user?.id
+  if (!id) return
+  try {
+    await navigator.clipboard.writeText(String(id))
+    copied.value = true
+    clearTimeout(copiedTimer)
+    copiedTimer = setTimeout(() => (copied.value = false), 1500)
+  } catch {
+    toast.error(t('keys.copyFailed'))
+  }
+}
 
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
@@ -114,12 +135,25 @@ async function onSignOut() {
       class="absolute right-0 top-full z-50 mt-1.5 w-60 overflow-hidden rounded-lg border border-border bg-bg-elevated py-1 shadow-lg"
     >
       <!-- 菜单里再写一遍身份：只靠顶栏那行小字的话，展开后视线落在菜单上，
-           反而不知道自己在哪个账号里操作。同样不写 ID，要看 ID 去账号设置。 -->
+           反而不知道自己在哪个账号里操作。
+           用户 ID 与账号设置里同款（蓝色「用户ID：1」+ 近黑复制图标）：
+           报障时就在手边，不用先跳去设置页抄号。 -->
       <div class="border-b border-border px-3 pb-2.5 pt-2">
         <p class="truncate text-[13px] font-medium">{{ displayName }}</p>
         <p v-if="subline" class="mt-0.5 truncate text-[11.5px] text-fg-subtle">
           {{ subline }}
         </p>
+        <button
+          v-if="user.user?.id"
+          type="button"
+          class="mt-1 flex items-center gap-1 text-[11.5px] leading-none text-accent transition-colors hover:text-accent-hover"
+          :title="t('settings.userIdHint')"
+          @click="copyUserId"
+        >
+          <span class="tabular">{{ t('console.account.idLabel', { id: user.user.id }) }}</span>
+          <Check v-if="copied" class="size-3 text-fg" />
+          <Copy v-else class="size-3 text-fg" />
+        </button>
       </div>
       <RouterLink
         to="/console/settings"

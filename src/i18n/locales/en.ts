@@ -290,7 +290,7 @@ export default {
       help: 'Help & Support',
     },
     account: {
-      idLabel: 'ID',
+      idLabel: 'User ID: {id}',
       menu: 'Account menu',
     },
     playground: {
@@ -859,6 +859,7 @@ export default {
     subtitle: 'Profile, security and sign-in methods',
     profileTitle: 'Profile',
     displayName: 'Display name',
+    displayNameHint: 'Shown to others; separate from your sign-in username and editable anytime',
     usernameHint: 'Username is your sign-in credential and cannot be changed',
     userIdHint: 'Account ID, assigned by the system and not editable. Quote it in support requests',
     copyUserId: 'Copy user ID',

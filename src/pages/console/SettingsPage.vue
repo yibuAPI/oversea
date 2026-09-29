@@ -285,35 +285,31 @@ async function copyText(text: string, id: string) {
             :label="t('auth.username')"
             :hint="t('settings.usernameHint')"
           >
-            <!-- 用户名 + 用户 ID：两项都只读，不可编辑。
-                 用户名是登录凭据也是 OAuth 绑定的身份键，改掉会牵扯登录与绑定；
-                 用户 ID 由后端分配。提工单、找客服对账时报的就是这个数。
-                 两项放同一行、去掉输入框样式改成纯文本，是为了让「账号」整块
-                 读起来就是一段信息，不再给人「这里能改」的错觉。
-                 用户 ID 另外做成一键复制：多数场景是把 ID 发给客服，手抄容易错。 -->
-            <div class="flex items-center gap-2">
-              <span
-                class="tabular flex h-9 min-w-0 flex-1 items-center truncate rounded-lg border border-border bg-bg-subtle px-3 text-[13px] text-fg-muted"
-              >
-                {{ user?.username }}
-              </span>
-              <span
+            <!-- 用户 ID 挂在标签行右侧（用户名右边），不在输入框那一行 ——
+                 它跟着用户名走，输入框那行只留用户名本身。
+                 蓝色（text-accent）是它的固定色：这行是附属信息，用品牌色
+                 才不至于跟下面的只读灰字混成一片。复制图标保持近黑 text-fg。 -->
+            <template #labelExtra>
+              <button
                 v-if="user?.id"
-                class="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-bg-subtle px-2 py-2 text-[12px] leading-none text-fg-subtle"
+                type="button"
+                class="flex items-center gap-1 text-[12px] leading-none text-accent transition-colors hover:text-accent-hover"
                 :title="t('settings.userIdHint')"
+                @click="copyText(String(user.id), 'uid')"
               >
-                <span class="tabular">{{ t('console.account.idLabel') }} {{ user.id }}</span>
-                <button
-                  type="button"
-                  class="rounded p-0.5 text-fg-subtle transition-colors hover:bg-bg-muted hover:text-fg"
-                  :aria-label="t('settings.copyUserId')"
-                  @click="copyText(String(user.id), 'uid')"
-                >
-                  <Check v-if="copied === 'uid'" class="size-3" />
-                  <Copy v-else class="size-3" />
-                </button>
-              </span>
-            </div>
+                <span class="tabular">{{ t('console.account.idLabel', { id: user.id }) }}</span>
+                <Check v-if="copied === 'uid'" class="size-3" />
+                <Copy v-else class="size-3 text-fg" />
+              </button>
+            </template>
+            <!-- 用户名只读：是登录凭据也是 OAuth 绑定的身份键，改掉会牵扯
+                 登录与绑定。去掉输入框样式改成纯文本，是为了让这一格读起来
+                 就是一段信息，不给人「这里能改」的错觉。 -->
+            <span
+              class="tabular flex h-9 min-w-0 items-center truncate rounded-lg border border-border bg-bg-subtle px-3 text-[13px] text-fg-muted"
+            >
+              {{ user?.username }}
+            </span>
           </FormField>
           <!-- 显示名称：后端 DisplayName 同样是 validate:"max=20"，
                和密码共用同一次 Validate.Struct，超长会回同一句看不懂的 tag 报错。

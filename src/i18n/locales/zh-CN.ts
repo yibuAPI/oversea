@@ -288,9 +288,10 @@ export default {
       payments: '充值记录',
       help: '帮助与支持',
     },
-    /** 右上角用户菜单。idLabel 后面拼真实用户 ID，客服/工单对账时要用 */
+    /** 用户菜单 / 账号设置里的用户 ID。idLabel 整句带分隔符，中英的冒号不同，
+        所以把 ID 作为变量拼进来，而不是在模板里硬写一个 ':' */
     account: {
-      idLabel: 'ID',
+      idLabel: '用户ID：{id}',
       menu: '账号菜单',
     },
     playground: {
@@ -859,8 +860,9 @@ export default {
     subtitle: '资料、安全与登录方式',
     profileTitle: '基本资料',
     displayName: '显示名称',
+    displayNameHint: '对外展示的名字，与登录用的用户名无关，可随时修改',
     usernameHint: '用户名是登录凭据，创建后不可修改',
-    userIdHint: '账号 ID，由系统分配，不可修改。报障、对账时报这个号',
+    userIdHint: '账号 ID',
     copyUserId: '复制用户 ID',
     changePassword: '修改密码',
     currentPassword: '当前密码',
