@@ -3,10 +3,11 @@
  * 控制台左侧栏 —— 对齐 infron 的结构：
  *   顶部  品牌 + 余额药丸
  *   中部  分组导航（Cost Management / Analysis / AI Gateway）
+ *   底部  账号入口（头像 / 名称 / 邮箱，点开是设置、充值、帮助、登出）
  *
- * 账号入口（账号设置 / 充值记录 / 帮助与支持 / 退出登录）在顶栏右上角，
- * 见 components/layout/UserMenu.vue —— 放在这里的话，窄屏收成抽屉后
- * 用户得先拉开抽屉才够得着账号。
+ * 账号入口曾经在顶栏右上角，现在挪到侧栏底部、钉在「密钥集成」下面：
+ * 顶栏本来就有面包屑 + 三个图标，再挂一个带名称和邮箱的账号块太挤。
+ * 菜单从底部向上弹，见 components/layout/UserMenu.vue 的 sidebar 变体。
  *
  * 宽度 256px，桌面常驻；lg 以下抽屉式（由父组件控制 open）。
  * 导航项按后端能力过滤：签到未开、订阅无套餐时不显示对应入口 ——
@@ -35,6 +36,7 @@ import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 import { useTicketUnread } from '@/composables/useTicketUnread'
 import { formatQuota } from '@/lib/format'
+import UserMenu from '@/components/layout/UserMenu.vue'
 
 const emit = defineEmits<{ navigate: [] }>()
 
@@ -197,5 +199,11 @@ function isActive(to: string) {
         </ul>
       </div>
     </nav>
+
+    <!-- 账号入口：钉在侧栏最底部，紧挨在「密钥集成」下面（导航自己滚动，这块不动）。
+         窄屏是抽屉，所以跳转后要把抽屉收起来 —— 靠 UserMenu 冒泡的 navigate。 -->
+    <div class="shrink-0 border-t border-border px-3 py-2">
+      <UserMenu variant="sidebar" @navigate="emit('navigate')" />
+    </div>
   </div>
 </template>

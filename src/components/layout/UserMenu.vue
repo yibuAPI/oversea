@@ -1,11 +1,12 @@
 <script setup lang="ts">
 /**
- * 顶栏右上角的账号入口。控制台与公开站共用一份 —— 之前这两处的用户信息
- * 各写各的（控制台塞在左侧栏底部、公开站只有一枚「控制台」按钮），
- * 同一个人在两个页面看到的是两套不同的东西。
+ * 账号入口：头像 + 名称 + 邮箱，点开是设置 / 充值 / 帮助 / 登出。
  *
- * 显示：头像 + 名称 + 用户 ID。ID 必须露出来 —— 提工单、找客服对账时
- * 双方都靠它定位账号，翻设置在那一层找太慢。
+ * 两个摆放位置，由 variant 决定：
+ *   bar      控制台顶栏右侧（公开站 SiteHeader 的账号区也是这一套观感）
+ *   sidebar  控制台左侧栏底部，钉在「密钥集成」下面 —— 菜单向上弹出
+ *
+ * 显示：头像 + 名称 + 邮箱。
  *
  * 未登录时退化成「登录 / 注册」两枚按钮（site header 的旧样式），
  * 这样调用方不用自己判断登录态。
@@ -21,6 +22,16 @@ import {
   Settings,
 } from 'lucide-vue-next'
 import { useUserStore } from '@/stores/user'
+
+const props = withDefaults(defineProps<{ variant?: 'bar' | 'sidebar' }>(), {
+  variant: 'bar',
+})
+
+/** 侧栏底部那一版：占满一行、菜单向上弹。点击菜单项后交给父级关抽屉 */
+const isSidebar = computed(() => props.variant === 'sidebar')
+
+/** 侧栏在窄屏是抽屉，跳转后要收起来。顶栏那版没人监听这个事件 */
+const emit = defineEmits<{ navigate: [] }>()
 
 const user = useUserStore()
 const router = useRouter()
@@ -58,6 +69,14 @@ async function onSignOut() {
   open.value = false
   await user.logout()
   await router.replace('/')
+  emit('navigate')
+}
+
+/** 点菜单项：先收起面板，再把抽屉交给父级关。
+    写成函数而不是内联多语句 —— @click 里换行的表达式过不了模板解析器。 */
+function onItemClick() {
+  open.value = false
+  emit('navigate')
 }
 </script>
 
@@ -79,10 +98,15 @@ async function onSignOut() {
     </RouterLink>
   </div>
 
-  <div v-else ref="root" class="relative">
+  <div v-else ref="root" class="relative" :class="isSidebar && 'w-full'">
     <button
       type="button"
-      class="motion-press flex items-center gap-2 rounded-lg py-1 pl-1 pr-1.5 text-left transition-colors hover:bg-bg-muted sm:pr-2"
+      class="motion-press text-left transition-colors hover:bg-bg-muted"
+      :class="
+        isSidebar
+          ? 'flex w-full items-center gap-2.5 rounded-lg px-2 py-2'
+          : 'flex items-center gap-2 rounded-lg py-1 pl-1 pr-1.5 sm:pr-2'
+      "
       :aria-expanded="open"
       aria-haspopup="menu"
       :aria-label="t('console.account.menu')"
@@ -94,27 +118,34 @@ async function onSignOut() {
       >
         {{ initial }}
       </span>
-      <!-- 名称 + 邮箱。窄屏只留头像（顶栏还要塞面包屑和三个图标）。
-           刻意不在这里显示用户 ID：它属于「账号详情」，在账号设置里已经能看到，
-           顶栏这一条再挂一遍会让整块变得啰嗦。 -->
-      <span class="hidden min-w-0 sm:block">
-        <span class="block max-w-[9rem] truncate text-[13px] font-medium leading-tight">
+      <!-- 名称 + 邮箱。顶栏那版窄屏只留头像（那一行还要塞面包屑和三个图标）；
+           侧栏那版无论多窄都是整块宽度，不藏。 -->
+      <span :class="isSidebar ? 'min-w-0 flex-1' : 'hidden min-w-0 sm:block'">
+        <span class="block truncate text-[13px] font-medium leading-tight">
           {{ displayName }}
         </span>
-        <span v-if="subline" class="block max-w-[9rem] truncate text-[11px] leading-tight text-fg-subtle">
+        <span v-if="subline" class="block truncate text-[11px] leading-tight text-fg-subtle">
           {{ subline }}
         </span>
       </span>
-      <ChevronsUpDown class="hidden size-3.5 shrink-0 text-fg-subtle sm:block" />
+      <ChevronsUpDown
+        :class="
+          isSidebar
+            ? 'size-3.5 shrink-0 text-fg-subtle'
+            : 'hidden size-3.5 shrink-0 text-fg-subtle sm:block'
+        "
+      />
     </button>
 
+    <!-- 顶栏那版向下弹；侧栏那版在页面最底下，只能向上弹 -->
     <div
       v-if="open"
       role="menu"
-      class="absolute right-0 top-full z-50 mt-1.5 w-60 overflow-hidden rounded-lg border border-border bg-bg-elevated py-1 shadow-lg"
+      class="absolute z-50 overflow-hidden rounded-lg border border-border bg-bg-elevated py-1 shadow-lg"
+      :class="isSidebar ? 'bottom-full left-0 mb-1.5 w-full' : 'right-0 top-full mt-1.5 w-60'"
     >
-      <!-- 菜单里再写一遍身份：只靠顶栏那行小字的话，展开后视线落在菜单上，
-           反而不知道自己在哪个账号里操作。同样不写 ID，要看 ID 去账号设置。 -->
+      <!-- 菜单里再写一遍身份：只靠上面那行小字的话，展开后视线落在菜单上，
+           反而不知道自己在哪个账号里操作。 -->
       <div class="border-b border-border px-3 pb-2.5 pt-2">
         <p class="truncate text-[13px] font-medium">{{ displayName }}</p>
         <p v-if="subline" class="mt-0.5 truncate text-[11.5px] text-fg-subtle">
@@ -125,7 +156,7 @@ async function onSignOut() {
         to="/console/settings"
         role="menuitem"
         class="motion-press flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
-        @click="open = false"
+        @click="onItemClick"
       >
         <Settings class="size-4" />
         {{ t('console.nav.settings') }}
@@ -134,7 +165,7 @@ async function onSignOut() {
         to="/console/billing"
         role="menuitem"
         class="motion-press flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
-        @click="open = false"
+        @click="onItemClick"
       >
         <CreditCard class="size-4" />
         {{ t('console.nav.payments') }}
@@ -143,7 +174,7 @@ async function onSignOut() {
         to="/console/docs"
         role="menuitem"
         class="motion-press flex items-center gap-2.5 px-3 py-2 text-[13px] text-fg-muted hover:bg-bg-muted hover:text-fg"
-        @click="open = false"
+        @click="onItemClick"
       >
         <LifeBuoy class="size-4" />
         {{ t('console.nav.help') }}
